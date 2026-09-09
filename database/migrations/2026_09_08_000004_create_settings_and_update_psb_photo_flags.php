@@ -22,8 +22,8 @@ return new class extends Migration
 
         // 2. Add photo compliance status to psb_registrations
         Schema::table('psb_registrations', function (Blueprint $table) {
-            $table->string('foto_status')->default('Belum Diperiksa')->after('pas_foto'); // Belum Diperiksa, Sesuai, Perlu Perbaikan
-            $table->string('foto_catatan')->nullable()->after('foto_status');
+            $table->string('foto_status')->default('Belum Diperiksa'); // Belum Diperiksa, Sesuai, Perlu Perbaikan
+            $table->string('foto_catatan')->nullable();
         });
     }
 
