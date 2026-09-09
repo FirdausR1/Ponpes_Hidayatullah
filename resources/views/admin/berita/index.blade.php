@@ -18,32 +18,53 @@
     </div>
 
     <!-- Filter & Search Card -->
-    <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <form action="{{ route('admin.berita.index') }}" method="GET" class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div class="relative flex-1 sm:w-64">
-                <span class="text-slate-400 absolute left-3 top-2.5">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari judul atau penulis..." class="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none transition">
+    <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <form action="{{ route('admin.berita.index') }}" method="GET" class="flex flex-wrap items-center gap-2.5 flex-1">
+            <div class="relative flex-1 min-w-[220px] max-w-sm">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari judul atau penulis..." class="w-full h-10 pl-10 pr-8 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition placeholder:text-slate-400">
+                @if(request('q'))
+                    <a href="{{ route('admin.berita.index', request()->except('q')) }}" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition" title="Hapus teks pencarian">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </a>
+                @endif
             </div>
 
-            <select name="kategori" onchange="this.form.submit()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none">
+            <select name="kategori" onchange="this.form.submit()" class="h-10 text-xs font-medium rounded-lg px-3 border outline-none transition cursor-pointer {{ request('kategori') ? 'bg-brand-50/50 border-brand-300 text-brand-700 font-bold' : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-600' }}">
                 <option value="">Semua Kategori</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat }}" {{ request('kategori') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                 @endforeach
             </select>
 
-            <select name="status" onchange="this.form.submit()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 outline-none">
+            <select name="status" onchange="this.form.submit()" class="h-10 text-xs font-medium rounded-lg px-3 border outline-none transition cursor-pointer {{ request('status') ? 'bg-brand-50/50 border-brand-300 text-brand-700 font-bold' : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-600' }}">
                 <option value="">Semua Status</option>
                 <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
                 <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
             </select>
+
+            @if(request()->filled('q') || request()->filled('kategori') || request()->filled('status'))
+                <a href="{{ route('admin.berita.index') }}" class="inline-flex items-center gap-1.5 h-10 px-3 text-xs font-semibold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg transition shadow-xs" title="Reset Semua Filter">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    <span>Reset</span>
+                </a>
+            @endif
         </form>
 
-        <span class="text-xs text-slate-500 self-end sm:self-center">
-            Menampilkan <strong>{{ $articles->total() }}</strong> artikel
-        </span>
+        <div class="inline-flex items-center h-10 px-3.5 bg-slate-100/80 border border-slate-200/80 rounded-lg text-xs text-slate-600 font-medium whitespace-nowrap self-end sm:self-center">
+            Total:&nbsp;<strong class="text-slate-800 font-bold">{{ $articles->total() }}</strong>&nbsp;Artikel
+        </div>
     </div>
 
     <!-- Articles Table (TailAdmin Style) -->

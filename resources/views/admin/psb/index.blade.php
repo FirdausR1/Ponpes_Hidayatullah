@@ -54,33 +54,45 @@
     </div>
     @endif
 
-    <!-- Filter & Search Card -->
-    <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col lg:flex-row gap-3 items-center justify-between">
-        <form action="{{ route('admin.psb.index') }}" method="GET" class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            <div class="relative flex-1 sm:w-56">
-                <span class="text-slate-400 absolute left-3 top-2.5">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </span>
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari nama, No Reg, NISN, WA..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none transition">
+    <!-- Filter & Search Card (Rapi, Terstruktur & Presisi) -->
+    <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-col xl:flex-row gap-3 items-stretch xl:items-center justify-between">
+        <form action="{{ route('admin.psb.index') }}" method="GET" class="flex flex-wrap items-center gap-2.5 flex-1">
+            <!-- Search Input Box -->
+            <div class="relative flex-1 min-w-[240px] max-w-sm">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari nama santri, No Reg, NISN, WA..." class="w-full h-10 pl-10 pr-9 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition placeholder:text-slate-400">
+                @if(request('q'))
+                    <a href="{{ route('admin.psb.index', request()->except('q')) }}" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition" title="Hapus teks pencarian">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </a>
+                @endif
             </div>
 
             <!-- Filter Tahun Daftar -->
-            <select name="tahun" onchange="this.form.submit()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none font-medium">
-                <option value="">Semua Tahun Daftar</option>
+            <select name="tahun" onchange="this.form.submit()" class="h-10 text-xs font-medium rounded-lg px-3 border outline-none transition cursor-pointer {{ request('tahun') ? 'bg-brand-50/50 border-brand-300 text-brand-700 font-bold' : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-600' }}">
+                <option value="">Semua Tahun</option>
                 @foreach($years ?? [] as $yr)
                     <option value="{{ $yr }}" {{ request('tahun') == $yr ? 'selected' : '' }}>Tahun {{ $yr }}</option>
                 @endforeach
             </select>
 
             <!-- Filter Jenis Kelamin (Putra / Putri) -->
-            <select name="jenis_kelamin" onchange="this.form.submit()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none font-medium">
+            <select name="jenis_kelamin" onchange="this.form.submit()" class="h-10 text-xs font-medium rounded-lg px-3 border outline-none transition cursor-pointer {{ request('jenis_kelamin') ? 'bg-brand-50/50 border-brand-300 text-brand-700 font-bold' : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-600' }}">
                 <option value="">Semua Gender</option>
                 <option value="Laki-laki" {{ request('jenis_kelamin') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki (Putra)</option>
                 <option value="Perempuan" {{ request('jenis_kelamin') == 'Perempuan' ? 'selected' : '' }}>Perempuan (Putri)</option>
             </select>
 
             <!-- Filter Jenjang -->
-            <select name="jenjang" onchange="this.form.submit()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none font-medium">
+            <select name="jenjang" onchange="this.form.submit()" class="h-10 text-xs font-medium rounded-lg px-3 border outline-none transition cursor-pointer {{ request('jenjang') ? 'bg-brand-50/50 border-brand-300 text-brand-700 font-bold' : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-600' }}">
                 <option value="">Semua Jenjang</option>
                 <option value="MTs Mukim" {{ request('jenjang') == 'MTs Mukim' ? 'selected' : '' }}>MTs Mukim</option>
                 <option value="MTs Laju" {{ request('jenjang') == 'MTs Laju' ? 'selected' : '' }}>MTs Laju</option>
@@ -89,29 +101,38 @@
             </select>
 
             <!-- Filter Status Seleksi -->
-            <select name="status" onchange="this.form.submit()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none font-medium">
+            <select name="status" onchange="this.form.submit()" class="h-10 text-xs font-medium rounded-lg px-3 border outline-none transition cursor-pointer {{ request('status') ? 'bg-brand-50/50 border-brand-300 text-brand-700 font-bold' : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-600' }}">
                 <option value="">Semua Status</option>
                 <option value="Menunggu" {{ request('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
                 <option value="Diterima" {{ request('status') == 'Diterima' ? 'selected' : '' }}>Diterima</option>
                 <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
             </select>
 
+            <!-- Tombol Reset Filter jika aktif -->
             @if(request()->filled('q') || request()->filled('jenjang') || request()->filled('status') || request()->filled('jenis_kelamin') || request()->filled('tahun'))
-                <a href="{{ route('admin.psb.index') }}" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded hover:bg-rose-50 transition flex items-center gap-1" title="Reset Semua Filter">
-                    ✕ Reset Filter
+                <a href="{{ route('admin.psb.index') }}" class="inline-flex items-center gap-1.5 h-10 px-3 text-xs font-semibold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg transition shadow-xs" title="Reset Semua Filter">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    <span>Reset</span>
                 </a>
             @endif
         </form>
 
-        <div class="flex items-center gap-2.5 self-end lg:self-center">
-            <!-- Direct Download Excel for Current Filter -->
-            <a href="{{ route('admin.psb.export', request()->all()) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition shadow-xs" title="Unduh file Excel (.xls) rapi sesuai filter yang aktif">
-                <svg class="icon-svg w-3.5 h-3.5 text-emerald-700" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <!-- Aksi Kanan: Export Excel & Total Data -->
+        <div class="flex items-center gap-2.5 self-end xl:self-center shrink-0 pt-1 xl:pt-0">
+            <a href="{{ route('admin.psb.export', request()->all()) }}" class="inline-flex items-center gap-2 h-10 px-3.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-300 hover:border-emerald-600 rounded-lg text-xs font-bold transition shadow-xs" title="Unduh file Excel (.xls) rapi sesuai filter yang aktif">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
                 <span>Download Excel</span>
             </a>
-            <span class="text-xs text-slate-500 whitespace-nowrap">
-                Total: <strong>{{ $registrations->total() }}</strong> Santri
-            </span>
+            <div class="inline-flex items-center h-10 px-3.5 bg-slate-100/80 border border-slate-200/80 rounded-lg text-xs text-slate-600 font-medium whitespace-nowrap">
+                Total:&nbsp;<strong class="text-slate-800 font-bold">{{ $registrations->total() }}</strong>&nbsp;Santri
+            </div>
         </div>
     </div>
 
@@ -260,13 +281,36 @@
 
                             <!-- Actions -->
                             <td class="px-5 py-4 text-right">
-                                <div class="inline-flex items-center gap-1.5">
-                                    <!-- Print CV & Documents Button -->
-                                    <a href="{{ route('admin.psb.print', ['ids' => $reg->id]) }}" target="_blank" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="🖨️ Cetak Kartu CV & Dokumen Santri">
-                                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <div class="inline-flex items-center gap-1">
+                                    <!-- 1. View Details Modal Trigger -->
+                                    <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition" title="Lihat Berkas & Detail Lengkap Santri">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+
+                                    <!-- 2. Cetak Kartu CV & Dokumen Santri (Satu-satunya Icon Print) -->
+                                    <a href="{{ route('admin.psb.print', ['ids' => $reg->id]) }}" target="_blank" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Cetak Kartu CV & Dokumen Santri (A4)">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                            <rect x="6" y="14" width="12" height="8"></rect>
+                                        </svg>
                                     </a>
 
-                                    <!-- Personal WhatsApp Notification Button -->
+                                    <!-- 3. Buka Bukti Pendaftaran / Tanda Terima (Icon Dokumen/Receipt, Bukan Print!) -->
+                                    <a href="{{ route('psb.success', $reg->id) }}" target="_blank" class="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition" title="Buka Bukti Pendaftaran / Tanda Terima Online">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                                        </svg>
+                                    </a>
+
+                                    <!-- 4. WhatsApp Notification Button -->
                                     @php
                                         $targetPhone = $reg->ayah_telepon ?: $reg->no_whatsapp;
                                         $cleanTargetPhone = preg_replace('/[^0-9]/', '', $targetPhone);
@@ -277,27 +321,22 @@
                                         $waMsg = "Assalamu'alaikum Wr. Wb.\n\nBpk/Ibu Wali dari ananda *{$reg->nama_lengkap}*,\n\nKami dari Panitia PSB Pondok Pesantren Hidayatullah Tuksongo menginformasikan status verifikasi pendaftaran:\n- No. Registrasi: *{$reg->no_registrasi}*\n- Jenjang: *{$reg->jenjang}*\n- Status Seleksi: *{$reg->status}*\n- Status Pas Foto: *{$reg->foto_status}*" . ($reg->foto_catatan ? " ({$reg->foto_catatan})" : "") . "\n\nAnda dapat memantau progres atau memperbarui berkas mandiri melalui tautan berikut:\n{$checkStatusUrl}\n\nJazakumullah khairan katsiran.\nPanitia PSB Ponpes Hidayatullah Tuksongo";
                                     @endphp
                                     @if($cleanTargetPhone)
-                                    <a href="https://wa.me/{{ $cleanTargetPhone }}?text={{ urlencode($waMsg) }}" target="_blank" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Kirim Pesan WhatsApp Personal Status Pendaftaran">
-                                        <svg class="icon-svg w-4 h-4 text-emerald-600" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    <a href="https://wa.me/{{ $cleanTargetPhone }}?text={{ urlencode($waMsg) }}" target="_blank" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Kirim Pesan WhatsApp Status ke Wali">
+                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                        </svg>
                                     </a>
                                     @endif
 
-                                    <!-- View Details Modal Trigger -->
-                                    <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition" title="Lihat Berkas & Detail Lengkap">
-                                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                    </button>
-
-                                    <!-- View/Print Receipt Page -->
-                                    <a href="{{ route('psb.success', $reg->id) }}" target="_blank" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Buka Tanda Terima Pendaftaran">
-                                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                                    </a>
-
-                                    <!-- Delete Form -->
+                                    <!-- 5. Delete Form -->
                                     <form action="{{ route('admin.psb.destroy', $reg->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pendaftar {{ $reg->nama_lengkap }}?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Pendaftar">
-                                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Data Pendaftar">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
                                         </button>
                                     </form>
                                 </div>
