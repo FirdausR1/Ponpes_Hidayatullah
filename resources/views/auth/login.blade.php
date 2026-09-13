@@ -186,8 +186,8 @@
                                 name="email"
                                 autocomplete="email"
                                 required
-                                value="{{ old('email', 'admin@hidayatullah.ponpes.id') }}"
-                                placeholder="nama@hidayatullah.ponpes.id"
+                                value="{{ old('email') }}"
+                                placeholder="Masukkan email admin..."
                                 class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition"
                             />
                         </div>
