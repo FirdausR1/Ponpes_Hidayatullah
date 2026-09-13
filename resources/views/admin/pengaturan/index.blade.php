@@ -79,6 +79,10 @@
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path></svg>
             TTD Digital & Stempel PSB
         </button>
+        <button type="button" onclick="switchTab('tab-footer')" id="btn-tab-footer" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
+            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            Tahun Ajaran & Footer
+        </button>
     </div>
 
     <!-- ==================== TAB 1: HERO, BROSUR & PANDUAN ==================== -->
@@ -125,53 +129,129 @@
             </div>
         </form>
 
-        <!-- Card 2: Foto Utama Kampus (Hero Visual) -->
-        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
+        <!-- Card 2: Pengaturan Hero Slider & Foto Kampus (3-5 Foto) -->
+        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-6">
             @csrf
             <input type="hidden" name="active_tab" value="tab-hero">
-            <input type="hidden" name="section_name" value="Foto Utama Kampus">
+            <input type="hidden" name="section_name" value="Hero Slider & Foto Kampus">
 
-            <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-                <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold">2</div>
-                <div>
-                    <h2 class="font-bold text-slate-800 text-base">Foto Utama Kampus (Hero Visual)</h2>
-                    <p class="text-xs text-slate-500">Foto besar kampus atau gerbang pondok yang tampil di sebelah kanan hero beranda.</p>
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-5 items-start">
-                <div class="w-full sm:w-56 h-36 rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100 shrink-0 relative group">
-                    <img id="heroImagePreview" src="{{ !empty($settings['hero_image']) ? asset($settings['hero_image']) : 'https://lh3.googleusercontent.com/aida-public/AB6AXuCGYaU4q4nIXeNSx0KvqvdTCXvhP1950A1c7sA345MHgqC0koDMg-pDDQnBy9NpclcSa0PcDMfQidKumWL-n9GMZ9qrXrvAEwL9U3hdTPo2-0eXAokLKZ11EVIOzlck9D1C9LwbnjOu8N6NjiOSLbZCN3122S-MJBUjjFqSj9UoSN7s74Zg-Yc4FBDioEDu2ACO-pOvjP9mhQLY9aUyH4HtA-4GCzA_H_DcQHTZ5Binpb7M2nk8bVSb' }}" alt="Preview Hero" class="w-full h-full object-cover">
-                    <div id="heroImageStatus" class="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">Foto Aktif</div>
-                </div>
-                <div class="flex-1 space-y-3 w-full">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">2</div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Unggah Foto Baru dari Komputer / HP</label>
-                        <input type="file" name="hero_image_file" id="heroImageFileInput" onchange="previewHeroImage(this)" accept="image/jpeg,image/png,image/jpg,image/webp" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 border border-slate-200 rounded-lg p-1.5 bg-slate-50/50 cursor-pointer">
-                        <p class="text-[11px] text-slate-400 mt-1">Mendukung format JPG, JPEG, PNG, WEBP. Maksimal ukuran 15 MB. Preview langsung muncul seketika di samping kiri.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Atau Gunakan Link / URL Gambar Langsung</label>
-                        <input type="text" name="hero_image" id="heroImageUrlInput" oninput="previewHeroImageUrl(this.value)" value="{{ old('hero_image', $settings['hero_image'] ?? '') }}" placeholder="https://... atau /uploads/settings/foto.jpg" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                        <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                            Pengaturan Hero Slider & Foto Kampus (3-5 Foto)
+                            <span class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200">Auto-Slide Aktif</span>
+                        </h2>
+                        <p class="text-xs text-slate-500">Atur foto berganti otomatis di beranda, jumlah foto yang tampil, model animasi transisi, dan kecepatan slide.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+            <!-- Baris Kontrol Slider (TailAdmin Controls) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Foto (Caption)</label>
-                    <input type="text" name="hero_caption" value="{{ old('hero_caption', $settings['hero_caption'] ?? 'Kampus Alam Tuksongo Madani') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <svg class="icon-svg w-3.5 h-3.5 text-brand-500" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        Jumlah Foto Ditampilkan
+                    </label>
+                    <select name="hero_slide_count" class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 focus:border-brand-500 outline-none">
+                        <option value="3" {{ (old('hero_slide_count', $settings['hero_slide_count'] ?? '5') == '3') ? 'selected' : '' }}>3 Foto</option>
+                        <option value="4" {{ (old('hero_slide_count', $settings['hero_slide_count'] ?? '5') == '4') ? 'selected' : '' }}>4 Foto</option>
+                        <option value="5" {{ (old('hero_slide_count', $settings['hero_slide_count'] ?? '5') == '5') ? 'selected' : '' }}>5 Foto (Maksimal / Lengkap)</option>
+                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1">Pilih berapa foto yang akan bergulir di slider beranda.</p>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Sub-keterangan Lokasi</label>
-                    <input type="text" name="hero_subcaption" value="{{ old('hero_subcaption', $settings['hero_subcaption'] ?? "Dusun Tuksongo, Nglorog, Pringsurat — Asri, hening, dan kondusif untuk tholabul 'ilmi") }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <svg class="icon-svg w-3.5 h-3.5 text-brand-500" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Model Animasi Ganti Slide
+                    </label>
+                    <select name="hero_slider_animation" class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 focus:border-brand-500 outline-none">
+                        <option value="fade" {{ (old('hero_slider_animation', $settings['hero_slider_animation'] ?? 'fade') == 'fade') ? 'selected' : '' }}>Fade Smooth (Transisi Memudar Lembut)</option>
+                        <option value="slide" {{ (old('hero_slider_animation', $settings['hero_slider_animation'] ?? 'fade') == 'slide') ? 'selected' : '' }}>Slide Horizontal (Geser Mengalir)</option>
+                        <option value="zoom" {{ (old('hero_slider_animation', $settings['hero_slider_animation'] ?? 'fade') == 'zoom') ? 'selected' : '' }}>Ken Burns / Zoom Perlahan (Sinematik)</option>
+                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1">Efek visual saat pergantian foto berlangsung.</p>
                 </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                        <svg class="icon-svg w-3.5 h-3.5 text-brand-500" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Kecepatan Ganti Slide
+                    </label>
+                    <select name="hero_slider_duration" class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 focus:border-brand-500 outline-none">
+                        <option value="3" {{ (old('hero_slider_duration', $settings['hero_slider_duration'] ?? '5') == '3') ? 'selected' : '' }}>3 Detik (Cepat)</option>
+                        <option value="4" {{ (old('hero_slider_duration', $settings['hero_slider_duration'] ?? '5') == '4') ? 'selected' : '' }}>4 Detik</option>
+                        <option value="5" {{ (old('hero_slider_duration', $settings['hero_slider_duration'] ?? '5') == '5') ? 'selected' : '' }}>5 Detik (Rekomendasi Nyaman)</option>
+                        <option value="6" {{ (old('hero_slider_duration', $settings['hero_slider_duration'] ?? '5') == '6') ? 'selected' : '' }}>6 Detik</option>
+                        <option value="7" {{ (old('hero_slider_duration', $settings['hero_slider_duration'] ?? '5') == '7') ? 'selected' : '' }}>7 Detik (Tenang)</option>
+                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1">Jeda waktu sebelum foto otomatis berganti sendiri.</p>
+                </div>
+            </div>
+
+            <!-- Daftar 5 Slot Slide Foto -->
+            <div class="space-y-4 pt-2">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Daftar Slot Foto Slider (1 s/d 5)</h3>
+
+                @for ($i = 1; $i <= 5; $i++)
+                    @php
+                        $slideData = $heroSlides[$i - 1] ?? [
+                            'id' => $i,
+                            'image' => "/uploads/settings/hero_slide_{$i}.jpg",
+                            'caption' => "Slide {$i}",
+                            'subcaption' => "Deskripsi slide {$i}",
+                            'active' => true
+                        ];
+                    @endphp
+                    <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center">{{ $i }}</span>
+                                <span class="text-xs font-bold text-slate-800">Foto Slot #{{ $i }} {{ $i === 1 ? '(Foto Utama / Cover)' : '' }}</span>
+                            </div>
+                            <label class="inline-flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="hero_slide_active_{{ $i }}" value="1" {{ !empty($slideData['active']) ? 'checked' : '' }} class="rounded text-brand-500 focus:ring-brand-400">
+                                <span class="text-xs font-semibold text-slate-600">Aktifkan Slide</span>
+                            </label>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-4 items-start">
+                            <div class="w-full sm:w-44 h-28 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0 relative">
+                                <img id="slidePreview_{{ $i }}" src="{{ asset($slideData['image'] ?? '/uploads/settings/hero_slide_1.jpg') }}" alt="Preview Slide {{ $i }}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 space-y-2.5 w-full">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Unggah File Gambar Baru</label>
+                                    <input type="file" name="hero_slide_file_{{ $i }}" onchange="previewSlideFile(this, {{ $i }})" accept="image/jpeg,image/png,image/jpg,image/webp" class="w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 border border-slate-200 rounded-lg p-1 bg-slate-50 cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Atau Gunakan Link / URL Gambar</label>
+                                    <input type="text" name="hero_slide_image_{{ $i }}" id="slideUrl_{{ $i }}" oninput="previewSlideUrl(this.value, {{ $i }})" value="{{ $slideData['image'] ?? '' }}" placeholder="/uploads/settings/... atau https://..." class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Judul Caption Foto</label>
+                                <input type="text" name="hero_slide_caption_{{ $i }}" value="{{ $slideData['caption'] ?? '' }}" placeholder="Contoh: Kampus Alam Tuksongo" class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Subjudul / Deskripsi Lokasi</label>
+                                <input type="text" name="hero_slide_subcaption_{{ $i }}" value="{{ $slideData['subcaption'] ?? '' }}" placeholder="Contoh: Dusun Tuksongo, Pringsurat..." class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                @endfor
             </div>
 
             <div class="pt-4 border-t border-slate-100 flex justify-end">
                 <button type="submit" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-5 py-2.5 rounded-lg shadow-sm hover:shadow transition">
                     <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    Simpan Foto Kampus
+                    Simpan Konfigurasi Slider & Foto
                 </button>
             </div>
         </form>
@@ -1254,6 +1334,91 @@
 
     </div>
 
+    <!-- ==================== TAB 8: TAHUN AJARAN & FOOTER WEBSITE ==================== -->
+    <div id="tab-footer" class="tab-content space-y-6 hidden">
+        <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-6">
+            @csrf
+            <input type="hidden" name="active_tab" value="tab-footer">
+            <input type="hidden" name="section_name" value="Tahun Ajaran & Footer Website">
+
+            <!-- Card 1: Pengaturan Tahun Ajaran Aktif -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">1</div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base">Tahun Ajaran Aktif Pesantren</h2>
+                        <p class="text-xs text-slate-500">Tahun ajaran ini akan otomatis tersinkronisasi ke seluruh sistem: hero badge, formulir pendaftaran santri baru, ujian seleksi CBT, rincian biaya, kartu biodata CV, status verifikasi, dan panel admin.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tahun Ajaran Aktif</label>
+                        <input type="text" name="tahun_ajaran" value="{{ old('tahun_ajaran', $settings['tahun_ajaran'] ?? '2026/2027') }}" required placeholder="Contoh: 2026/2027" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm font-bold text-emerald-800 focus:bg-white focus:border-brand-500 outline-none">
+                        <p class="text-[11px] text-slate-400 mt-1">Format umum: YYYY/YYYY (misal: 2026/2027).</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Teks Badge Hero PSB</label>
+                        <input type="text" name="hero_badge" value="{{ old('hero_badge', $settings['hero_badge'] ?? 'PSB TA 2026/2027 Telah Dibuka') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                        <p class="text-[11px] text-slate-400 mt-1">Badge berkedip kecil di atas judul utama halaman depan.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Pengaturan Konten Footer Website -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">2</div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base">Identitas & Konten Footer Website</h2>
+                        <p class="text-xs text-slate-500">Kelola deskripsi lembaga, akreditasi resmi, kontak cepat, website, dan teks copyright di bagian bawah website.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Lembaga di Footer</label>
+                            <input type="text" name="footer_title" value="{{ old('footer_title', $settings['footer_title'] ?? 'Pondok Pesantren Hidayatullah Tuksongo') }}" required class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Akreditasi & NSPP Resmi</label>
+                            <input type="text" name="footer_accreditation" value="{{ old('footer_accreditation', $settings['footer_accreditation'] ?? 'Terakreditasi B (BAN-SM Kemenag) • NSPP: 512032304095') }}" required class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Deskripsi Visi Singkat Lembaga</label>
+                        <textarea name="footer_description" rows="3" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 p-4 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none leading-relaxed">{{ old('footer_description', $settings['footer_description'] ?? 'Membentuk generasi Qur\'ani yang berakhlak mulia, berwawasan global, mandiri, dan berakar kuat pada nilai-nilai Panca Jiwa Pesantren.') }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nomor Hotline Footer</label>
+                            <input type="text" name="footer_hotline" value="{{ old('footer_hotline', $settings['footer_hotline'] ?? '0813-9110-9966') }}" placeholder="Contoh: 0813-9110-9966" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Website / Domain Resmi</label>
+                            <input type="text" name="footer_website" value="{{ old('footer_website', $settings['footer_website'] ?? 'tuksongo.ponpes.id') }}" placeholder="Contoh: tuksongo.ponpes.id" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Teks Copyright Bawah</label>
+                        <input type="text" name="footer_copyright" value="{{ old('footer_copyright', $settings['footer_copyright'] ?? '© 2026 Yayasan Hidayatullah Tuksongo Pringsurat Temanggung. Hak Cipta Dilindungi.') }}" required class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
+                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Simpan Perubahan Tahun Ajaran & Footer
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
 </div>
 @endsection
 
@@ -1732,6 +1897,24 @@
             confirmButtonColor: '#10b981',
             timer: 2500
         });
+    }
+
+    function previewSlideFile(input, index) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('slide_preview_' + index);
+                if (img) img.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewSlideUrl(url, index) {
+        if (url && url.trim().length > 3) {
+            const img = document.getElementById('slide_preview_' + index);
+            if (img) img.src = url.trim();
+        }
     }
 
     // Restore active tab on load

@@ -31,13 +31,14 @@
 
     <div class="max-w-2xl w-full space-y-6">
 
-    <div class="max-w-2xl w-full space-y-6">
-
         <!-- Back to Home & Print Link -->
         <div class="no-print flex items-center justify-between">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-emerald-800 transition">
-                <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Kembali ke Beranda
+            <a href="{{ route('home') }}" class="flex items-center gap-2.5 group">
+                <img src="/logo.png" alt="Logo Pondok Pesantren Hidayatullah" class="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0 group-hover:scale-105 transition">
+                <div class="flex flex-col justify-center">
+                    <img src="/logo1.png" alt="معهد هداية الله للتربية الإسلامية" class="h-6 sm:h-7 w-auto object-contain object-left">
+                    <span class="font-sans text-[9px] sm:text-[10px] font-semibold text-slate-600 tracking-tight">Pondok Pesantren Hidayatullah Tuksongo</span>
+                </div>
             </a>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('psb.printCard', ['id' => $registration->id, 'mode' => 'cv']) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-xs transition">
@@ -60,8 +61,12 @@
             
             <!-- Card Header -->
             <div class="bg-gradient-to-r from-[#0d3b1e] via-[#145a2e] to-[#1a6b38] text-white p-6 sm:p-8 text-center relative">
-                <div class="w-16 h-16 bg-white rounded-2xl p-2 mx-auto mb-3 shadow-md flex items-center justify-center">
-                    <img src="/logo.png" alt="Logo" class="w-full h-full object-contain">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <img src="/logo.png" alt="Logo" class="w-12 h-12 object-contain">
+                    <div class="text-left flex flex-col justify-center">
+                        <img src="/logo1.png" alt="معهد هداية الله" class="h-8 w-auto object-contain brightness-0 invert">
+                        <span class="text-[10px] text-emerald-100 font-medium">Pondok Pesantren Hidayatullah Tuksongo</span>
+                    </div>
                 </div>
                 <span class="text-xs uppercase tracking-widest text-[#e8cc5a] font-bold block mb-1">Panitia Penerimaan Santri Baru (PSB)</span>
                 <h1 class="text-2xl font-serif font-bold">Bukti Pendaftaran Sementara</h1>

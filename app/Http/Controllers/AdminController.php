@@ -6,8 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Article;
 use App\Models\PsbRegistration;
 use App\Models\Setting;
+use App\Models\User;
+use App\Models\Student;
 use App\Services\PhotoVerificationService;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -221,6 +224,86 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Status pendaftaran santri ' . $registration->nama_lengkap . ' diubah menjadi: ' . $registration->status);
     }
 
+    /**
+     * Proses seleksi kelulusan / penerimaan santri secara otomatis.
+     * Kriteria fleksibel: (1) Berdasarkan kelulusan CBT (Nilai >= KKM / Override Lulus),
+     * (2) Nilai CBT Lulus + Bukti Pembayaran, atau (3) Kuota Top N nilai tertinggi.
+     * Admin juga tetap dapat mengedit status secara manual kapan saja.
+     */
+    public function psbAutoSeleksi(Request $request)
+    {
+        $kkm = (int) Setting::get('cbt_passing_grade', 70);
+        $kriteria = $request->input('kriteria', 'nilai_cbt'); // 'nilai_cbt', 'nilai_dan_bayar', 'kuota'
+        $statusTidakLulus = $request->input('status_tidak_lulus', 'tetap'); // 'tetap' atau 'tolak'
+        $kuotaCount = (int) $request->input('kuota_count', 50);
+
+        $registrations = PsbRegistration::all();
+        $acceptedCount = 0;
+        $rejectedCount = 0;
+
+        if ($kriteria === 'kuota') {
+            // Urutkan pendaftar berdasarkan nilai ujian tertinggi
+            $sorted = $registrations->sortByDesc(function ($reg) {
+                return $reg->nilai_ujian ?? -1;
+            });
+
+            $rank = 0;
+            foreach ($sorted as $reg) {
+                $rank++;
+                if ($rank <= $kuotaCount && ($reg->nilai_ujian !== null && $reg->nilai_ujian > 0)) {
+                    if ($reg->status !== 'Diterima') {
+                        $reg->update(['status' => 'Diterima']);
+                        $acceptedCount++;
+                    }
+                } elseif ($statusTidakLulus === 'tolak') {
+                    if ($reg->status !== 'Ditolak') {
+                        $reg->update(['status' => 'Ditolak']);
+                        $rejectedCount++;
+                    }
+                }
+            }
+        } else {
+            foreach ($registrations as $reg) {
+                $evaluasi = $reg->evaluasiSyaratPenerimaan();
+                $lulusCbt = ($reg->status_kelulusan === 'Lulus') || ($reg->nilai_ujian !== null && $reg->nilai_ujian >= $kkm);
+
+                $memenuhi = false;
+                if ($kriteria === 'nilai_dan_bayar') {
+                    $memenuhi = $lulusCbt && !empty($reg->bukti_transfer);
+                } else {
+                    // Default: Nilai CBT Lulus
+                    $memenuhi = $lulusCbt;
+                }
+
+                if ($memenuhi) {
+                    if ($reg->status !== 'Diterima') {
+                        $reg->update(['status' => 'Diterima']);
+                        $acceptedCount++;
+                    }
+                } elseif ($statusTidakLulus === 'tolak' && $evaluasi['sudah_ujian'] && !$lulusCbt) {
+                    if ($reg->status !== 'Ditolak') {
+                        $reg->update(['status' => 'Ditolak']);
+                        $rejectedCount++;
+                    }
+                }
+            }
+        }
+
+        $kriteriaLabel = match($kriteria) {
+            'nilai_dan_bayar' => 'Nilai CBT Lulus & Bukti Pembayaran',
+            'kuota' => "Kuota Top {$kuotaCount} Nilai Tertinggi",
+            default => "Nilai CBT Lulus (>= KKM {$kkm})"
+        };
+
+        $msg = "Seleksi otomatis selesai berdasarkan kriteria [{$kriteriaLabel}]: {$acceptedCount} calon santri dinyatakan DITERIMA.";
+        if ($rejectedCount > 0) {
+            $msg .= " Serta {$rejectedCount} santri dinyatakan DITOLAK.";
+        }
+        $msg .= " Catatan: Anda tetap dapat mengedit status setiap santri secara bebas kapan saja melalui tabel.";
+
+        return redirect()->back()->with('success', $msg);
+    }
+
     public function psbDestroy($id)
     {
         $registration = PsbRegistration::findOrFail($id);
@@ -282,7 +365,8 @@ class AdminController extends Controller
         if ($request->filled('jenis_kelamin')) $filterSubDesc[] = 'Jenis Kelamin: ' . $request->jenis_kelamin;
         if ($request->filled('jenjang')) $filterSubDesc[] = 'Jenjang: ' . $request->jenjang;
         if ($request->filled('status')) $filterSubDesc[] = 'Status: ' . $request->status;
-        $subtitleText = 'REKAPITULASI PENDAFTARAN SANTRI BARU (PSB) TAHUN AJARAN 2025/2026' . (!empty($filterSubDesc) ? ' (' . implode(' • ', $filterSubDesc) . ')' : '');
+        $taText = Setting::get('tahun_ajaran', '2026/2027');
+        $subtitleText = 'REKAPITULASI PENDAFTARAN SANTRI BARU (PSB) TAHUN AJARAN ' . $taText . (!empty($filterSubDesc) ? ' (' . implode(' • ', $filterSubDesc) . ')' : '');
 
         $headers = [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
@@ -615,12 +699,21 @@ class AdminController extends Controller
             ['hari' => 'Bulanan & Tahunan', 'kegiatan' => "Selapanan Wali Santri & Khutbatul 'Arsy", 'keterangan' => 'Silaturahmi Ahad Legi, Panggung Gembira (PG) kelas 6 TMI, dan wisuda hafidz'],
         ];
 
+        $defaultHeroSlides = [
+            ['id' => 1, 'image' => '/uploads/settings/hero_slide_1.jpg', 'caption' => 'Kampus Alam Tuksongo Madani', 'subcaption' => "Dusun Tuksongo, Nglorog, Pringsurat — Asri, hening, dan kondusif untuk tholabul 'ilmi", 'active' => true],
+            ['id' => 2, 'image' => '/uploads/settings/hero_slide_2.jpg', 'caption' => "Halaqah Tahfidzul Qur'an Bersanad", 'subcaption' => "Bimbingan intensif mutqin bersama asatidz penghafal Al-Qur'an", 'active' => true],
+            ['id' => 3, 'image' => '/uploads/settings/hero_slide_3.jpg', 'caption' => 'Kompleks Asrama & Kampus Modern', 'subcaption' => 'Lingkungan hunian santri yang bersih, tertib, sehat, dan islami 24 jam', 'active' => true],
+            ['id' => 4, 'image' => '/uploads/settings/hero_slide_4.jpg', 'caption' => 'Majelis Asatidz & Pendidik Amanah', 'subcaption' => 'Kaderisasi alumni Gontor & salafiyah berdedikasi mengabdi', 'active' => true],
+            ['id' => 5, 'image' => '/uploads/settings/hero_slide_5.jpg', 'caption' => 'Laboratorium CBT & Penunjang Digital', 'subcaption' => 'Fasilitas ujian mandiri dan penguasaan sains teknologi modern', 'active' => true],
+        ];
+
         $pancaJiwa = json_decode($settings['panca_jiwa_json'] ?? 'null', true) ?: $defaultPancaJiwa;
         $filosofiLambang = json_decode($settings['filosofi_lambang_json'] ?? 'null', true) ?: $defaultFilosofiLambang;
         $pilarPendidikan = json_decode($settings['pilar_pendidikan_json'] ?? 'null', true) ?: $defaultPilarPendidikan;
         $agendaBerkala = json_decode($settings['agenda_berkala_json'] ?? 'null', true) ?: $defaultAgendaBerkala;
+        $heroSlides = json_decode($settings['hero_slides_json'] ?? 'null', true) ?: $defaultHeroSlides;
 
-        return view('admin.pengaturan.index', compact('settings', 'jadwalSantri', 'biayaAwal', 'biayaBulanan', 'pancaJiwa', 'filosofiLambang', 'pilarPendidikan', 'agendaBerkala'));
+        return view('admin.pengaturan.index', compact('settings', 'jadwalSantri', 'biayaAwal', 'biayaBulanan', 'pancaJiwa', 'filosofiLambang', 'pilarPendidikan', 'agendaBerkala', 'heroSlides'));
     }
 
     public function settingsUpdate(Request $request)
@@ -638,50 +731,71 @@ class AdminController extends Controller
             UPLOAD_ERR_EXTENSION => 'Upload dihentikan oleh konfigurasi modul PHP.',
         ];
 
-        // 1. Handle File Upload Hero Image Landing Page (Foto Utama Kampus)
-        if ($sectionName === 'Foto Utama Kampus' || $request->hasFile('hero_image_file') || $request->filled('hero_image')) {
+        // 1. Handle File Upload Hero Slider (3-5 Foto Kampus) & Konfigurasi Animasi
+        if ($sectionName === 'Foto Utama Kampus' || $sectionName === 'Hero Slider & Foto Kampus' || $request->has('hero_slider_animation') || $request->hasFile('hero_image_file') || $request->filled('hero_image')) {
+            $dest = public_path('uploads/settings');
+            if (!file_exists($dest)) {
+                mkdir($dest, 0777, true);
+            }
+
+            if ($request->filled('hero_slider_animation')) {
+                Setting::set('hero_slider_animation', $request->input('hero_slider_animation', 'fade'), 'hero');
+            }
+            if ($request->filled('hero_slider_duration')) {
+                Setting::set('hero_slider_duration', (string) $request->input('hero_slider_duration', '5'), 'hero');
+            }
+            if ($request->filled('hero_slide_count')) {
+                Setting::set('hero_slide_count', (string) $request->input('hero_slide_count', '5'), 'hero');
+            }
+
+            $currentSlides = json_decode(Setting::get('hero_slides_json', '[]'), true) ?: [];
+            $newSlides = [];
+
+            // Handle individual slides (1 s/d 5)
+            for ($i = 1; $i <= 5; $i++) {
+                $slideImage = $request->input("hero_slide_image_{$i}") ?? ($currentSlides[$i - 1]['image'] ?? "/uploads/settings/hero_slide_{$i}.jpg");
+
+                if ($request->hasFile("hero_slide_file_{$i}")) {
+                    $file = $request->file("hero_slide_file_{$i}");
+                    if ($file->isValid()) {
+                        $filename = 'hero_slide_' . $i . '_' . time() . '.' . $file->getClientOriginalExtension();
+                        $file->move($dest, $filename);
+                        $slideImage = '/uploads/settings/' . $filename;
+                    }
+                }
+
+                $caption = $request->input("hero_slide_caption_{$i}", $currentSlides[$i - 1]['caption'] ?? "Kampus Alam Tuksongo Madani");
+                $subcaption = $request->input("hero_slide_subcaption_{$i}", $currentSlides[$i - 1]['subcaption'] ?? "Dusun Tuksongo, Nglorog, Pringsurat");
+                $active = $request->has("hero_slide_active_{$i}") || ($request->input('hero_slide_count', 5) >= $i);
+
+                $newSlides[] = [
+                    'id' => $i,
+                    'image' => $slideImage,
+                    'caption' => $caption,
+                    'subcaption' => $subcaption,
+                    'active' => (bool) $active,
+                ];
+            }
+
+            // Fallback for single hero_image_file legacy upload
             if ($request->hasFile('hero_image_file')) {
                 $file = $request->file('hero_image_file');
-                if (!$file->isValid()) {
-                    $errText = $phpUploadErrors[$file->getError()] ?? $file->getErrorMessage();
-                    return redirect()->back()
-                        ->with('error', 'Gagal mengunggah foto kampus: ' . $errText)
-                        ->with('active_tab', $activeTab)
-                        ->withInput();
-                }
-
-                $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-                    'hero_image_file' => 'required|image|mimes:jpeg,png,jpg,webp,jfif,gif,bmp,avif|max:15360',
-                ], [
-                    'hero_image_file.image' => 'File yang diunggah harus berupa file gambar valid.',
-                    'hero_image_file.mimes' => 'Format gambar yang didukung: JPG, JPEG, PNG, WEBP, GIF, BMP.',
-                    'hero_image_file.max' => 'Ukuran file gambar kampus maksimal 15 MB.',
-                ]);
-
-                if ($validator->fails()) {
-                    return redirect()->back()
-                        ->withErrors($validator)
-                        ->with('error', 'Validasi foto kampus gagal: ' . implode(' ', $validator->errors()->all()))
-                        ->with('active_tab', $activeTab)
-                        ->withInput();
-                }
-
-                try {
+                if ($file->isValid()) {
                     $filename = 'hero_' . time() . '.' . $file->getClientOriginalExtension();
-                    $dest = public_path('uploads/settings');
-                    if (!file_exists($dest)) {
-                        mkdir($dest, 0777, true);
-                    }
                     $file->move($dest, $filename);
-                    Setting::set('hero_image', '/uploads/settings/' . $filename, 'hero');
-                } catch (\Exception $e) {
-                    return redirect()->back()
-                        ->with('error', 'Gagal menyimpan foto kampus ke server: ' . $e->getMessage())
-                        ->with('active_tab', $activeTab)
-                        ->withInput();
+                    $newSlides[0]['image'] = '/uploads/settings/' . $filename;
                 }
             } elseif ($request->filled('hero_image')) {
-                Setting::set('hero_image', trim($request->hero_image), 'hero');
+                $newSlides[0]['image'] = trim($request->hero_image);
+            }
+
+            Setting::set('hero_slides_json', json_encode($newSlides, JSON_PRETTY_PRINT), 'hero');
+
+            // Sync legacy keys to slide 1
+            if (!empty($newSlides[0]['image'])) {
+                Setting::set('hero_image', $newSlides[0]['image'], 'hero');
+                Setting::set('hero_caption', $newSlides[0]['caption'] ?? '', 'hero');
+                Setting::set('hero_subcaption', $newSlides[0]['subcaption'] ?? '', 'hero');
             }
         }
 
@@ -1073,6 +1187,11 @@ class AdminController extends Controller
             'biaya_awal_komponen', 'biaya_awal_mts_mukim', 'biaya_awal_mts_laju', 'biaya_awal_ma_mukim', 'biaya_awal_ma_laju', 'biaya_awal_is_total',
             'biaya_bulanan_komponen', 'biaya_bulanan_mts_mukim', 'biaya_bulanan_mts_laju', 'biaya_bulanan_ma_mukim', 'biaya_bulanan_ma_laju', 'biaya_bulanan_is_total',
             'ttd_digital_pengurus_file', 'ttd_digital_pengurus_canvas', 'ttd_digital_stempel_file',
+            'hero_slide_file_1', 'hero_slide_file_2', 'hero_slide_file_3', 'hero_slide_file_4', 'hero_slide_file_5',
+            'hero_slide_image_1', 'hero_slide_image_2', 'hero_slide_image_3', 'hero_slide_image_4', 'hero_slide_image_5',
+            'hero_slide_caption_1', 'hero_slide_caption_2', 'hero_slide_caption_3', 'hero_slide_caption_4', 'hero_slide_caption_5',
+            'hero_slide_subcaption_1', 'hero_slide_subcaption_2', 'hero_slide_subcaption_3', 'hero_slide_subcaption_4', 'hero_slide_subcaption_5',
+            'hero_slide_active_1', 'hero_slide_active_2', 'hero_slide_active_3', 'hero_slide_active_4', 'hero_slide_active_5',
         ];
         $data = $request->except($exclude);
 
@@ -1080,7 +1199,7 @@ class AdminController extends Controller
             $group = 'general';
             if (str_starts_with($key, 'hero_')) {
                 $group = 'hero';
-            } elseif (str_starts_with($key, 'sosmed_') || str_starts_with($key, 'kontak_') || $key === 'alamat_kampus') {
+            } elseif (str_starts_with($key, 'sosmed_') || str_starts_with($key, 'kontak_') || str_starts_with($key, 'footer_') || $key === 'alamat_kampus') {
                 $group = 'kontak';
             } elseif (str_starts_with($key, 'profil_') || str_starts_with($key, 'sejarah_') || str_starts_with($key, 'sambutan_') || str_starts_with($key, 'quran_') || in_array($key, ['visi', 'misi', 'nspp', 'mts_npsn', 'ma_npsn', 'status_tanah', 'falsafah_judul', 'falsafah_subjudul', 'filosofi_judul', 'filosofi_subjudul', 'pilar_title', 'pilar_subtitle'])) {
                 $group = 'profil';
@@ -1091,5 +1210,263 @@ class AdminController extends Controller
         return redirect()->back()
             ->with('success', "{$sectionName} berhasil disimpan dan diperbarui!")
             ->with('active_tab', $activeTab);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MANAJEMEN PENGGUNA (SUPERADMIN & ADMIN)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Tampilkan daftar pengguna. Hanya dapat diakses oleh Superadmin.
+     */
+    public function userIndex(Request $request)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            return redirect()->route('admin.profile')->with('warning', 'Hanya Superadmin yang berhak mengelola akun pengguna lain. Anda dapat memperbarui profil dan kata sandi Anda di halaman ini.');
+        }
+
+        $query = User::query();
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $users = $query->orderBy('role', 'asc')->latest()->paginate(10)->withQueryString();
+
+        return view('admin.users.index', compact('users'));
+    }
+
+    /**
+     * Form tambah pengguna baru. Hanya untuk Superadmin.
+     */
+    public function userCreate()
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Akses ditolak. Hanya Superadmin yang diizinkan menambah akun admin.');
+        }
+
+        return view('admin.users.create');
+    }
+
+    /**
+     * Simpan pengguna baru ke database.
+     */
+    public function userStore(Request $request)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Akses ditolak. Hanya Superadmin yang diizinkan menambah akun admin.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'role' => 'required|string|in:superadmin,admin,bendahara',
+            'password' => 'required|string|min:6|confirmed',
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.unique' => 'Email ini sudah terdaftar untuk pengguna lain.',
+            'role.required' => 'Pilih peran (role) pengguna.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
+        ]);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'jabatan' => $request->input('jabatan'),
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('admin.users.index')->with('success', "Pengguna baru dengan peran {$request->role} berhasil ditambahkan!");
+    }
+
+    /**
+     * Form ubah data pengguna.
+     */
+    public function userEdit($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Jika bukan superadmin dan bukan mengedit dirinya sendiri, tolak
+        if (!auth()->user()->isSuperAdmin() && auth()->id() !== $user->id) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        return view('admin.users.edit', compact('user'));
+    }
+
+    /**
+     * Perbarui data pengguna.
+     */
+    public function userUpdate(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $isSelf = auth()->id() === $user->id;
+
+        if (!auth()->user()->isSuperAdmin() && !$isSelf) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6|confirmed',
+        ];
+
+        // Hanya superadmin yang boleh mengubah role
+        if (auth()->user()->isSuperAdmin()) {
+            $rules['role'] = 'required|string|in:superadmin,admin,bendahara';
+        }
+
+        $request->validate($rules, [
+            'name.required' => 'Nama pengguna wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.unique' => 'Email ini sudah digunakan oleh akun lain.',
+            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
+        ]);
+
+        $userData = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'jabatan' => $request->input('jabatan'),
+        ];
+
+        if (auth()->user()->isSuperAdmin() && $request->filled('role')) {
+            // Mencegah superadmin menurunkan role dirinya sendiri jika dia adalah satu-satunya superadmin
+            if ($isSelf && $request->role !== 'superadmin' && User::where('role', 'superadmin')->count() <= 1) {
+                return back()->withErrors(['role' => 'Anda adalah satu-satunya Superadmin. Role tidak dapat diubah menjadi Admin.']);
+            }
+            $userData['role'] = $request->role;
+        }
+
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($userData);
+
+        if (!auth()->user()->isSuperAdmin()) {
+            return redirect()->route('admin.profile')->with('success', 'Profil dan kata sandi Anda berhasil diperbarui!');
+        }
+
+        return redirect()->route('admin.users.index')->with('success', "Data pengguna {$user->name} berhasil diperbarui!");
+    }
+
+    /**
+     * Hapus pengguna. Hanya untuk Superadmin.
+     */
+    public function userDestroy($id)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Akses ditolak. Hanya Superadmin yang berhak menghapus akun.');
+        }
+
+        $user = User::findOrFail($id);
+
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        $userName = $user->name;
+        $user->delete();
+
+        return redirect()->route('admin.users.index')->with('success', "Pengguna {$userName} berhasil dihapus dari sistem.");
+    }
+
+    /**
+     * Halaman profil & edit password sendiri (Dapat diakses oleh Admin biasa maupun Superadmin).
+     */
+    public function profile()
+    {
+        $user = auth()->user();
+        return view('admin.users.profile', compact('user'));
+    }
+
+    /**
+     * Proses perbarui profil, jabatan, tanda tangan digital, & password sendiri.
+     */
+    public function profileUpdate(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'jabatan' => 'nullable|string|max:100',
+            'signature_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
+            'signature_canvas' => 'nullable|string',
+            'current_password' => 'required_with:password|string',
+            'password' => 'nullable|string|min:6|confirmed',
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'signature_file.image' => 'File tanda tangan harus berupa gambar (PNG/JPG/WEBP).',
+            'signature_file.max' => 'Ukuran file tanda tangan maksimal 3MB.',
+            'current_password.required_with' => 'Masukkan kata sandi saat ini untuk menetapkan kata sandi baru.',
+            'password.min' => 'Kata sandi baru minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi kata sandi baru tidak sesuai.',
+        ]);
+
+        if ($request->filled('password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Kata sandi saat ini salah.']);
+            }
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->name = $request->name;
+        if ($request->has('jabatan')) {
+            $user->jabatan = $request->jabatan;
+        }
+
+        // Hapus TTD jika diminta
+        if ($request->boolean('remove_signature')) {
+            if ($user->signature_image && file_exists(public_path($user->signature_image))) {
+                @unlink(public_path($user->signature_image));
+            }
+            $user->signature_image = null;
+        }
+        // Unggah file TTD baru
+        elseif ($request->hasFile('signature_file')) {
+            if ($user->signature_image && file_exists(public_path($user->signature_image))) {
+                @unlink(public_path($user->signature_image));
+            }
+            $file = $request->file('signature_file');
+            $filename = 'ttd_user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/signatures'), $filename);
+            $user->signature_image = '/uploads/signatures/' . $filename;
+        }
+        // Atau simpan dari Canvas Pad
+        elseif ($request->filled('signature_canvas') && str_starts_with($request->signature_canvas, 'data:image')) {
+            $dataUrl = $request->signature_canvas;
+            if (preg_match('/^data:image\/(\w+);base64,/', $dataUrl)) {
+                $rawBase64 = substr($dataUrl, strpos($dataUrl, ',') + 1);
+                $decoded = base64_decode($rawBase64);
+                if ($decoded !== false) {
+                    if ($user->signature_image && file_exists(public_path($user->signature_image))) {
+                        @unlink(public_path($user->signature_image));
+                    }
+                    $filename = 'ttd_canvas_user_' . $user->id . '_' . time() . '.png';
+                    file_put_contents(public_path('uploads/signatures/' . $filename), $decoded);
+                    $user->signature_image = '/uploads/signatures/' . $filename;
+                }
+            }
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profil, jabatan, dan tanda tangan digital Anda berhasil diperbarui!');
     }
 }

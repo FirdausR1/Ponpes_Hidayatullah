@@ -6,7 +6,7 @@
     <title>{{ $article->title }} — Pondok Pesantren Hidayatullah Tuksongo</title>
     <meta name="description" content="{{ $article->excerpt ?: Str::limit(strip_tags($article->content), 160) }}">
     <link rel="icon" href="/logo.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Grenze:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -66,7 +66,7 @@
         .navbar-inner { display: flex; align-items: center; justify-content: space-between; }
         .navbar-brand { display: flex; align-items: center; gap: 12px; }
         .navbar-brand img { width: 42px; height: 42px; object-fit: contain; }
-        .navbar-brand strong { font-family: 'EB Garamond', serif; font-size: 19px; color: var(--green-900); display: block; line-height: 1.1; }
+        .navbar-brand strong { font-family: 'Grenze', Georgia, serif; font-size: 19px; color: var(--green-900); display: block; line-height: 1.1; }
         .navbar-brand span { font-size: 11px; color: var(--text-muted); }
         .nav-actions { display: flex; align-items: center; gap: 12px; }
         .btn-nav {
@@ -104,7 +104,7 @@
             border: 1px solid var(--green-200); margin-bottom: 14px;
         }
         .article-title {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: clamp(28px, 3.8vw, 42px);
             font-weight: 600; color: var(--green-950);
             line-height: 1.25; margin-bottom: 18px;
@@ -135,9 +135,9 @@
             line-height: 1.85; margin-bottom: 40px;
         }
         .article-content p { margin-bottom: 20px; }
-        .article-content em { font-family: 'EB Garamond', serif; font-size: 18px; color: var(--green-900); }
+        .article-content em { font-family: 'Grenze', Georgia, serif; font-size: 18px; color: var(--green-900); }
         .article-content h2, .article-content h3 {
-            font-family: 'EB Garamond', serif; color: var(--green-950);
+            font-family: 'Grenze', Georgia, serif; color: var(--green-950);
             margin: 32px 0 14px; font-weight: 600;
         }
         .article-content h2 { font-size: 26px; }
@@ -146,7 +146,7 @@
             border-left: 3px solid var(--green-500);
             background: var(--green-50); padding: 18px 24px;
             margin: 24px 0; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            font-family: 'EB Garamond', serif; font-size: 19px; font-style: italic;
+            font-family: 'Grenze', Georgia, serif; font-size: 19px; font-style: italic;
             color: var(--green-950);
         }
 
@@ -193,7 +193,7 @@
             border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm);
         }
         .widget-title {
-            font-family: 'EB Garamond', serif; font-size: 20px;
+            font-family: 'Grenze', Georgia, serif; font-size: 20px;
             font-weight: 600; color: var(--green-950);
             padding-bottom: 12px; margin-bottom: 16px;
             border-bottom: 2px solid var(--green-100);
@@ -218,7 +218,7 @@
             border-radius: var(--radius-md); padding: 28px 22px; text-align: center;
         }
         .psb-callout h4 {
-            font-family: 'EB Garamond', serif; font-size: 22px;
+            font-family: 'Grenze', Georgia, serif; font-size: 22px;
             margin-bottom: 8px; line-height: 1.3;
         }
         .psb-callout p { font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 18px; }
@@ -239,28 +239,8 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <header class="navbar">
-        <div class="container">
-            <div class="navbar-inner">
-                <a href="{{ route('home') }}" class="navbar-brand">
-                    <img src="/logo.png" alt="Logo Pondok Hidayatullah">
-                    <div>
-                        <strong>Hidayatullah Tuksongo</strong>
-                        <span>Pringsurat Temanggung</span>
-                    </div>
-                </a>
-                <div class="nav-actions">
-                    <a href="{{ route('berita.index') }}" class="btn-link">← Semua Berita</a>
-                    <a href="{{ route('home') }}" class="btn-link">Beranda Utama</a>
-                    <a href="{{ route('home') }}#psb" class="btn-nav">
-                        Pendaftaran Santri
-                        <svg class="icon-svg" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <!-- OFFICIAL UNIFIED HEADER NAVBAR -->
+    @include('partials.navbar', ['isLanding' => false])
 
     <div class="container">
         <!-- BREADCRUMB -->
@@ -370,7 +350,7 @@
 
                 <!-- PSB CALLOUT -->
                 <div class="psb-callout">
-                    <span style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-300);display:block;margin-bottom:6px;">PSB TA 2025/2026</span>
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-300);display:block;margin-bottom:6px;">PSB TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}</span>
                     <h4>Daftarkan Putra-Putri Anda di Hidayatullah Tuksongo</h4>
                     <p>Pendidikan tahfidz 30 juz mutqin, kurikulum formal Kemenag MTs & MA, dan lingkungan asrama representatif.</p>
                     <a href="{{ route('home') }}#psb" class="btn-callout">Lihat Rincian Biaya & Syarat →</a>

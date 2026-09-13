@@ -194,6 +194,7 @@
                     </div>
                     <div class="flex-1 text-center">
                         <h4 class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">Yayasan Pondok Pesantren Hidayatullah Temanggung</h4>
+                        <img src="/logo1.png" alt="Kaligrafi Hidayatullah" class="h-7 mx-auto my-0.5 object-contain">
                         <h2 class="text-xl font-serif font-bold text-[#0d3b1e] tracking-wide uppercase">Pondok Pesantren Hidayatullah Tuksongo</h2>
                         <p class="text-[11px] font-semibold text-slate-800 mt-0.5">
                             Madrasah Tsanawiyah (MTs) &bull; Madrasah Aliyah (MA) Tahfidz & Sains Al-Qur'an
@@ -218,7 +219,7 @@
                 <!-- Title of the Document -->
                 <div class="text-center mb-4">
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 bg-slate-100 py-1 px-4 rounded-md inline-block border border-slate-200">
-                        Biodata Calon Santri Baru (CV Santri) — TA 2025/2026
+                        Biodata Calon Santri Baru (CV Santri) — TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
                     </h3>
                     <div class="flex items-center justify-center gap-4 text-[10.5px] text-slate-600 mt-1.5">
                         <span>No. Reg: <strong class="font-mono text-emerald-800">{{ $reg->no_registrasi }}</strong></span>
@@ -479,9 +480,10 @@
                 <div class="flex items-center justify-between border-b-2 border-emerald-800 pb-2 mb-4">
                     <div class="flex items-center gap-3">
                         <img src="/logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                        <img src="/logo1.png" alt="Kaligrafi Hidayatullah" class="h-6 object-contain">
                         <div>
                             <h3 class="text-xs font-serif font-bold text-emerald-950 uppercase">Pondok Pesantren Hidayatullah Tuksongo</h3>
-                            <p class="text-[10px] text-slate-500">Lampiran Dokumen Verifikasi Calon Santri Baru TA 2025/2026</p>
+                            <p class="text-[10px] text-slate-500">Lampiran Dokumen Verifikasi Calon Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}</p>
                         </div>
                     </div>
                     <div class="text-right text-xs">
@@ -629,6 +631,278 @@
                     </div>
                 </div>
 
+            </div>
+            @endif
+
+            <!-- SHEET 3: LEMBAR HASIL UJIAN SELEKSI MASUK (CBT) & KELULUSAN -->
+            @if((($mode ?? 'all') == 'all' || ($mode ?? 'all') == 'ujian') && ($reg->status_ujian === 'Selesai' || $reg->nilai_ujian !== null))
+            @php
+                $cbtKkm = (int) \App\Models\Setting::get('cbt_passing_grade', 70);
+                $mapelList = $reg->nilai_per_mapel_array ?? [];
+                $kelulusanStatus = $reg->status_kelulusan;
+                $evaluasi = $reg->evaluasiSyaratPenerimaan();
+            @endphp
+            <div class="sheet">
+                <!-- KOP SURAT RESMI PESANTREN -->
+                <div class="flex items-center gap-4">
+                    <div class="w-20 h-20 shrink-0 flex items-center justify-center">
+                        <img src="/logo.png" alt="Logo Pesantren" class="max-w-full max-h-full object-contain">
+                    </div>
+                    <div class="flex-1 text-center">
+                        <h4 class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">Yayasan Pondok Pesantren Hidayatullah Temanggung</h4>
+                        <h2 class="text-xl font-serif font-bold text-[#0d3b1e] tracking-wide uppercase">Pondok Pesantren Hidayatullah Tuksongo</h2>
+                        <p class="text-[11px] font-semibold text-slate-800 mt-0.5">
+                            Madrasah Tsanawiyah (MTs) &bull; Madrasah Aliyah (MA) Tahfidz &amp; Sains Al-Qur'an
+                        </p>
+                        <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
+                            Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
+                            Hotline PSB / WhatsApp: 0852-9042-9617 &bull; Website: ponpeshidayatullahtuksongo.com
+                        </p>
+                    </div>
+                    <div class="w-20 shrink-0 text-right">
+                        <div class="border border-slate-300 rounded p-1 text-center bg-slate-50">
+                            <span class="text-[8px] font-mono text-slate-400 block">BERKAS CBT</span>
+                            <span class="text-[10px] font-mono font-bold text-slate-800">CBT-{{ date('y') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kop-line"></div>
+
+                <div class="text-center mb-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 bg-slate-100 py-1 px-4 rounded-md inline-block border border-slate-200">
+                        Lembar Hasil Ujian Seleksi Masuk (CBT Online) &amp; Status Penerimaan
+                    </h3>
+                    <div class="flex items-center justify-center gap-4 text-[10.5px] text-slate-600 mt-1.5">
+                        <span>No. Registrasi: <strong class="font-mono text-emerald-800">{{ $reg->no_registrasi }}</strong></span>
+                        <span>&bull;</span>
+                        <span>Jalur: <strong>{{ $reg->jalur ?: 'Reguler' }}</strong></span>
+                        <span>&bull;</span>
+                        <span>Jenjang: <strong class="text-blue-800">{{ $reg->jenjang }}</strong></span>
+                        <span>&bull;</span>
+                        <span>TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}</span>
+                    </div>
+                </div>
+
+                <!-- BANNER STATUS PENERIMAAN -->
+                <div class="p-3.5 rounded-lg border mb-3 {{ $reg->status === 'Diterima' ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : ($reg->status === 'Ditolak' ? 'bg-rose-50 border-rose-300 text-rose-900' : 'bg-amber-50 border-amber-300 text-amber-900') }}">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="px-2.5 py-1 rounded text-xs font-black uppercase tracking-wider {{ $reg->status === 'Diterima' ? 'bg-emerald-700 text-white' : ($reg->status === 'Ditolak' ? 'bg-rose-700 text-white' : 'bg-amber-600 text-white') }}">
+                                {{ $reg->status === 'Diterima' ? '✓ DITERIMA' : ($reg->status === 'Ditolak' ? '✕ DITOLAK' : '⏳ MENUNGGU KEPUTUSAN') }}
+                            </span>
+                            <div>
+                                <span class="text-[12px] font-bold block">
+                                    @if($reg->status === 'Diterima')
+                                        DINYATAKAN DITERIMA SEBAGAI SANTRI BARU
+                                    @elseif($reg->status === 'Ditolak')
+                                        BELUM MEMENUHI SYARAT KELULUSAN / DAYA TAMPUNG
+                                    @else
+                                        PROSES SELEKSI PENERIMAAN SANTRI SEDANG BERLANGSUNG
+                                    @endif
+                                </span>
+                                <span class="text-[10px] opacity-90 block">
+                                    @if($reg->status === 'Diterima')
+                                        Berdasarkan evaluasi nilai ujian masuk CBT (memenuhi standar KKM {{ $cbtKkm }}) serta pemenuhan administrasi pendaftaran santri baru.
+                                    @elseif($reg->status === 'Ditolak')
+                                        Keputusan panitia seleksi santri baru bersifat mutlak berdasarkan kriteria yang berlaku.
+                                    @else
+                                        Menunggu kelengkapan hasil ujian, verifikasi pembayaran, atau penetapan dewan penguji.
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-[9px] uppercase font-bold text-slate-400 block">Kriteria Kelulusan</span>
+                            <span class="text-[10.5px] font-bold {{ $evaluasi['memenuhi'] ? 'text-emerald-700' : 'text-amber-700' }}">
+                                {{ $evaluasi['memenuhi'] ? 'Memenuhi Syarat (Nilai & Bayar)' : 'Belum Memenuhi Syarat' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IDENTITAS SINGKAT PESERTA UJIAN -->
+                <table class="w-full text-left text-[11px] border border-slate-200 mb-3">
+                    <tbody>
+                        <tr class="border-b border-slate-200">
+                            <td class="py-1 px-2.5 font-bold text-slate-500 w-36 bg-slate-50/80">Nama Lengkap</td>
+                            <td class="py-1 px-2.5 font-bold text-slate-900 uppercase">{{ $reg->nama_lengkap }}</td>
+                            <td class="py-1 px-2.5 font-semibold text-slate-500 w-32 bg-slate-50/80">NISN / NIK</td>
+                            <td class="py-1 px-2.5 font-mono text-slate-800">{{ $reg->nisn ?: '-' }} / {{ $reg->nik ?: '-' }}</td>
+                        </tr>
+                        <tr class="border-b border-slate-200">
+                            <td class="py-1 px-2.5 font-semibold text-slate-500 bg-slate-50/80">Sekolah Asal</td>
+                            <td class="py-1 px-2.5 text-slate-800">{{ $reg->nama_sekolah ?: $reg->asal_sekolah ?: '-' }}</td>
+                            <td class="py-1 px-2.5 font-semibold text-slate-500 bg-slate-50/80">Waktu Selesai Ujian</td>
+                            <td class="py-1 px-2.5 text-slate-800">{{ $reg->ujian_selesai_at ? $reg->ujian_selesai_at->translatedFormat('d F Y, H:i') . ' WIB' : 'Belum Ujian' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 px-2.5 font-semibold text-slate-500 bg-slate-50/80">Biaya Pendaftaran</td>
+                            <td class="py-1 px-2.5 font-semibold {{ $reg->bukti_transfer ? 'text-emerald-700' : 'text-slate-400' }}">
+                                {{ $reg->bukti_transfer ? '✓ Terverifikasi Lunas (Rp 200.000)' : '✕ Belum Terunggah' }}
+                            </td>
+                            <td class="py-1 px-2.5 font-semibold text-slate-500 bg-slate-50/80">Hasil Akhir CBT</td>
+                            <td class="py-1 px-2.5 font-bold {{ ($reg->nilai_ujian ?? 0) >= $cbtKkm ? 'text-emerald-700' : 'text-rose-700' }}">
+                                Nilai: {{ $reg->nilai_ujian ?? 0 }} (KKM: {{ $cbtKkm }}) &bull; {{ $kelulusanStatus }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- SCORE HIGHLIGHT OVERVIEW -->
+                <div class="grid grid-cols-4 gap-2.5 mb-3 text-center">
+                    <div class="p-2 border border-slate-200 rounded bg-slate-50">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Nilai Ujian CBT</span>
+                        <span class="text-xl font-bold font-serif {{ ($reg->nilai_ujian ?? 0) >= $cbtKkm ? 'text-emerald-700' : 'text-rose-700' }}">
+                            {{ $reg->nilai_ujian ?? 0 }}
+                        </span>
+                        <span class="text-[9px] text-slate-400 block">Skala 0 - 100</span>
+                    </div>
+                    <div class="p-2 border border-slate-200 rounded bg-slate-50">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Standar KKM</span>
+                        <span class="text-xl font-bold font-serif text-slate-800">{{ $cbtKkm }}</span>
+                        <span class="text-[9px] text-slate-400 block">Batas Minimal</span>
+                    </div>
+                    <div class="p-2 border border-slate-200 rounded bg-slate-50">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Predikat Akademik</span>
+                        <span class="text-xs font-bold block mt-1 {{ $kelulusanStatus === 'Lulus' ? 'text-emerald-700' : ($kelulusanStatus === 'Tidak Lulus' ? 'text-rose-700' : 'text-amber-700') }}">
+                            {{ $kelulusanStatus }}
+                        </span>
+                        <span class="text-[9px] text-slate-400 block">{{ ($reg->cbt_attempts_count ?? 1) }}x Kesempatan</span>
+                    </div>
+                    <div class="p-2 border border-slate-200 rounded bg-slate-50">
+                        <span class="text-[9px] uppercase font-bold text-slate-500 block">Status Pengawasan</span>
+                        <span class="text-xs font-bold block mt-1 {{ $reg->pelanggaran_curang_count > 0 ? 'text-rose-600' : 'text-emerald-700' }}">
+                            {{ $reg->pelanggaran_curang_count > 0 ? $reg->pelanggaran_curang_count . ' Peringatan' : 'Bersih (0 Teguran)' }}
+                        </span>
+                        <span class="text-[9px] text-slate-400 block">Anti-Curang AI</span>
+                    </div>
+                </div>
+
+                <!-- TABEL RINCIAN NILAI PER MATA PELAJARAN -->
+                <div class="mb-3">
+                    <div class="bg-emerald-900 text-white px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider rounded-t flex items-center justify-between">
+                        <span>Rincian Hasil Ujian Per Mata Pelajaran</span>
+                        <span class="text-[9.5px] font-medium text-emerald-200">Standar Kelulusan Mapel: KKM {{ $cbtKkm }}</span>
+                    </div>
+                    <table class="w-full text-left text-[11px] border border-t-0 border-slate-200">
+                        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[10.5px]">
+                            <tr>
+                                <th class="py-1.5 px-2 text-center w-10">No</th>
+                                <th class="py-1.5 px-2.5">Mata Pelajaran / Materi Ujian</th>
+                                <th class="py-1.5 px-2 text-center w-24">Jumlah Soal</th>
+                                <th class="py-1.5 px-2 text-center w-24">Jawaban Benar</th>
+                                <th class="py-1.5 px-2 text-center w-20">Nilai</th>
+                                <th class="py-1.5 px-2 text-center w-24">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @forelse($mapelList as $m)
+                                @php
+                                    $isTuntas = ($m['skor'] ?? 0) >= ($m['kkm'] ?? $cbtKkm);
+                                @endphp
+                                <tr class="hover:bg-slate-50">
+                                    <td class="py-1.5 px-2 text-center text-slate-500 font-semibold">{{ $loop->iteration }}</td>
+                                    <td class="py-1.5 px-2.5 font-bold text-slate-800">{{ $m['kategori'] }}</td>
+                                    <td class="py-1.5 px-2 text-center text-slate-700">{{ $m['total_soal'] }} butir</td>
+                                    <td class="py-1.5 px-2 text-center font-semibold {{ ($m['benar'] ?? 0) > 0 ? 'text-emerald-700' : 'text-slate-500' }}">
+                                        {{ $m['benar'] ?? 0 }} soal
+                                    </td>
+                                    <td class="py-1.5 px-2 text-center font-mono font-bold text-xs {{ $isTuntas ? 'text-emerald-700' : 'text-rose-700' }}">
+                                        {{ $m['skor'] ?? 0 }}
+                                    </td>
+                                    <td class="py-1.5 px-2 text-center">
+                                        @if($isTuntas)
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Tuntas</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">Belum Tuntas</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="py-4 text-center text-slate-400 italic">
+                                        Rincian nilai per mata pelajaran belum tersedia atau santri belum menyelesaikan ujian.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- CATATAN DEWAN PENGUJI -->
+                <div class="mb-4 p-2.5 bg-slate-50 border border-slate-200 rounded text-[10.5px] leading-relaxed">
+                    <strong class="text-slate-800 block mb-0.5">Catatan Dewan Penguji &amp; Panitia PSB:</strong>
+                    <p class="text-slate-600 italic">
+                        "{{ $reg->catatan_penguji ?: 'Santri telah mengikuti seluruh tahapan ujian seleksi CBT sesuai regulasi. Keputusan kelulusan resmi ditetapkan berdasarkan pertimbangan akademik dan kelengkapan administrasi calon santri.' }}"
+                    </p>
+                </div>
+
+                <!-- TANDA TANGAN & PENGESAHAN LEMBAR HASIL UJIAN -->
+                <div class="mt-4 pt-3 border-t border-slate-200">
+                    <div class="grid grid-cols-2 gap-8 text-center text-xs items-end">
+                        <!-- Pihak Santri / Wali -->
+                        <div class="space-y-12">
+                            <p class="text-slate-600">
+                                Calon Santri / Orang Tua / Wali,<br>
+                                <span class="text-[10px] text-slate-400">Menerima dan memahami hasil seleksi ujian</span>
+                            </p>
+                            <div>
+                                <p class="font-bold text-slate-900 border-b border-slate-400 inline-block px-8 pb-1">
+                                    {{ $reg->ayah_nama ?: $reg->nama_wali ?: $reg->nama_lengkap }}
+                                </p>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Tanda Tangan Wali Santri</span>
+                            </div>
+                        </div>
+
+                        <!-- Panitia Seleksi CBT & Pengurus Pesantren -->
+                        <div class="space-y-1 relative text-center">
+                            <p class="text-slate-700 text-[11px] leading-tight">
+                                {{ \App\Models\Setting::get('ttd_digital_kota', 'Pringsurat') }}, {{ $reg->ujian_selesai_at ? $reg->ujian_selesai_at->translatedFormat('d F Y') : date('d F Y') }}<br>
+                                <strong class="text-slate-900 uppercase text-[11px]">{{ \App\Models\Setting::get('ttd_digital_jabatan', 'Pengurus &amp; Panitia Seleksi PSB') }}</strong><br>
+                                <span class="text-[9.5px] text-slate-500">Pondok Pesantren Hidayatullah Tuksongo</span>
+                            </p>
+
+                            <div class="relative h-20 my-1 flex items-center justify-center">
+                                @php
+                                    $stempelImg = \App\Models\Setting::get('ttd_digital_stempel_image', '/uploads/settings/default_stempel_pesantren.png');
+                                    $ttdImg = \App\Models\Setting::get('ttd_digital_pengurus_image', '/uploads/settings/default_ttd_pengurus.png');
+                                    $showStempel = \App\Models\Setting::get('ttd_digital_show_stempel', '1') == '1';
+                                @endphp
+
+                                @if($showStempel && $stempelImg)
+                                    <img src="{{ $stempelImg }}" alt="Stempel Resmi" class="absolute w-20 h-20 object-contain opacity-80 left-4 pointer-events-none transform -rotate-6">
+                                @endif
+
+                                @if($ttdImg)
+                                    <img src="{{ $ttdImg }}" alt="Tanda Tangan Pengurus" class="relative z-10 h-16 max-w-[150px] object-contain mx-auto">
+                                @else
+                                    <div class="mx-auto py-1 px-3 border border-emerald-600 rounded-lg bg-emerald-50/70 inline-flex items-center gap-2">
+                                        <span class="text-[9px] font-mono font-bold text-emerald-800 uppercase">TERVERIFIKASI PANITIA</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div>
+                                <p class="font-bold text-slate-900 border-b border-slate-400 inline-block px-4 pb-0.5 text-xs">
+                                    {{ \App\Models\Setting::get('ttd_digital_nama', 'Ust. Ahmad Fauzi, S.Pd.I') }}
+                                </p>
+                                @if(\App\Models\Setting::get('ttd_digital_nip'))
+                                    <span class="text-[9.5px] font-mono text-slate-500 block mt-0.5">
+                                        NIP: {{ \App\Models\Setting::get('ttd_digital_nip') }}
+                                    </span>
+                                @else
+                                    <span class="text-[9.5px] text-slate-400 block mt-0.5">Ketua Tim Seleksi Akademik CBT</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400">
+                    <span>Dokumen resmi hasil seleksi ujian masuk &bull; Ponpes Hidayatullah Tuksongo</span>
+                    <span>Lembar Hasil Ujian CBT</span>
+                </div>
             </div>
             @endif
 

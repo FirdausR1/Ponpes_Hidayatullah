@@ -7,9 +7,10 @@
     <title>Pondok Pesantren Hidayatullah Tuksongo — Pringsurat Temanggung</title>
     <meta name="description"
         content="Website Resmi Pondok Pesantren Hidayatullah Tuksongo, Pringsurat, Temanggung. Memadukan kurikulum Kemenag (MTs-MA) dan tradisi kepesantrenan modern, tahfidz bersanad, bahasa Arab-Inggris aktif.">
-    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Grenze:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <style>
         /* ===== CSS RESET & BASE ===== */
@@ -77,7 +78,7 @@
             --gradient-primary: linear-gradient(135deg, #145a2e 0%, #228b4c 100%);
             --gradient-emerald: linear-gradient(135deg, #0d3b1e 0%, #1a6b38 100%);
             --gradient-gold: linear-gradient(135deg, #c8a415 0%, #e8cc5a 100%);
-            --gradient-hero: linear-gradient(160deg, #f0fdf4 0%, #dcfce7 40%, #bbf7d0 100%);
+            --gradient-hero: radial-gradient(circle at 18% 18%, rgba(34, 139, 76, 0.16) 0%, transparent 45%), radial-gradient(circle at 82% 80%, rgba(200, 164, 21, 0.12) 0%, transparent 40%), linear-gradient(145deg, #f0fdf4 0%, #dcfce7 32%, #edfbf2 65%, #fefce8 100%);
             --gradient-subtle: linear-gradient(180deg, #edfbf2 0%, #fafbfc 100%);
             --shadow-sm: 0 1px 3px rgba(13, 59, 30, 0.06);
             --shadow-md: 0 4px 16px rgba(13, 59, 30, 0.08);
@@ -147,11 +148,12 @@
         }
 
         .section-label {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.14em;
+            font-family: 'Grenze', Georgia, serif;
+            font-size: 13.5px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: var(--green-600);
+            color: var(--green-700);
             margin-bottom: 8px;
             display: inline-flex;
             align-items: center;
@@ -159,12 +161,12 @@
         }
 
         .section-title {
-            font-family: 'EB Garamond', serif;
-            font-size: clamp(28px, 4vw, 40px);
+            font-family: 'Grenze', Georgia, serif;
+            font-size: clamp(30px, 4.2vw, 44px);
             font-weight: 600;
             color: var(--text-primary);
             line-height: 1.2;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.01em;
         }
 
         .section-desc {
@@ -196,51 +198,83 @@
             justify-content: space-between;
         }
 
+        .navbar .container {
+            max-width: 1280px;
+        }
+
         .navbar-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--text-primary);
+            gap: 10px;
+            text-decoration: none;
+            flex-shrink: 0;
         }
 
-        .navbar-brand img {
-            width: 44px;
-            height: 44px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-        }
-
-        .navbar-brand-text strong {
+        .navbar-brand .navbar-brand-crest {
             display: block;
-            font-family: 'EB Garamond', serif;
-            font-size: 19px;
-            color: var(--green-900);
-            line-height: 1.1;
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
         }
 
-        .navbar-brand-text span {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--text-muted);
-            letter-spacing: 0.04em;
+        .navbar-brand:hover .navbar-brand-crest {
+            transform: scale(1.05);
+        }
+
+        .navbar-brand-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .navbar-brand .navbar-brand-calligraphy {
+            height: 25px;
+            width: auto;
+            max-width: 205px;
+            object-fit: contain;
+            object-position: left center;
+            filter: contrast(1.12);
+            transition: all 0.25s ease;
+        }
+
+        .navbar-brand:hover .navbar-brand-calligraphy {
+            opacity: 0.88;
+        }
+
+        .brand-latin-sub {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            font-size: 9px;
+            font-weight: 600;
+            color: #475569;
+            letter-spacing: 0.25px;
+            white-space: nowrap;
+            line-height: 1.15;
+            transition: color 0.2s ease;
+        }
+
+        .navbar-brand:hover .brand-latin-sub {
+            color: var(--green-800);
         }
 
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 20px;
         }
 
         .nav-links>a,
+        .nav-link-item,
         .nav-dropdown-trigger {
-            font-size: 13px;
+            font-family: 'Grenze', Georgia, serif;
+            font-size: 18px;
             font-weight: 500;
-            color: #273b2d;
-            padding: 7px 12px;
-            border-radius: var(--radius-xs);
-            transition: all 0.2s;
+            color: #111111;
+            padding: 6px 4px;
+            transition: all 0.2s ease;
             position: relative;
             display: inline-flex;
             align-items: center;
@@ -248,32 +282,98 @@
             cursor: pointer;
             background: none;
             border: none;
-            font-family: inherit;
             text-decoration: none;
+            letter-spacing: 0.45px;
+            white-space: nowrap;
         }
 
         .nav-links>a:hover,
+        .nav-link-item:hover,
         .nav-dropdown-trigger:hover,
         .nav-item-dropdown:hover .nav-dropdown-trigger {
-            color: var(--green-800);
-            background: var(--green-50);
+            color: #006837;
+            background: transparent;
         }
 
         .nav-links>a.active,
+        .nav-link-item.active,
         .nav-dropdown-trigger.active {
-            color: var(--green-800);
+            color: #006837;
             font-weight: 600;
-            background: var(--green-50);
+            background: transparent;
+        }
+
+        .nav-links>a.active::after,
+        .nav-link-item.active::after,
+        .nav-dropdown-trigger.active::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 5%;
+            width: 90%;
+            height: 2.5px;
+            background-color: #006837;
+            border-radius: 9999px;
         }
 
         .nav-dropdown-trigger .chevron-icon {
             transition: transform 0.25s ease;
-            color: #556b5c;
+            color: #64748b;
+            width: 12px;
+            height: 12px;
+            margin-left: 2px;
         }
 
         .nav-item-dropdown:hover .chevron-icon {
             transform: rotate(180deg);
-            color: var(--green-700);
+            color: #006837;
+        }
+
+        /* PENDAFTARAN BUTTON (PENGGANTI PSB SESUAI DESAIN GONTOR) */
+        .btn-nav-pendaftaran {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #0d3b1e;
+            color: #ffffff !important;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: 600;
+            font-size: 13.5px;
+            letter-spacing: 0.2px;
+            padding: 7px 18px;
+            border-radius: 9999px;
+            box-shadow: 0 3px 10px rgba(13, 59, 30, 0.2);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 6px;
+        }
+
+        .btn-nav-pendaftaran:hover {
+            background: #006837;
+            box-shadow: 0 5px 14px rgba(0, 104, 55, 0.28);
+            transform: translateY(-1px);
+            color: #ffffff !important;
+        }
+
+        .btn-nav-pendaftaran .chevron-icon {
+            width: 11px;
+            height: 11px;
+            stroke-width: 2.4;
+            transition: transform 0.25s ease;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .nav-item-dropdown:hover .btn-nav-pendaftaran .chevron-icon {
+            transform: rotate(180deg);
+            color: #ffffff;
+        }
+
+        .nav-dropdown-menu-right {
+            left: auto !important;
+            right: 0 !important;
         }
 
         /* DROPDOWN MENU */
@@ -401,6 +501,7 @@
             border-radius: var(--radius-sm);
             box-shadow: 0 2px 8px rgba(13, 59, 30, 0.22);
             transition: all 0.25s;
+            white-space: nowrap;
         }
 
         .nav-cta:hover {
@@ -531,7 +632,7 @@
         }
 
         .hero-title {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: clamp(34px, 4.2vw, 48px);
             font-weight: 600;
             color: var(--green-950);
@@ -607,18 +708,150 @@
 
         .hero-img-wrap {
             position: relative;
-            border-radius: var(--radius-lg);
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 60px -15px rgba(13, 59, 30, 0.32), 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            border: none !important;
+            /* Tanpa border/batasan sesuai permintaan */
             aspect-ratio: 4/3;
-            background: var(--surface-dim);
+            background: #0d3b1e;
         }
 
-        .hero-img-wrap img {
+        .hero-slider {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+            will-change: opacity, transform;
+            z-index: 1;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        .hero-slide img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: block;
+        }
+
+        /* Animasi Model: Zoom */
+        .hero-slider[data-animation="zoom"] .hero-slide {
+            transform: scale(1.08);
+            transition: opacity 0.9s ease, transform 6s ease-out;
+        }
+
+        .hero-slider[data-animation="zoom"] .hero-slide.active {
+            transform: scale(1);
+        }
+
+        /* Animasi Model: Slide */
+        .hero-slider[data-animation="slide"] .hero-slide {
+            transform: translateX(100%);
+        }
+
+        .hero-slider[data-animation="slide"] .hero-slide.active {
+            transform: translateX(0);
+        }
+
+        .hero-slider[data-animation="slide"] .hero-slide.prev-out {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        /* Navigation Arrows */
+        .hero-slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: none;
+            color: #0d3b1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            opacity: 0;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+        }
+
+        .hero-slider:hover .hero-slider-btn {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .hero-slider-btn {
+                opacity: 0.85 !important;
+            }
+        }
+
+        .hero-slider-btn:hover {
+            background: #ffffff;
+            color: #006837;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .hero-slider-btn.prev {
+            left: 14px;
+        }
+
+        .hero-slider-btn.next {
+            right: 14px;
+        }
+
+        /* Navigation Dots */
+        .hero-slider-dots {
+            position: absolute;
+            bottom: 14px;
+            right: 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+            background: rgba(8, 36, 18, 0.45);
+            padding: 5px 10px;
+            border-radius: 9999px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .hero-slider-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.45);
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            padding: 0;
+        }
+
+        .hero-slider-dot.active {
+            width: 20px;
+            background: #e8cc5a;
         }
 
         .hero-img-overlay {
@@ -695,7 +928,7 @@
         }
 
         .stat-value {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 26px;
             font-weight: 700;
             color: var(--green-900);
@@ -846,7 +1079,7 @@
         }
 
         .berita-card-title {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 21px;
             font-weight: 700;
             color: #ffffff;
@@ -918,7 +1151,7 @@
         }
 
         .profil-sejarah h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 24px;
             color: var(--green-900);
             margin-bottom: 12px;
@@ -968,7 +1201,7 @@
         }
 
         .visi-misi-box .visi-quote {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 20px;
             font-weight: 600;
             color: var(--green-900);
@@ -1030,7 +1263,7 @@
         }
 
         .panca-num {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 20px;
             font-weight: 700;
             color: var(--green-300);
@@ -1073,7 +1306,7 @@
         }
 
         .logo-filosofi-header h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 22px;
             color: var(--green-900);
         }
@@ -1177,7 +1410,7 @@
         }
 
         .pilar-card h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 19px;
             font-weight: 600;
             color: var(--text-primary);
@@ -1230,7 +1463,7 @@
         }
 
         .timeline-card h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 22px;
             color: var(--green-900);
             margin-bottom: 4px;
@@ -1319,7 +1552,7 @@
         }
 
         .agenda-card h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 22px;
             color: var(--green-900);
         }
@@ -1405,7 +1638,7 @@
         }
 
         .tertib-card h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 19px;
             font-weight: 600;
             color: var(--green-900);
@@ -1481,7 +1714,7 @@
         }
 
         .quote-content blockquote {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: clamp(18px, 2.5vw, 26px);
             font-style: italic;
             color: rgba(255, 255, 255, 0.95);
@@ -1626,13 +1859,13 @@
         }
 
         .fasilitas-card-title {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 22px;
             font-weight: 700;
             color: #ffffff;
             line-height: 1.3;
             margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
         }
 
         .fasilitas-card-desc {
@@ -1678,7 +1911,7 @@
             border-radius: var(--radius-xs);
             background: var(--gradient-primary);
             color: #fff;
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 18px;
             font-weight: 700;
             display: flex;
@@ -1726,7 +1959,7 @@
         }
 
         .biaya-header h3 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 24px;
             color: var(--green-900);
         }
@@ -1787,7 +2020,7 @@
         }
 
         .rek-card h4 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 20px;
             color: var(--green-900);
             margin-bottom: 10px;
@@ -1848,7 +2081,7 @@
         }
 
         .syarat-card h4 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 20px;
             color: var(--green-900);
             margin-bottom: 12px;
@@ -1925,7 +2158,7 @@
         }
 
         .panduan-text h2 {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: clamp(24px, 3vw, 34px);
             font-weight: 600;
             line-height: 1.2;
@@ -2088,11 +2321,11 @@
             font-size: 44px;
             line-height: 1;
             color: var(--green-200);
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
         }
 
         .pimpinan-quote blockquote {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: clamp(17px, 2.2vw, 22px);
             font-style: italic;
             color: var(--text-primary);
@@ -2193,7 +2426,7 @@
         }
 
         .footer-brand strong {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: 20px;
             font-weight: 700;
             color: #fff;
@@ -2418,9 +2651,9 @@
 
         /* ===== ANIMATIONS ===== */
         .anim-fade-up {
-            opacity: 0;
-            transform: translateY(24px);
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .anim-fade-up.visible {
@@ -2445,211 +2678,8 @@
     <!-- Scroll Progress -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- NAVBAR -->
-    <header class="navbar" id="navbar">
-        <div class="container">
-            <div class="navbar-inner">
-                <a href="#" class="navbar-brand">
-                    <img src="/logo.png" alt="Logo Pondok Pesantren Hidayatullah Tuksongo">
-                    <div class="navbar-brand-text">
-                        <strong>Hidayatullah Tuksongo</strong>
-                        <span>Pringsurat Temanggung</span>
-                    </div>
-                </a>
-                <nav class="nav-links">
-                    <a href="#beranda" class="active">Beranda</a>
-                    <a href="#berita">Berita</a>
-
-                    <!-- DROPDOWN 1: TENTANG PONDOK -->
-                    <div class="nav-item-dropdown">
-                        <button class="nav-dropdown-trigger" id="navDropdownTentang" aria-haspopup="true">
-                            Tentang Pondok
-                            <svg class="icon-svg icon-svg-xs chevron-icon" viewBox="0 0 24 24">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                        <div class="nav-dropdown-menu">
-                            <a href="#profil" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Profil & Sejarah</strong>
-                                    <span>Berdiri sejak 1999 di tanah wakaf Tuksongo</span>
-                                </div>
-                            </a>
-                            <a href="#profil" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polygon
-                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                                        </polygon>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Panca Jiwa & Nilai</strong>
-                                    <span>Keikhlasan, kesederhanaan & kemandirian</span>
-                                </div>
-                            </a>
-                            <a href="#fasilitas" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Fasilitas Kampus</strong>
-                                    <span>Masjid jami', asrama sehat & laboratorium</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- DROPDOWN 2: KEPESANTRENAN -->
-                    <div class="nav-item-dropdown">
-                        <button class="nav-dropdown-trigger" id="navDropdownPesantren" aria-haspopup="true">
-                            Kepesantrenan
-                            <svg class="icon-svg icon-svg-xs chevron-icon" viewBox="0 0 24 24">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                        <div class="nav-dropdown-menu">
-                            <a href="#program" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Pilar Pendidikan</strong>
-                                    <span>Tahfidz bersanad, sains & dwibahasa aktif</span>
-                                </div>
-                            </a>
-                            <a href="#kehidupan" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Santri 24 Jam</strong>
-                                    <span>Jadwal rutinitas harian dari 03.00—22.00</span>
-                                </div>
-                            </a>
-                            <a href="#tata-tertib" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Tata Tertib & Disiplin</strong>
-                                    <span>Kedisiplinan ibadah, adab & bebas gadget</span>
-                                </div>
-                            </a>
-                            <a href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}" target="_blank" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                        <polyline points="21 15 16 10 5 21"></polyline>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Brosur PSB (PDF / Gambar)</strong>
-                                    <span>Unduh brosur resmi penerimaan santri</span>
-                                </div>
-                            </a>
-                            <a href="{{ \App\Models\Setting::get('panduan_file_url', '/NEW BUKU PANDUAN SANTRI TA 2025 (2).pdf') }}" target="_blank" class="nav-dropdown-item">
-                                <div class="dd-icon">
-                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    </svg>
-                                </div>
-                                <div class="dd-text">
-                                    <strong>Buku Panduan Santri (PDF)</strong>
-                                    <span>Buku pedoman resmi santri (81 hlm)</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-
-                    <a href="#psb">Biaya & PSB</a>
-                    <a href="#kontak">Kontak</a>
-                </nav>
-                <div class="nav-cta-wrap">
-                    <a href="{{ route('psb.checkStatus') }}" class="btn-cek-status-nav" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--green-900); background:#fff; border:1px solid var(--green-300); padding:7px 14px; border-radius:var(--radius-sm); transition:all 0.2s; text-decoration:none;" title="Pantau status verifikasi berkas tanpa akun login">
-                        <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <span>Cek Status</span>
-                    </a>
-                    <a class="nav-cta" href="{{ route('psb.register') }}">
-                        Daftar Santri Baru
-                        <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </a>
-                </div>
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Buka Menu">
-                    <span></span><span></span><span></span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- MOBILE NAV -->
-    <div class="mobile-nav" id="mobileNav">
-        <button class="mobile-nav-close" id="mobileNavClose" aria-label="Tutup Menu">✕</button>
-        <a href="#beranda" onclick="closeMobileNav()">Beranda</a>
-        <a href="#berita" onclick="closeMobileNav()">Warta Berita</a>
-
-        <div class="mobile-group-title">Tentang Pondok</div>
-        <div class="mobile-sublinks">
-            <a href="#profil" onclick="closeMobileNav()">• Profil, Sejarah & Panca Jiwa</a>
-            <a href="#fasilitas" onclick="closeMobileNav()">• Fasilitas Kampus</a>
-        </div>
-
-        <div class="mobile-group-title">Kepesantrenan</div>
-        <div class="mobile-sublinks">
-            <a href="#program" onclick="closeMobileNav()">• Pilar Pendidikan Integral</a>
-            <a href="#kehidupan" onclick="closeMobileNav()">• Kehidupan Santri 24 Jam</a>
-            <a href="#tata-tertib" onclick="closeMobileNav()">• Tata Tertib & Disiplin</a>
-            <a href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}" target="_blank" onclick="closeMobileNav()">• Unduh Brosur PSB (PDF / Gambar)</a>
-            <a href="{{ \App\Models\Setting::get('panduan_file_url', '/NEW BUKU PANDUAN SANTRI TA 2025 (2).pdf') }}" target="_blank" onclick="closeMobileNav()">• Unduh Buku Panduan Santri (PDF)</a>
-        </div>
-
-        <a href="#psb" onclick="closeMobileNav()">Biaya & Pendaftaran PSB</a>
-        <a href="{{ route('psb.checkStatus') }}" onclick="closeMobileNav()" style="font-weight:700; color:var(--green-900); display:flex; align-items:center; gap:8px;">
-            <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            Cek Status Pendaftaran Mandiri
-        </a>
-        <a href="#kontak" onclick="closeMobileNav()">Kontak & Hotline</a>
-        <a href="{{ route('admin.dashboard') }}" target="_blank" onclick="closeMobileNav()"
-            style="color: var(--green-700); font-size: 14px; font-weight: 700; border-top: 1px dashed var(--border); padding-top: 12px; display: flex; align-items: center; justify-content: space-between;">
-            <span>Masuk TailAdmin</span>
-            <span
-                style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--green-100); color: var(--green-800);">Admin</span>
-        </a>
-        <a class="nav-cta" href="{{ route('psb.register') }}" onclick="closeMobileNav()"
-            style="margin-top:16px; justify-content:center;">
-            Daftar Santri Baru
-            <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-        </a>
-    </div>
+    <!-- OFFICIAL NAVBAR (SHARED WITH BIAYA & PUBLIC PAGES) -->
+    @include('partials.navbar', ['isLanding' => true])
 
     <main>
         <!-- ===== HERO ===== -->
@@ -2675,7 +2705,9 @@
                                     <polyline points="12 5 19 12 12 19"></polyline>
                                 </svg>
                             </a>
-                            <a class="btn-secondary" href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}" target="_blank">
+                            <a class="btn-secondary"
+                                href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}"
+                                target="_blank">
                                 <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -2687,21 +2719,90 @@
                         </div>
                     </div>
                     <div class="hero-visual">
+                        @php
+                            $heroSlideCount = (int) \App\Models\Setting::get('hero_slide_count', '5');
+                            if ($heroSlideCount < 3)
+                                $heroSlideCount = 3;
+                            if ($heroSlideCount > 5)
+                                $heroSlideCount = 5;
+                            $heroAnimation = \App\Models\Setting::get('hero_slider_animation', 'fade');
+                            $heroDuration = (int) \App\Models\Setting::get('hero_slider_duration', '5');
+                            if ($heroDuration < 2)
+                                $heroDuration = 5;
+
+                            $rawSlides = \App\Models\Setting::get('hero_slides_json');
+                            $heroSlidesList = [];
+                            if (!empty($rawSlides)) {
+                                $heroSlidesList = is_string($rawSlides) ? json_decode($rawSlides, true) : $rawSlides;
+                            }
+                            if (empty($heroSlidesList) || !is_array($heroSlidesList)) {
+                                $heroSlidesList = [
+                                    1 => ['image' => '/uploads/settings/hero_slide_1.jpg', 'caption' => 'Kampus Alam Tuksongo Madani', 'subcaption' => "Asri, hening, dan kondusif untuk tholabul 'ilmi", 'active' => true],
+                                    2 => ['image' => '/uploads/settings/hero_slide_2.jpg', 'caption' => "Halaqah Tahfidzul Qur'an Mutqin", 'subcaption' => 'Bimbingan intensif 30 juz bersanad muttashil', 'active' => true],
+                                    3 => ['image' => '/uploads/settings/hero_slide_3.jpg', 'caption' => "Kompleks Asrama & Masjid Jami'", 'subcaption' => 'Lingkungan mukim santri yang bersih, tertib, dan islami', 'active' => true],
+                                    4 => ['image' => '/uploads/settings/hero_slide_4.jpg', 'caption' => 'Majelis Asatidz & Dewan Pembina', 'subcaption' => 'Pendidik berdedikasi mengawal sanad akhlak dan adab', 'active' => true],
+                                    5 => ['image' => '/uploads/settings/hero_slide_5.jpg', 'caption' => 'Laboratorium Komputer CBT', 'subcaption' => 'Fasilitas digital modern untuk seleksi & pembelajaran santri', 'active' => true],
+                                ];
+                            }
+                            $displaySlides = [];
+                            $slotIdx = 1;
+                            foreach ($heroSlidesList as $s) {
+                                if ($slotIdx > $heroSlideCount)
+                                    break;
+                                if (!isset($s['active']) || $s['active']) {
+                                    $displaySlides[] = $s;
+                                    $slotIdx++;
+                                }
+                            }
+                            if (empty($displaySlides)) {
+                                $displaySlides = array_slice(array_values($heroSlidesList), 0, $heroSlideCount);
+                            }
+                        @endphp
                         <div class="hero-img-wrap">
-                            <img src="{{ \App\Models\Setting::get('hero_image', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCGYaU4q4nIXeNSx0KvqvdTCXvhP1950A1c7sA345MHgqC0koDMg-pDDQnBy9NpclcSa0PcDMfQidKumWL-n9GMZ9qrXrvAEwL9U3hdTPo2-0eXAokLKZ11EVIOzlck9D1C9LwbnjOu8N6NjiOSLbZCN3122S-MJBUjjFqSj9UoSN7s74Zg-Yc4FBDioEDu2ACO-pOvjP9mhQLY9aUyH4HtA-4GCzA_H_DcQHTZ5Binpb7M2nk8bVSb') }}"
-                                alt="Kampus Terpadu Pondok Pesantren Hidayatullah Tuksongo">
-                            <div class="hero-img-overlay">
-                                <div class="hero-img-overlay-content">
-                                    <div class="badge-verified">
-                                        <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
-                                            <polyline points="20 6 9 17 4 12"></polyline>
+                            <div class="hero-slider" id="heroSlider" data-animation="{{ $heroAnimation }}"
+                                data-duration="{{ $heroDuration * 1000 }}">
+                                @foreach($displaySlides as $index => $slide)
+                                    <div class="hero-slide {{ $index === 0 ? 'active' : '' }}"
+                                        data-slide-index="{{ $index }}">
+                                        <img src="{{ asset($slide['image']) }}"
+                                            alt="{{ $slide['caption'] ?? 'Foto Kampus Hidayatullah Tuksongo' }}"
+                                            loading="{{ $index === 0 ? 'eager' : 'lazy' }}">
+                                        <div class="hero-img-overlay">
+                                            <div class="hero-img-overlay-content">
+                                                <div class="badge-verified">
+                                                    <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ $slide['caption'] ?? 'Pondok Pesantren Hidayatullah' }}</strong>
+                                                    <small>{{ $slide['subcaption'] ?? 'Tuksongo — Pringsurat, Temanggung' }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                @if(count($displaySlides) > 1)
+                                    <button class="hero-slider-btn prev" id="heroPrevBtn" aria-label="Slide Sebelumnya">
+                                        <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
                                         </svg>
+                                    </button>
+                                    <button class="hero-slider-btn next" id="heroNextBtn" aria-label="Slide Berikutnya">
+                                        <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+
+                                    <div class="hero-slider-dots" id="heroSliderDots">
+                                        @foreach($displaySlides as $index => $slide)
+                                            <button class="hero-slider-dot {{ $index === 0 ? 'active' : '' }}"
+                                                data-slide-target="{{ $index }}"
+                                                aria-label="Lihat Slide {{ $index + 1 }}"></button>
+                                        @endforeach
                                     </div>
-                                    <div>
-                                        <strong>{{ \App\Models\Setting::get('hero_caption', 'Kampus Alam Tuksongo Madani') }}</strong>
-                                        <small>{{ \App\Models\Setting::get('hero_subcaption', "Dusun Tuksongo, Nglorog, Pringsurat — Asri, hening, dan kondusif untuk tholabul 'ilmi") }}</small>
-                                    </div>
-                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -2859,7 +2960,7 @@
                             </div>
                             <div style="margin-top: 14px;">
                                 <strong
-                                    style="font-family: 'EB Garamond', serif; font-size: 19px; color: #fff; display: block; line-height: 1.2;">{{ \App\Models\Setting::get('sambutan_nama', 'Pimpinan Pesantren') }}</strong>
+                                    style="font-family: 'Grenze', Georgia, serif; font-size: 19px; color: #fff; display: block; line-height: 1.2;">{{ \App\Models\Setting::get('sambutan_nama', 'Pimpinan Pesantren') }}</strong>
                                 <span
                                     style="font-size: 12px; font-weight: 700; color: var(--gold-300); letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-top: 2px;">{{ \App\Models\Setting::get('sambutan_jabatan', 'Hidayatullah Tuksongo') }}</span>
                             </div>
@@ -2883,7 +2984,7 @@
                             </div>
 
                             <blockquote
-                                style="font-family: 'EB Garamond', serif; font-size: 21px; font-style: italic; line-height: 1.6; color: #ffffff; margin: 0; position: relative;">
+                                style="font-family: 'Grenze', Georgia, serif; font-size: 21px; font-style: italic; line-height: 1.6; color: #ffffff; margin: 0; position: relative;">
                                 "{{ \App\Models\Setting::get('sambutan_quote', 'Pondok Pesantren bukan sekadar tempat menuntut ilmu, melainkan kawah candradimuka yang menempa jiwa keikhlasan, kesederhanaan, kemandirian, dan ukhuwah. Sebesar keinsyafan seseorang, sebesar itu pula keuntungan hidup yang diraihnya.') }}"
                             </blockquote>
 
@@ -2902,7 +3003,8 @@
                         Sejarah & Identitas Resmi
                     </span>
                     <h2 class="section-title">
-                        {{ \App\Models\Setting::get('profil_judul', 'Profil Pesantren Hidayatullah Tuksongo') }}</h2>
+                        {{ \App\Models\Setting::get('profil_judul', 'Profil Pesantren Hidayatullah Tuksongo') }}
+                    </h2>
                     <p class="section-desc">Lembaga pendidikan Islam integral di bawah naungan Yayasan Hidayatullah
                         Tuksongo, mendidik generasi berilmu amaliah, beramal ilmiah, dan berakhlak karimah.</p>
                 </div>
@@ -2950,11 +3052,11 @@
                             <ul class="misi-list">
                                 @php
                                     $rawMisi = \App\Models\Setting::get('misi', "Terwujudnya kurikulum pesantren berbasis integrasi keagamaan dan kurikulum nasional yang unggul.
-                                    Peningkatan prestasi akademik sains dan non-akademik keagamaan.
-                                    Terbentuknya santri berkarakter kokoh, beradab mulia, dan siap guna di tengah masyarakat luas.
-                                    Menjadi lembaga pendidikan berkualitas dengan jejaring dalam maupun luar negeri.");
+                                                                        Peningkatan prestasi akademik sains dan non-akademik keagamaan.
+                                                                        Terbentuknya santri berkarakter kokoh, beradab mulia, dan siap guna di tengah masyarakat luas.
+                                                                        Menjadi lembaga pendidikan berkualitas dengan jejaring dalam maupun luar negeri.");
                                     $misiItems = array_filter(array_map('trim', explode("
-                                    ", $rawMisi)));
+                                                                        ", $rawMisi)));
                                 @endphp
                                 @foreach($misiItems as $misiPoint)
                                     <li>
@@ -2982,17 +3084,21 @@
                 <div class="panca-title-wrap anim-fade-up">
                     <div>
                         <span class="section-label">Falsafah Hidup Pondok</span>
-                        <h3 class="section-title" style="font-size: 28px;">{{ \App\Models\Setting::get('falsafah_judul', 'Panca Jiwa Pondok Pesantren Hidayatullah') }}</h3>
+                        <h3 class="section-title" style="font-size: 28px;">
+                            {{ \App\Models\Setting::get('falsafah_judul', 'Panca Jiwa Pondok Pesantren Hidayatullah') }}
+                        </h3>
                     </div>
-                    <p class="section-desc" style="font-size: 13px;">{{ \App\Models\Setting::get('falsafah_subjudul', 'Lima nilai pokok yang menjadi ruh dan pedoman pembentukan karakter setiap santri selama menuntut ilmu.') }}</p>
+                    <p class="section-desc" style="font-size: 13px;">
+                        {{ \App\Models\Setting::get('falsafah_subjudul', 'Lima nilai pokok yang menjadi ruh dan pedoman pembentukan karakter setiap santri selama menuntut ilmu.') }}
+                    </p>
                 </div>
                 <div class="panca-grid">
                     @foreach ($pancaJiwaList as $index => $item)
-                    <div class="panca-card anim-fade-up">
-                        <div class="panca-num">{{ $item['nomor'] ?? sprintf('%02d', $index + 1) }}</div>
-                        <h4>{{ $item['judul'] ?? '' }}</h4>
-                        <p>{!! nl2br(e($item['deskripsi'] ?? '')) !!}</p>
-                    </div>
+                        <div class="panca-card anim-fade-up">
+                            <div class="panca-num">{{ $item['nomor'] ?? sprintf('%02d', $index + 1) }}</div>
+                            <h4>{{ $item['judul'] ?? '' }}</h4>
+                            <p>{!! nl2br(e($item['deskripsi'] ?? '')) !!}</p>
+                        </div>
                     @endforeach
                 </div>
 
@@ -3013,16 +3119,18 @@
                     <div class="logo-filosofi-header">
                         <img src="/logo.png" alt="Logo Pondok Pesantren Hidayatullah">
                         <div>
-                            <h3>{{ \App\Models\Setting::get('filosofi_judul', 'Makna Filosofi Lambang Pesantren') }}</h3>
-                            <p>{{ \App\Models\Setting::get('filosofi_subjudul', 'Setiap goresan simbol dan warna dalam logo pesantren mencerminkan visi luhur perjuangan dakwah dan pendidikan.') }}</p>
+                            <h3>{{ \App\Models\Setting::get('filosofi_judul', 'Makna Filosofi Lambang Pesantren') }}
+                            </h3>
+                            <p>{{ \App\Models\Setting::get('filosofi_subjudul', 'Setiap goresan simbol dan warna dalam logo pesantren mencerminkan visi luhur perjuangan dakwah dan pendidikan.') }}
+                            </p>
                         </div>
                     </div>
                     <div class="filosofi-items-grid">
                         @foreach ($filosofiLambangList as $fItem)
-                        <div class="filosofi-item">
-                            <strong>{{ $fItem['elemen'] ?? '' }}</strong>
-                            <span>{!! nl2br(e($fItem['makna'] ?? '')) !!}</span>
-                        </div>
+                            <div class="filosofi-item">
+                                <strong>{{ $fItem['elemen'] ?? '' }}</strong>
+                                <span>{!! nl2br(e($fItem['makna'] ?? '')) !!}</span>
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -3063,41 +3171,47 @@
                         </svg>
                         Khazanah & Pola Pengasuhan
                     </span>
-                    <h2 class="section-title">{{ \App\Models\Setting::get('pilar_title', 'Fondasi Pendidikan Integral Berkarakter Islami') }}</h2>
-                    <p class="section-desc">{{ \App\Models\Setting::get('pilar_subtitle', "Pilar pendidikan di Pesantren Hidayatullah Tuksongo dirancang seimbang antara kesucian ruhani, kedalaman ilmu syar'i, kecerdasan intelek, dan kemandirian hidup.") }}</p>
+                    <h2 class="section-title">
+                        {{ \App\Models\Setting::get('pilar_title', 'Fondasi Pendidikan Integral Berkarakter Islami') }}
+                    </h2>
+                    <p class="section-desc">
+                        {{ \App\Models\Setting::get('pilar_subtitle', "Pilar pendidikan di Pesantren Hidayatullah Tuksongo dirancang seimbang antara kesucian ruhani, kedalaman ilmu syar'i, kecerdasan intelek, dan kemandirian hidup.") }}
+                    </p>
                 </div>
                 <div class="pilar-grid">
                     @foreach ($pilarPendidikanList as $index => $item)
-                    <div class="pilar-card anim-fade-up">
-                        <div class="pilar-icon">
-                            @if ($index % 4 === 0)
-                            <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                            @elseif ($index % 4 === 1)
-                            <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
-                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                            </svg>
-                            @elseif ($index % 4 === 2)
-                            <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                            </svg>
-                            @else
-                            <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
-                            </svg>
+                        <div class="pilar-card anim-fade-up">
+                            <div class="pilar-icon">
+                                @if ($index % 4 === 0)
+                                    <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    </svg>
+                                @elseif ($index % 4 === 1)
+                                    <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                    </svg>
+                                @elseif ($index % 4 === 2)
+                                    <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                                        <path
+                                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                                        </path>
+                                    </svg>
+                                @else
+                                    <svg class="icon-svg icon-svg-md" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                                    </svg>
+                                @endif
+                            </div>
+                            <h3>{{ $item['judul'] ?? '' }}</h3>
+                            <p>{!! nl2br(e($item['deskripsi'] ?? '')) !!}</p>
+                            @if (!empty($item['tag']))
+                                <span class="pilar-tag">{{ $item['tag'] }}</span>
                             @endif
                         </div>
-                        <h3>{{ $item['judul'] ?? '' }}</h3>
-                        <p>{!! nl2br(e($item['deskripsi'] ?? '')) !!}</p>
-                        @if (!empty($item['tag']))
-                        <span class="pilar-tag">{{ $item['tag'] }}</span>
-                        @endif
-                    </div>
                     @endforeach
                 </div>
             </div>
@@ -3180,11 +3294,11 @@
                         </div>
                         <div class="agenda-items">
                             @foreach ($agendaBerkalaList as $agenda)
-                            <div class="agenda-item">
-                                <div class="agenda-day">{{ $agenda['hari'] ?? '' }}</div>
-                                <div class="agenda-activity">{{ $agenda['kegiatan'] ?? '' }}</div>
-                                <div class="agenda-note">{!! nl2br(e($agenda['keterangan'] ?? '')) !!}</div>
-                            </div>
+                                <div class="agenda-item">
+                                    <div class="agenda-day">{{ $agenda['hari'] ?? '' }}</div>
+                                    <div class="agenda-activity">{{ $agenda['kegiatan'] ?? '' }}</div>
+                                    <div class="agenda-note">{!! nl2br(e($agenda['keterangan'] ?? '')) !!}</div>
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -3375,8 +3489,12 @@
                             </svg>
                             {!! \App\Models\Setting::get('quran_label', 'Al-Qur\'an Surah Al-Mujadilah : 11') !!}
                         </div>
-                        <blockquote>{!! \App\Models\Setting::get('quran_quote', '"Allah akan meninggikan orang-orang yang beriman di antaramu dan orang-orang yang diberi ilmu pengetahuan beberapa derajat."') !!}</blockquote>
-                        <p class="quote-ref">{{ \App\Models\Setting::get('quran_desc', 'Prinsip keselarasan antara kemurnian tauhid dan kedalaman ilmu pengetahuan yang menuntun setiap langkah pengasuhan di Pondok Pesantren Hidayatullah Tuksongo.') }}</p>
+                        <blockquote>
+                            {!! \App\Models\Setting::get('quran_quote', '"Allah akan meninggikan orang-orang yang beriman di antaramu dan orang-orang yang diberi ilmu pengetahuan beberapa derajat."') !!}
+                        </blockquote>
+                        <p class="quote-ref">
+                            {{ \App\Models\Setting::get('quran_desc', 'Prinsip keselarasan antara kemurnian tauhid dan kedalaman ilmu pengetahuan yang menuntun setiap langkah pengasuhan di Pondok Pesantren Hidayatullah Tuksongo.') }}
+                        </p>
                     </div>
                     <div class="quote-icon">
                         <svg class="icon-svg icon-svg-xl" viewBox="0 0 24 24">
@@ -3408,97 +3526,130 @@
                 <div class="fasilitas-grid">
                     <!-- 1. Masjid Jami' Hidayatullah -->
                     <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU6a2L-sDyoOwD_72rgteFhrsAe8symZKQSYIa4qFEcX_x_0urIjNrwIq3gKCYYSWQMViH-sIYhzZkjwLeKZYtA0h99F2ZNQIy89TBXob6RrVInKoij1Pklw1sIhPQR_Dytb1XlvsZLNmFwCeh1jHMyRlG-pJhDilfgIfiVT9KbgclTW_oorWofU9BoyAw3M5oihmSeX4mJM_OpdNIwKLugn0Icz7_QgEB7ev6T7fMhIM4W6RsAqbH" alt="Masjid Jami' Hidayatullah" loading="lazy">
+                        <img class="fasilitas-card-bg-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU6a2L-sDyoOwD_72rgteFhrsAe8symZKQSYIa4qFEcX_x_0urIjNrwIq3gKCYYSWQMViH-sIYhzZkjwLeKZYtA0h99F2ZNQIy89TBXob6RrVInKoij1Pklw1sIhPQR_Dytb1XlvsZLNmFwCeh1jHMyRlG-pJhDilfgIfiVT9KbgclTW_oorWofU9BoyAw3M5oihmSeX4mJM_OpdNIwKLugn0Icz7_QgEB7ev6T7fMhIM4W6RsAqbH"
+                            alt="Masjid Jami' Hidayatullah" loading="lazy">
                         <div class="fasilitas-card-gradient"></div>
                         <div class="fasilitas-card-top">
                             <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                                </svg>
                                 Masjid Jami' Hidayatullah
                             </span>
                         </div>
                         <div class="fasilitas-card-content">
                             <h3 class="fasilitas-card-title">Masjid Jami' Pesantren</h3>
-                            <p class="fasilitas-card-desc">Pusat peribadatan utama shalat berjamaah 5 waktu, halaqah tasmi' Al-Qur'an, kajian hadits nabawi, dan pembacaan maulid mingguan.</p>
+                            <p class="fasilitas-card-desc">Pusat peribadatan utama shalat berjamaah 5 waktu, halaqah
+                                tasmi' Al-Qur'an, kajian hadits nabawi, dan pembacaan maulid mingguan.</p>
                         </div>
                     </div>
 
                     <!-- 2. Asrama Santri Sehat -->
                     <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAdIufyUcLU26xaZ61J8_dbSfX-yPAG5ljh4y-di7Qqra8jK-JVkKDj-gBeDDI20axF6hvx7_wSSN3meuUuNZ7wHTriZV5srouq1o_BC9sjfRL5BkHT4M1O_4oQ6Z8XdNBBMRZQ1DurexAIsGNY_ZFnSJaAhZv_oajAAF8YA0asSodQhgePBVvbtLnw0QM5NRPg9i4aLPQam6rO6_VNKTaVQs4Ku1lngNeYAIR8ztkvLK5gFmt9y_R" alt="Asrama Santri Sehat" loading="lazy">
+                        <img class="fasilitas-card-bg-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAdIufyUcLU26xaZ61J8_dbSfX-yPAG5ljh4y-di7Qqra8jK-JVkKDj-gBeDDI20axF6hvx7_wSSN3meuUuNZ7wHTriZV5srouq1o_BC9sjfRL5BkHT4M1O_4oQ6Z8XdNBBMRZQ1DurexAIsGNY_ZFnSJaAhZv_oajAAF8YA0asSodQhgePBVvbtLnw0QM5NRPg9i4aLPQam6rO6_VNKTaVQs4Ku1lngNeYAIR8ztkvLK5gFmt9y_R"
+                            alt="Asrama Santri Sehat" loading="lazy">
                         <div class="fasilitas-card-gradient"></div>
                         <div class="fasilitas-card-top">
                             <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                </svg>
                                 Asrama Santri Sehat
                             </span>
                         </div>
                         <div class="fasilitas-card-content">
                             <h3 class="fasilitas-card-title">Asrama Putra & Putri Terpisah</h3>
-                            <p class="fasilitas-card-desc">Kamar asrama berpenerangan optimal, ventilasi alami perbukitan Pringsurat, almari santri individu, dan pendampingan wali kamar 24 jam.</p>
+                            <p class="fasilitas-card-desc">Kamar asrama berpenerangan optimal, ventilasi alami
+                                perbukitan Pringsurat, almari santri individu, dan pendampingan wali kamar 24 jam.</p>
                         </div>
                     </div>
 
                     <!-- 3. Laboratorium Sains -->
                     <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRLDfaZnczeAOBMNdv3-O4fNJHuDHanm-hedGFiVj5hrUReVRsvzSgPxwKkbDQARwwCVj_-x201mE14Tj0x4r9wU1TIAWEkbejJX13PHjnbc0EMVq0strXuHCkm6RrQ7tXgFYIMTenYyYWuIW9h3zuoLAIWOfO-5Ihuu7qRkCD85qKWlmjCKqaQQFUDKhO25Yb18hCopf6DEGrLFi6iHqD7S18tpGA2HC8TgOqEcsZZocUAxzsq0lq" alt="Laboratorium Sains" loading="lazy">
+                        <img class="fasilitas-card-bg-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRLDfaZnczeAOBMNdv3-O4fNJHuDHanm-hedGFiVj5hrUReVRsvzSgPxwKkbDQARwwCVj_-x201mE14Tj0x4r9wU1TIAWEkbejJX13PHjnbc0EMVq0strXuHCkm6RrQ7tXgFYIMTenYyYWuIW9h3zuoLAIWOfO-5Ihuu7qRkCD85qKWlmjCKqaQQFUDKhO25Yb18hCopf6DEGrLFi6iHqD7S18tpGA2HC8TgOqEcsZZocUAxzsq0lq"
+                            alt="Laboratorium Sains" loading="lazy">
                         <div class="fasilitas-card-gradient"></div>
                         <div class="fasilitas-card-top">
                             <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><path d="M10 2v7.31L4.41 19A2 2 0 0 0 6 22h12a2 2 0 0 0 1.59-3L14 9.31V2"></path></svg>
+                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                    <path d="M10 2v7.31L4.41 19A2 2 0 0 0 6 22h12a2 2 0 0 0 1.59-3L14 9.31V2"></path>
+                                </svg>
                                 Laboratorium Sains
                             </span>
                         </div>
                         <div class="fasilitas-card-content">
                             <h3 class="fasilitas-card-title">Laboratorium Sains & Komputer</h3>
-                            <p class="fasilitas-card-desc">Sarana praktikum fisika, biologi, kimia, dan lab komputer digital untuk mengasah literasi teknologi santri madrasah.</p>
+                            <p class="fasilitas-card-desc">Sarana praktikum fisika, biologi, kimia, dan lab komputer
+                                digital untuk mengasah literasi teknologi santri madrasah.</p>
                         </div>
                     </div>
 
                     <!-- 4. Perpustakaan & Turats -->
                     <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgackmlJNWMj8ykst-J3dloc8Vc0gC7YhqnQ7Isv4vtgrT4r0vG1hcaUPgEdGIR0XDtSV96zh7RqzBkDml_Qz7BJheMnpFqFUGx4a9nyCyDAVejEON4xLGZZFwRbxsT08deMXku5kRQ290jNBhBTOLWOgXYIyaXLSCq6g-QW7_P1wDAQKlzs0ZA-95wrmKpVgtgTuZKUMhPZF1Bb31F6SqtbEvhnYYy7JGhI8kbuCd4stp5rmiCfgz" alt="Perpustakaan & Turats" loading="lazy">
+                        <img class="fasilitas-card-bg-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgackmlJNWMj8ykst-J3dloc8Vc0gC7YhqnQ7Isv4vtgrT4r0vG1hcaUPgEdGIR0XDtSV96zh7RqzBkDml_Qz7BJheMnpFqFUGx4a9nyCyDAVejEON4xLGZZFwRbxsT08deMXku5kRQ290jNBhBTOLWOgXYIyaXLSCq6g-QW7_P1wDAQKlzs0ZA-95wrmKpVgtgTuZKUMhPZF1Bb31F6SqtbEvhnYYy7JGhI8kbuCd4stp5rmiCfgz"
+                            alt="Perpustakaan & Turats" loading="lazy">
                         <div class="fasilitas-card-gradient"></div>
                         <div class="fasilitas-card-top">
                             <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                </svg>
                                 Perpustakaan & Turats
                             </span>
                         </div>
                         <div class="fasilitas-card-content">
                             <h3 class="fasilitas-card-title">Perpustakaan Kitab Turats & Pengetahuan</h3>
-                            <p class="fasilitas-card-desc">Koleksi kitab rujukan bahasa Arab, buku referensi kurikulum Kemenag, ruang baca nyaman, dan pusat kajian muallimin.</p>
+                            <p class="fasilitas-card-desc">Koleksi kitab rujukan bahasa Arab, buku referensi kurikulum
+                                Kemenag, ruang baca nyaman, dan pusat kajian muallimin.</p>
                         </div>
                     </div>
 
                     <!-- 5. Kompleks Olahraga -->
                     <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm0uFhcuuSGhojqfIRGrLu2zQVLvVBvOIjUyEU5_FgEcO5WlCVLRZn5PxszCuJAgfMErlt0IWbKB_FZudBb7QA4jVi-Joa0fMqphmkE_WzeajuRZ22kcPwzd9sz7tgWEdSbm0-2zEgjneNqLNyeBzGBCGy-HyhslYe7UQ6lWNLn0XewuZliSWthzr4qygbQfE5qHFKraLRMESrRI8VJ1MJSxc1R1Owf3JMMpyx8l4fEC27K_GXy7BX" alt="Kompleks Olahraga" loading="lazy">
+                        <img class="fasilitas-card-bg-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm0uFhcuuSGhojqfIRGrLu2zQVLvVBvOIjUyEU5_FgEcO5WlCVLRZn5PxszCuJAgfMErlt0IWbKB_FZudBb7QA4jVi-Joa0fMqphmkE_WzeajuRZ22kcPwzd9sz7tgWEdSbm0-2zEgjneNqLNyeBzGBCGy-HyhslYe7UQ6lWNLn0XewuZliSWthzr4qygbQfE5qHFKraLRMESrRI8VJ1MJSxc1R1Owf3JMMpyx8l4fEC27K_GXy7BX"
+                            alt="Kompleks Olahraga" loading="lazy">
                         <div class="fasilitas-card-gradient"></div>
                         <div class="fasilitas-card-top">
                             <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                                    <path d="M2 12h20"></path>
+                                </svg>
                                 Kompleks Olahraga
                             </span>
                         </div>
                         <div class="fasilitas-card-content">
                             <h3 class="fasilitas-card-title">Lapangan Olahraga & Bela Diri</h3>
-                            <p class="fasilitas-card-desc">Area futsal, bulutangkis, bola voli, arena latihan pencak silat santri, dan kegiatan kepanduan Pramuka.</p>
+                            <p class="fasilitas-card-desc">Area futsal, bulutangkis, bola voli, arena latihan pencak
+                                silat santri, dan kegiatan kepanduan Pramuka.</p>
                         </div>
                     </div>
 
                     <!-- 6. Pos Kesehatan Pesantren -->
                     <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZHeIxAIcdIvaizS-iBy0iQtNF5rbrGlmdxDVcLS9wReOGG81d7womhqurfN39NuFAU24BNsukyrd6qc5U_XcTdHPGieMWHTVf7Z4236LXr88zHDdDXRLZ3VKSMUBvDcwjE4RXtbZdpJZcPo5HQysIIsEnscHm6fbWL4nab8tqO5YrpRAhDr-7Fam7Acma7ZJUqbIFpMMtRbigI76LnJU6OQhg5EuEil7-tLdBStcwSrm9l_fs6Sxo" alt="Pos Kesehatan Pesantren" loading="lazy">
+                        <img class="fasilitas-card-bg-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZHeIxAIcdIvaizS-iBy0iQtNF5rbrGlmdxDVcLS9wReOGG81d7womhqurfN39NuFAU24BNsukyrd6qc5U_XcTdHPGieMWHTVf7Z4236LXr88zHDdDXRLZ3VKSMUBvDcwjE4RXtbZdpJZcPo5HQysIIsEnscHm6fbWL4nab8tqO5YrpRAhDr-7Fam7Acma7ZJUqbIFpMMtRbigI76LnJU6OQhg5EuEil7-tLdBStcwSrm9l_fs6Sxo"
+                            alt="Pos Kesehatan Pesantren" loading="lazy">
                         <div class="fasilitas-card-gradient"></div>
                         <div class="fasilitas-card-top">
                             <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                </svg>
                                 Pos Kesehatan Pesantren
                             </span>
                         </div>
                         <div class="fasilitas-card-content">
                             <h3 class="fasilitas-card-title">Pos Kesehatan Santri (Poskestren)</h3>
-                            <p class="fasilitas-card-desc">Penanganan pertama medis, koordinasi puskesmas setempat, ruang isolasi santri saat sakit, dan pencatatan riwayat kesehatan.</p>
+                            <p class="fasilitas-card-desc">Penanganan pertama medis, koordinasi puskesmas setempat,
+                                ruang isolasi santri saat sakit, dan pencatatan riwayat kesehatan.</p>
                         </div>
                     </div>
                 </div>
@@ -3516,7 +3667,7 @@
                             <line x1="20" y1="8" x2="20" y2="14"></line>
                             <line x1="23" y1="11" x2="17" y2="11"></line>
                         </svg>
-                        Penerimaan Santri Baru TA 2025/2026
+                        Penerimaan Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
                     </span>
                     <h2 class="section-title">Informasi Pendaftaran & Rincian Biaya Transparan</h2>
                     <p class="section-desc">Rincian resmi ketetapan pimpinan Pondok Pesantren Hidayatullah Tuksongo
@@ -3554,176 +3705,85 @@
                     </div>
                 </div>
 
-                <!-- TABEL RINCIAN BIAYA DARI PDF -->
+                <!-- PREVIEW BIAYA RINGKAS & TAUTAN KE HALAMAN BIAYA LENGKAP -->
                 <div class="biaya-section-wrap anim-fade-up">
-                    <div class="biaya-header">
-                        <div>
-                            <span class="section-label" style="color: var(--green-700);">Rincian Biaya Resmi Masuk
-                                Santri Baru TA 2025/2026</span>
-                            <h3>Tabel Rincian Biaya Awal (Masuk Pertama Kali)</h3>
-                        </div>
-                        <p style="font-size: 13px; color: var(--text-muted); max-width: 400px;">Biaya sudah mencakup
-                            infaq pangkal, gedung, kasur/almari santri mukim, kertas/ujian 1 th, kesehatan 1 th,
-                            kegiatan 1 th, serta syahriyah & uang makan bulan pertama.</p>
-                    </div>
-
-                    @php
-                        $biayaAwalData = json_decode(\App\Models\Setting::get('biaya_awal_json', 'null'), true) ?: [
-                            ['komponen' => 'Uang Pangkal', 'mts_mukim' => 'Rp 1.200.000', 'mts_laju' => 'Rp 1.200.000', 'ma_mukim' => 'Rp 1.400.000', 'ma_laju' => 'Rp 1.400.000', 'is_total' => false],
-                            ['komponen' => 'Uang Gedung', 'mts_mukim' => 'Rp 500.000', 'mts_laju' => 'Rp 500.000', 'ma_mukim' => 'Rp 500.000', 'ma_laju' => 'Rp 500.000', 'is_total' => false],
-                            ['komponen' => 'Almari & Fasilitas Kamar', 'mts_mukim' => 'Rp 350.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 350.000', 'ma_laju' => '—', 'is_total' => false],
-                            ['komponen' => 'Kertas / Evaluasi Belajar (1 Tahun)', 'mts_mukim' => 'Rp 140.000', 'mts_laju' => 'Rp 140.000', 'ma_mukim' => 'Rp 160.000', 'ma_laju' => 'Rp 160.000', 'is_total' => false],
-                            ['komponen' => 'Kesehatan Santri (1 Tahun)', 'mts_mukim' => 'Rp 200.000', 'mts_laju' => 'Rp 200.000', 'ma_mukim' => 'Rp 200.000', 'ma_laju' => 'Rp 200.000', 'is_total' => false],
-                            ['komponen' => 'Kegiatan Santri (1 Tahun)', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => 'Rp 300.000', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => 'Rp 300.000', 'is_total' => false],
-                            ['komponen' => 'Syahriyah (Bulan Pertama)', 'mts_mukim' => 'Rp 85.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 105.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
-                            ['komponen' => 'Uang Makan (Bulan Pertama)', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => '—', 'is_total' => false],
-                            ['komponen' => 'TOTAL BIAYA DAFTAR ULANG', 'mts_mukim' => 'Rp 3.225.000', 'mts_laju' => 'Rp 2.395.000', 'ma_mukim' => 'Rp 3.315.000', 'ma_laju' => 'Rp 2.635.000', 'is_total' => true],
-                        ];
-
-                        $biayaBulananData = json_decode(\App\Models\Setting::get('biaya_bulanan_json', 'null'), true) ?: [
-                            ['komponen' => 'Uang Makan 3x Sehari', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => '—', 'is_total' => false],
-                            ['komponen' => 'Syahriyah Pendidikan', 'mts_mukim' => 'Rp 85.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 105.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
-                            ['komponen' => 'Tabungan Wajib Santri', 'mts_mukim' => 'Rp 25.000', 'mts_laju' => 'Rp 25.000', 'ma_mukim' => 'Rp 25.000', 'ma_laju' => 'Rp 25.000', 'is_total' => false],
-                            ['komponen' => 'TOTAL IURAN BULANAN', 'mts_mukim' => 'Rp 410.000 / bln', 'mts_laju' => 'Rp 80.000 / bln', 'ma_mukim' => 'Rp 430.000 / bln', 'ma_laju' => 'Rp 100.000 / bln', 'is_total' => true],
-                        ];
-                    @endphp
-
-                    <div class="biaya-table-responsive">
-                        <table class="biaya-table">
-                            <thead>
-                                <tr>
-                                    <th>Komponen Pembayaran</th>
-                                    <th>MTs Mukim (Asrama)</th>
-                                    <th>MTs Laju (Non-Asrama)</th>
-                                    <th>MA Mukim (Asrama)</th>
-                                    <th>MA Laju (Non-Asrama)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($biayaAwalData as $row)
-                                    <tr class="{{ !empty($row['is_total']) ? 'total-row' : '' }}">
-                                        <td>{{ $row['komponen'] ?? '' }}</td>
-                                        <td>{{ $row['mts_mukim'] ?? '—' }}</td>
-                                        <td>{{ $row['mts_laju'] ?? '—' }}</td>
-                                        <td>{{ $row['ma_mukim'] ?? '—' }}</td>
-                                        <td>{{ $row['ma_laju'] ?? '—' }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- TABEL BIAYA BULANAN -->
-                    <div style="margin-top: 10px; margin-bottom: 24px;">
-                        <h4
-                            style="font-family: 'EB Garamond', serif; font-size: 20px; color: var(--green-900); margin-bottom: 8px;">
-                            Rincian Biaya Bulanan (SPP/Syahriyah Rutin)</h4>
-                        <div class="biaya-table-responsive">
-                            <table class="biaya-table">
-                                <thead>
-                                    <tr>
-                                        <th>Rincian Rutin Bulanan</th>
-                                        <th>MTs Mukim</th>
-                                        <th>MTs Laju</th>
-                                        <th>MA Mukim</th>
-                                        <th>MA Laju</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($biayaBulananData as $row)
-                                        <tr class="{{ !empty($row['is_total']) ? 'total-row' : '' }}">
-                                            <td>{{ $row['komponen'] ?? '' }}</td>
-                                            <td>{{ $row['mts_mukim'] ?? '—' }}</td>
-                                            <td>{{ $row['mts_laju'] ?? '—' }}</td>
-                                            <td>{{ $row['ma_mukim'] ?? '—' }}</td>
-                                            <td>{{ $row['ma_laju'] ?? '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <p style="font-size: 11px; color: var(--text-muted); font-style: italic;">* Pembayaran
-                            administrasi bulanan disetorkan selambat-lambatnya sebelum tanggal 10 setiap bulannya.</p>
-                    </div>
-
-                    <!-- REKENING DAN PERSYARATAN -->
-                    <div class="psb-bottom-grid">
-                        <div class="rek-card">
-                            <div class="rek-bank-badge">BANK BRI RESMI PESANTREN</div>
-                            <h4>
-                                <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
-                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                                </svg>
-                                Pembayaran Transfer / Online
-                            </h4>
-                            <div class="rek-number">0102-01-022009-53-7</div>
-                            <div class="rek-owner">Atas Nama: <strong>DIKY FACHRI HUSEIN</strong></div>
-                            <p
-                                style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">
-                                Setelah melakukan transfer, silakan konfirmasi bukti transfer dengan format: <em>(Nama
-                                    Santri, Foto/Screenshot Struk, dan Jenis Pembayaran)</em> kepada bendahara pondok.
-                            </p>
-                            <a class="rek-wa-btn"
-                                href="https://wa.me/6285290429617?text=Assalamu'alaikum%2C%20saya%20ingin%20konfirmasi%20pembayaran%20administrasi%20santri%20Pondok%20Hidayatullah%20Tuksongo."
-                                target="_blank">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <path
-                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
-                                    </path>
-                                </svg>
-                                Konfirmasi via WhatsApp (0852-9042-9617)
-                            </a>
+                    <div class="anim-fade-up"
+                        style="background: #ffffff; border: 1px solid #d4ebd8; border-radius: var(--radius-md); padding: 36px; margin-top: 10px; box-shadow: var(--shadow-md);">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                            <div style="max-width: 650px;">
+                                <span class="section-label"
+                                    style="color: var(--green-700); background: var(--green-50); padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                                    </svg>
+                                    Rincian Biaya Resmi TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
+                                </span>
+                                <h3
+                                    style="font-family: 'Grenze', Georgia, serif; font-size: clamp(22px, 3vw, 28px); color: var(--green-950); margin-top: 10px; margin-bottom: 8px;">
+                                    Transparansi Biaya Pendidikan Santri Baru MTs & MA
+                                </h3>
+                                <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                                    Seluruh rincian pembiayaan awal (uang pangkal, seragam, kasur/kamar santri mukim)
+                                    serta syahriyah bulanan disajikan secara rinci, transparan, dan dapat diunduh pada
+                                    halaman khusus biaya kami.
+                                </p>
+                            </div>
+                            <div>
+                                <a href="{{ route('biaya.index') }}" class="btn-gold"
+                                    style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; font-size: 15px; font-weight: 700; border-radius: var(--radius-sm); text-decoration: none; box-shadow: var(--shadow-md);">
+                                    <span>Lihat Rincian Biaya Lengkap</span>
+                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        <polyline points="12 5 19 12 12 19"></polyline>
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
 
-                        <div class="syarat-card">
-                            <h4>
-                                <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                                Persyaratan Berkas Santri Baru
-                            </h4>
-                            <ul class="syarat-list">
-                                <li>
-                                    <svg class="icon-svg icon-svg-xs s-check" viewBox="0 0 24 24">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>Fotokopi Nomor Induk Siswa Nasional (NISN)</span>
-                                </li>
-                                <li>
-                                    <svg class="icon-svg icon-svg-xs s-check" viewBox="0 0 24 24">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>Fotokopi Akta Kelahiran santri</span>
-                                </li>
-                                <li>
-                                    <svg class="icon-svg icon-svg-xs s-check" viewBox="0 0 24 24">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>Fotokopi Kartu Keluarga (KK) orang tua / wali</span>
-                                </li>
-                                <li>
-                                    <svg class="icon-svg icon-svg-xs s-check" viewBox="0 0 24 24">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>Fotokopi Ijazah & SKHUN terakhir dilegalisir</span>
-                                </li>
-                                <li>
-                                    <svg class="icon-svg icon-svg-xs s-check" viewBox="0 0 24 24">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>Surat Keterangan Sehat dari dokter / puskesmas</span>
-                                </li>
-                                <li>
-                                    <svg class="icon-svg icon-svg-xs s-check" viewBox="0 0 24 24">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    <span>Fotokopi Kartu KIP / PKH (bagi yang memiliki)</span>
-                                </li>
-                            </ul>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border);">
+                            <div
+                                style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                                <div
+                                    style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                                    Biaya Masuk Pertama</div>
+                                <div style="font-size: 18px; font-weight: 800; color: var(--green-800); margin: 3px 0;">
+                                    Terjangkau & Jelas</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Sudah termasuk fasilitas
+                                    kamar</div>
+                            </div>
+                            <div
+                                style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                                <div
+                                    style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                                    Syahriyah Bulanan</div>
+                                <div style="font-size: 18px; font-weight: 800; color: var(--green-800); margin: 3px 0;">
+                                    Mulai Rp 80.000/bln</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Untuk santri laju non-asrama
+                                </div>
+                            </div>
+                            <div
+                                style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                                <div
+                                    style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                                    Makan Asrama 3x Sehari</div>
+                                <div style="font-size: 18px; font-weight: 800; color: var(--green-800); margin: 3px 0;">
+                                    Rp 300.000/bln</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Menu sehat bergizi &
+                                    higienis</div>
+                            </div>
+                            <div
+                                style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                                <div
+                                    style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                                    Bantuan / Beasiswa</div>
+                                <div style="font-size: 18px; font-weight: 800; color: var(--gold-600); margin: 3px 0;">
+                                    Tersedia</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Bagi dhuafa & santri
+                                    berprestasi</div>
+                            </div>
                         </div>
                     </div>
 
@@ -3733,9 +3793,9 @@
                         <div style="position: relative; z-index: 2; max-width: 720px; margin: 0 auto;">
                             <span class="section-label"
                                 style="color: var(--gold-300); background: rgba(255,255,255,0.12); padding: 5px 16px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); font-size: 11px; letter-spacing: 0.12em;">PENERIMAAN
-                                SANTRI BARU TA 2025/2026</span>
+                                SANTRI BARU TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}</span>
                             <h3
-                                style="font-family: 'EB Garamond', serif; font-size: clamp(26px, 3.5vw, 34px); font-weight: 700; margin-top: 14px; margin-bottom: 12px; color: #ffffff; line-height: 1.25;">
+                                style="font-family: 'Grenze', Georgia, serif; font-size: clamp(26px, 3.5vw, 34px); font-weight: 700; margin-top: 14px; margin-bottom: 12px; color: #ffffff; line-height: 1.25;">
                                 Formulir Pendaftaran Resmi Santri Baru</h3>
                             <p
                                 style="font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.7; margin-bottom: 28px;">
@@ -3754,8 +3814,10 @@
                                     Buka Formulir Pendaftaran Online
                                 </a>
                                 <a href="{{ route('psb.checkStatus') }}" class="btn-secondary"
-                                    style="background: #ffffff; color: var(--green-950); font-weight: 700; border: none; display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; box-shadow: var(--shadow-md);" title="Cek status verifikasi formulir dan foto calon santri cukup dengan No. Registrasi atau WhatsApp">
-                                    <svg class="icon-svg icon-svg-sm" style="color: var(--green-700);" viewBox="0 0 24 24">
+                                    style="background: #ffffff; color: var(--green-950); font-weight: 700; border: none; display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; box-shadow: var(--shadow-md);"
+                                    title="Cek status verifikasi formulir dan foto calon santri cukup dengan No. Registrasi atau WhatsApp">
+                                    <svg class="icon-svg icon-svg-sm" style="color: var(--green-700);"
+                                        viewBox="0 0 24 24">
                                         <circle cx="11" cy="11" r="8"></circle>
                                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                     </svg>
@@ -3778,76 +3840,7 @@
             </div>
         </section>
 
-        <!-- ===== BUKU PANDUAN BANNER ===== -->
-        <section class="section-panduan" id="panduan">
-            <div class="container">
-                <div class="panduan-card anim-fade-up">
-                    <div class="panduan-text">
-                        <div class="label">
-                            <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                            Dokumen Resmi Pesantren
-                        </div>
-                        <h2>Buku Panduan Santri TA 2025/2026</h2>
-                        <p>Unduh buku pedoman resmi setebal 81 halaman yang mencakup tata tertib, kurikulum mata
-                            pelajaran MTs & MA, jadwal harian lengkap, daftar perlengkapan santri putra & putri, serta
-                            nomor penting pengasuhan.</p>
-                        <ul class="panduan-features">
-                            <li>
-                                <svg class="icon-svg icon-svg-sm check-icon" viewBox="0 0 24 24">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Tata Tertib, Kode Etik & Deskripsi Poin Disiplin Santri</span>
-                            </li>
-                            <li>
-                                <svg class="icon-svg icon-svg-sm check-icon" viewBox="0 0 24 24">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Jadwal Harian 24 Jam & Agenda Kegiatan Berkala</span>
-                            </li>
-                            <li>
-                                <svg class="icon-svg icon-svg-sm check-icon" viewBox="0 0 24 24">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Daftar Ceklis Perlengkapan Wajib Santri Putra & Putri</span>
-                            </li>
-                            <li>
-                                <svg class="icon-svg icon-svg-sm check-icon" viewBox="0 0 24 24">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Kurikulum Mapel Kemenag & Muatan Lokal Turats TMI</span>
-                            </li>
-                        </ul>
-                        <a class="btn-gold" href="{{ \App\Models\Setting::get('panduan_file_url', '/NEW BUKU PANDUAN SANTRI TA 2025 (2).pdf') }}" target="_blank">
-                            <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            Unduh Buku Panduan Resmi (PDF)
-                        </a>
-                    </div>
-                    <div class="panduan-visual">
-                        <div class="panduan-pdf-preview">
-                            <div class="panduan-pdf-icon-wrap">
-                                <svg class="icon-svg icon-svg-xl" viewBox="0 0 24 24">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                            </div>
-                            <h4>Buku Panduan Santri</h4>
-                            <p>Tahun Ajaran 2025/2026</p>
-                            <p style="margin-top: 10px; color: rgba(255,255,255,0.4); font-size: 11px;">Format Dokumen PDF Resmi
-                                • 81 Halaman</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+
 
 
 
@@ -3990,14 +3983,14 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <strong>Pondok Pesantren Hidayatullah Tuksongo</strong>
-                    <p>Membentuk generasi Qur'ani yang berakhlak mulia, berwawasan global, mandiri, dan berakar kuat
-                        pada nilai-nilai Panca Jiwa Pesantren.</p>
+                    <strong>{{ \App\Models\Setting::get('footer_title', 'Pondok Pesantren Hidayatullah Tuksongo') }}</strong>
+                    <p>{{ \App\Models\Setting::get('footer_description', 'Membentuk generasi Qur\'ani yang berakhlak mulia, berwawasan global, mandiri, dan berakar kuat pada nilai-nilai Panca Jiwa Pesantren.') }}
+                    </p>
                     <div class="footer-accreditation">
                         <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        Terakreditasi B (BAN-SM Kemenag) • NSPP: 512032304095
+                        {{ \App\Models\Setting::get('footer_accreditation', 'Terakreditasi B (BAN-SM Kemenag) • NSPP: 512032304095') }}
                     </div>
                 </div>
                 <div class="footer-col">
@@ -4027,7 +4020,8 @@
                                 d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
                             </path>
                         </svg>
-                        <span>Hotline: 0813-9110-9966</span>
+                        <span>Hotline:
+                            {{ \App\Models\Setting::get('footer_hotline', \App\Models\Setting::get('kontak_hotline', '0813-9110-9966')) }}</span>
                     </div>
                     <div class="footer-contact-item">
                         <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
@@ -4035,7 +4029,7 @@
                             </path>
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
-                        <span>tuksongo.ponpes.id</span>
+                        <span>{{ \App\Models\Setting::get('footer_website', 'tuksongo.ponpes.id') }}</span>
                     </div>
                 </div>
                 <div class="footer-col">
@@ -4078,10 +4072,12 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2025 Yayasan Hidayatullah Tuksongo Pringsurat Temanggung. Hak Cipta Dilindungi.</span>
+                <span>{{ \App\Models\Setting::get('footer_copyright', '© 2026 Yayasan Hidayatullah Tuksongo Pringsurat Temanggung. Hak Cipta Dilindungi.') }}</span>
                 <div class="footer-bottom-links">
-                    <a href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}" target="_blank">Unduh Brosur PSB</a>
-                    <a href="{{ \App\Models\Setting::get('panduan_file_url', '/NEW BUKU PANDUAN SANTRI TA 2025 (2).pdf') }}" target="_blank">Buku Panduan Santri (PDF)</a>
+                    <a href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}"
+                        target="_blank">Unduh Brosur PSB</a>
+                    <a href="{{ \App\Models\Setting::get('panduan_file_url', '/NEW BUKU PANDUAN SANTRI TA 2025 (2).pdf') }}"
+                        target="_blank">Buku Panduan Santri (PDF)</a>
                     <a href="#tata-tertib">Tata Tertib Santri</a>
                 </div>
             </div>
@@ -4091,30 +4087,46 @@
     <script>
         // Scroll progress
         const scrollProgress = document.getElementById('scrollProgress');
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            scrollProgress.style.width = (scrollTop / docHeight) * 100 + '%';
-        });
+        if (scrollProgress) {
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                if (docHeight > 0) {
+                    scrollProgress.style.width = (scrollTop / docHeight) * 100 + '%';
+                }
+            }, { passive: true });
+        }
 
-        // Mobile menu
+        // Mobile menu safe fallback (official mobile nav is managed by partials.navbar)
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mobileNav = document.getElementById('mobileNav');
         const mobileNavClose = document.getElementById('mobileNavClose');
-        mobileMenuBtn.addEventListener('click', () => mobileNav.classList.add('open'));
-        mobileNavClose.addEventListener('click', () => mobileNav.classList.remove('open'));
-        function closeMobileNav() { mobileNav.classList.remove('open'); }
+        if (mobileMenuBtn && mobileNav) {
+            mobileMenuBtn.addEventListener('click', () => mobileNav.classList.add('open'));
+        }
+        if (mobileNavClose && mobileNav) {
+            mobileNavClose.addEventListener('click', () => mobileNav.classList.remove('open'));
+        }
+        function closeMobileNav() { if (mobileNav) mobileNav.classList.remove('open'); }
 
         // Scroll animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry, i) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => entry.target.classList.add('visible'), i * 70);
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
-        document.querySelectorAll('.anim-fade-up').forEach(el => observer.observe(el));
+        const animElements = document.querySelectorAll('.anim-fade-up');
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, i) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => entry.target.classList.add('visible'), i * 70);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.05 });
+            animElements.forEach(el => observer.observe(el));
+        } else {
+            animElements.forEach(el => el.classList.add('visible'));
+        }
+        setTimeout(() => {
+            animElements.forEach(el => el.classList.add('visible'));
+        }, 300);
 
         // Active nav on scroll
         const sections = document.querySelectorAll('section[id]');
@@ -4130,14 +4142,128 @@
             topNavLinks.forEach(link => {
                 link.classList.toggle('active', link.getAttribute('href') === '#' + current);
             });
-            // highlight parent dropdowns if sub-section is active
             if (triggerTentang) {
                 triggerTentang.classList.toggle('active', ['profil', 'fasilitas'].includes(current));
             }
             if (triggerPesantren) {
                 triggerPesantren.classList.toggle('active', ['program', 'kehidupan', 'tata-tertib', 'panduan'].includes(current));
             }
-        });
+        }, { passive: true });
+
+        // Hero Photo Slider (3-5 Photos Auto Rotate & Interactive)
+        (function initHeroSlider() {
+            const heroSlider = document.getElementById('heroSlider');
+            if (!heroSlider) return;
+
+            const slides = heroSlider.querySelectorAll('.hero-slide');
+            const dots = heroSlider.querySelectorAll('.hero-slider-dot');
+            const prevBtn = document.getElementById('heroPrevBtn');
+            const nextBtn = document.getElementById('heroNextBtn');
+            const duration = parseInt(heroSlider.dataset.duration, 10) || 5000;
+            const animation = heroSlider.dataset.animation || 'fade';
+            let currentIndex = 0;
+            let slideInterval = null;
+
+            if (slides.length <= 1) return;
+
+            function showSlide(index) {
+                if (index < 0) index = slides.length - 1;
+                if (index >= slides.length) index = 0;
+
+                slides.forEach((slide, idx) => {
+                    slide.classList.remove('active', 'prev-out');
+                    if (animation === 'slide' && idx === currentIndex && idx !== index) {
+                        slide.classList.add('prev-out');
+                    }
+                });
+                dots.forEach(dot => dot.classList.remove('active'));
+
+                currentIndex = index;
+                slides[currentIndex].classList.add('active');
+                if (dots[currentIndex]) dots[currentIndex].classList.add('active');
+            }
+
+            function nextSlide() {
+                showSlide(currentIndex + 1);
+            }
+
+            function prevSlide() {
+                showSlide(currentIndex - 1);
+            }
+
+            function startAutoSlide() {
+                stopAutoSlide();
+                slideInterval = setInterval(nextSlide, duration);
+            }
+
+            function stopAutoSlide() {
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                    slideInterval = null;
+                }
+            }
+
+            function resetTimer() {
+                stopAutoSlide();
+                startAutoSlide();
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    nextSlide();
+                    resetTimer();
+                });
+            }
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    prevSlide();
+                    resetTimer();
+                });
+            }
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = parseInt(dot.dataset.slideTarget, 10);
+                    if (!isNaN(target)) {
+                        showSlide(target);
+                        resetTimer();
+                    }
+                });
+            });
+
+            // Touch Swipe Support for Mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+            heroSlider.addEventListener('touchstart', (e) => {
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }
+                stopAutoSlide();
+            }, { passive: true });
+
+            heroSlider.addEventListener('touchend', (e) => {
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    const diff = touchEndX - touchStartX;
+                    if (Math.abs(diff) > 40) {
+                        if (diff < 0) nextSlide();
+                        else prevSlide();
+                    }
+                }
+                startAutoSlide();
+            }, { passive: true });
+
+            // Pause on hover
+            heroSlider.addEventListener('mouseenter', stopAutoSlide);
+            heroSlider.addEventListener('mouseleave', startAutoSlide);
+
+            // Start auto sliding
+            startAutoSlide();
+        })();
     </script>
 </body>
 

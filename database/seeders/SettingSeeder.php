@@ -160,6 +160,105 @@ class SettingSeeder extends Seeder
                 'value' => 'Dusun Tuksongo RT 01 / RW 01, Desa Nglorog, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272',
                 'group' => 'kontak',
             ],
+
+            // TAHUN AJARAN & FOOTER
+            [
+                'key' => 'tahun_ajaran',
+                'value' => '2026/2027',
+                'group' => 'general',
+            ],
+            [
+                'key' => 'footer_title',
+                'value' => 'Pondok Pesantren Hidayatullah Tuksongo',
+                'group' => 'kontak',
+            ],
+            [
+                'key' => 'footer_description',
+                'value' => 'Membentuk generasi Qur\'ani yang berakhlak mulia, berwawasan global, mandiri, dan berakar kuat pada nilai-nilai Panca Jiwa Pesantren.',
+                'group' => 'kontak',
+            ],
+            [
+                'key' => 'footer_accreditation',
+                'value' => 'Terakreditasi B (BAN-SM Kemenag) • NSPP: 512032304095',
+                'group' => 'kontak',
+            ],
+            [
+                'key' => 'footer_hotline',
+                'value' => '0813-9110-9966',
+                'group' => 'kontak',
+            ],
+            [
+                'key' => 'footer_website',
+                'value' => 'tuksongo.ponpes.id',
+                'group' => 'kontak',
+            ],
+            [
+                'key' => 'footer_copyright',
+                'value' => '© 2026 Yayasan Hidayatullah Tuksongo Pringsurat Temanggung. Hak Cipta Dilindungi.',
+                'group' => 'kontak',
+            ],
+            // HERO SLIDER & VISUAL SETTINGS
+            [
+                'key' => 'hero_image',
+                'value' => '/uploads/settings/hero_slide_1.jpg',
+                'group' => 'hero',
+            ],
+            [
+                'key' => 'hero_slider_animation',
+                'value' => 'fade',
+                'group' => 'hero',
+            ],
+            [
+                'key' => 'hero_slider_duration',
+                'value' => '5',
+                'group' => 'hero',
+            ],
+            [
+                'key' => 'hero_slide_count',
+                'value' => '5',
+                'group' => 'hero',
+            ],
+            [
+                'key' => 'hero_slides_json',
+                'value' => json_encode([
+                    [
+                        'id' => 1,
+                        'image' => '/uploads/settings/hero_slide_1.jpg',
+                        'caption' => 'Kampus Alam Tuksongo Madani',
+                        'subcaption' => 'Dusun Tuksongo, Nglorog, Pringsurat — Asri, hening, dan kondusif untuk tholabul \'ilmi',
+                        'active' => true,
+                    ],
+                    [
+                        'id' => 2,
+                        'image' => '/uploads/settings/hero_slide_2.jpg',
+                        'caption' => 'Halaqah Tahfidzul Qur\'an Bersanad',
+                        'subcaption' => 'Bimbingan intensif mutqin bersama asatidz penghafal Al-Qur\'an',
+                        'active' => true,
+                    ],
+                    [
+                        'id' => 3,
+                        'image' => '/uploads/settings/hero_slide_3.jpg',
+                        'caption' => 'Kompleks Asrama & Kampus Modern',
+                        'subcaption' => 'Lingkungan hunian santri yang bersih, tertib, sehat, dan islami 24 jam',
+                        'active' => true,
+                    ],
+                    [
+                        'id' => 4,
+                        'image' => '/uploads/settings/hero_slide_4.jpg',
+                        'caption' => 'Majelis Asatidz & Pendidik Amanah',
+                        'subcaption' => 'Kaderisasi alumni Gontor & salafiyah berdedikasi mengabdi',
+                        'active' => true,
+                    ],
+                    [
+                        'id' => 5,
+                        'image' => '/uploads/settings/hero_slide_5.jpg',
+                        'caption' => 'Laboratorium CBT & Penunjang Digital',
+                        'subcaption' => 'Fasilitas ujian mandiri dan penguasaan sains teknologi modern',
+                        'active' => true,
+                    ],
+                ], JSON_PRETTY_PRINT),
+                'group' => 'hero',
+            ],
         ];
 
         foreach ($settings as $s) {

@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulir Pendaftaran Santri Baru TA 2025/2026 — Hidayatullah Tuksongo</title>
+    <title>Formulir Pendaftaran Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }} — Hidayatullah Tuksongo</title>
     <link rel="icon" href="/logo.png" type="image/png">
     
-    <!-- Google Fonts: Plus Jakarta Sans & EB Garamond -->
+    <!-- Google Fonts: Plus Jakarta Sans, EB Garamond & Grenze -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=EB+Garamond:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=EB+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Grenze:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,7 +19,7 @@
                 extend: {
                     fontFamily: {
                         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        serif: ['"EB Garamond"', 'serif'],
+                        serif: ['"Grenze"', '"EB Garamond"', 'serif'],
                     },
                     colors: {
                         pondok: {
@@ -71,35 +71,39 @@
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 antialiased">
 
-    <!-- TOP HEADER -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
-            <a href="{{ route('home') }}" class="flex items-center gap-3 group">
-                <img src="/logo.png" alt="Logo Ponpes" class="w-10 h-10 object-contain group-hover:scale-105 transition">
-                <div>
-                    <strong class="font-bold text-slate-900 text-sm sm:text-base leading-tight block">Hidayatullah Tuksongo</strong>
-                    <span class="text-xs text-pondok-700 font-medium">Pringsurat Temanggung</span>
+    <!-- TOP HEADER (SPACIOUS & ELEGANT) -->
+    <header class="bg-white border-b border-slate-200/90 sticky top-0 z-40 shadow-xs py-5 sm:py-6 px-6 sm:px-12 lg:px-20 transition-all">
+        <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+            <a href="{{ route('home') }}" class="flex items-center gap-4 group">
+                <img src="/logo.png" alt="Logo Pondok Pesantren Hidayatullah" class="w-11 h-11 sm:w-12 sm:h-12 object-contain shrink-0 group-hover:scale-105 transition">
+                <div class="flex flex-col justify-center">
+                    <img src="/logo1.png" alt="معهد هداية الله للتربية الإسلامية" class="h-6 sm:h-8 w-auto object-contain object-left filter contrast-105">
+                    <span class="font-sans text-[11px] sm:text-xs font-semibold text-slate-600 tracking-tight">Pondok Pesantren Hidayatullah Tuksongo</span>
                 </div>
             </a>
             <div class="flex items-center gap-3">
-                <a href="{{ route('home') }}" class="text-xs font-semibold text-slate-500 hover:text-pondok-800 transition flex items-center gap-1.5">
+                <a href="{{ route('psb.checkStatus') }}" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-pondok-800 transition shadow-2xs">
+                    <svg class="icon-svg w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <span>Cek Status Pendaftaran</span>
+                </a>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 hover:bg-emerald-100 text-xs sm:text-sm font-semibold text-emerald-900 transition shadow-2xs">
                     <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    <span class="hidden sm:inline">Kembali ke Beranda</span>
+                    <span>Kembali ke Beranda</span>
                 </a>
             </div>
         </div>
     </header>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 py-8 px-4 sm:px-6">
-        <div class="max-w-4xl mx-auto space-y-6">
+    <main class="flex-1 py-10 sm:py-16 px-4 sm:px-6">
+        <div class="max-w-4xl mx-auto space-y-8">
 
             <!-- Title & Hero Banner -->
             <div class="bg-gradient-to-br from-pondok-900 to-pondok-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
                 <div class="relative z-10 space-y-2">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs text-xs font-semibold text-gold-300 border border-white/20">
                         <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
-                        TAHUN AJARAN 2025/2026
+                        TAHUN AJARAN {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight">Formulir Pendaftaran Santri Baru</h1>
                     <p class="text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
@@ -300,12 +304,12 @@
                     </div>
 
                     <!-- Navigation Buttons -->
-                    <div class="pt-4 flex items-center justify-between">
-                        <button type="button" onclick="goToStep(1)" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">
+                    <div class="pt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+                        <button type="button" onclick="goToStep(1)" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition text-center">
                             ← Kembali
                         </button>
-                        <button type="button" onclick="validateAndGoStep(2, 3)" class="px-6 py-3 bg-pondok-700 hover:bg-pondok-800 text-white font-semibold rounded-xl text-sm transition shadow-md flex items-center gap-2">
-                            Lanjut: Sekolah & Orang Tua
+                        <button type="button" onclick="validateAndGoStep(2, 3)" class="w-full sm:w-auto px-6 py-3 bg-pondok-700 hover:bg-pondok-800 text-white font-semibold rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+                            Lanjut: Sekolah &amp; Orang Tua
                             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </button>
                     </div>
@@ -504,12 +508,12 @@
                     </div>
 
                     <!-- Navigation Buttons -->
-                    <div class="pt-4 flex items-center justify-between">
-                        <button type="button" onclick="goToStep(2)" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">
+                    <div class="pt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+                        <button type="button" onclick="goToStep(2)" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition text-center">
                             ← Kembali
                         </button>
-                        <button type="button" onclick="validateAndGoStep(3, 4)" class="px-6 py-3 bg-pondok-700 hover:bg-pondok-800 text-white font-semibold rounded-xl text-sm transition shadow-md flex items-center gap-2">
-                            Lanjut: Pembayaran & Upload Berkas
+                        <button type="button" onclick="validateAndGoStep(3, 4)" class="w-full sm:w-auto px-6 py-3 bg-pondok-700 hover:bg-pondok-800 text-white font-semibold rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+                            Lanjut: Pembayaran &amp; Upload Berkas
                             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </button>
                     </div>
@@ -669,11 +673,11 @@
                             </label>
                         </div>
 
-                        <div class="flex items-center justify-between pt-2">
-                            <button type="button" onclick="goToStep(3)" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">
+                        <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-2">
+                            <button type="button" onclick="goToStep(3)" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition text-center">
                                 ← Kembali
                             </button>
-                            <button type="submit" id="btnSubmitForm" class="px-8 py-3.5 bg-pondok-700 hover:bg-pondok-800 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center gap-2">
+                            <button type="submit" id="btnSubmitForm" class="w-full sm:w-auto px-8 py-3.5 bg-pondok-700 hover:bg-pondok-800 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
                                 <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                                 Kirim Formulir Pendaftaran Sekarang
                             </button>
@@ -688,8 +692,8 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500">
-        <p>© 2025 Pondok Pesantren Hidayatullah Tuksongo Pringsurat Temanggung. Hotline Panitia PSB: 0852-9042-9617</p>
+    <footer class="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500 px-4">
+        <p>© {{ date('Y') }} Pondok Pesantren Hidayatullah Tuksongo Pringsurat Temanggung. Hotline Panitia PSB: {{ \App\Models\Setting::get('kontak_hotline_1', '0852-9042-9617') }}</p>
     </footer>
 
     <!-- JAVASCRIPT WIZARD, CLIPBOARD & PREVIEW -->

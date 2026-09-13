@@ -27,21 +27,34 @@
     <div class="max-w-3xl w-full space-y-6">
 
         <!-- Top Navigation -->
-        <div class="flex items-center justify-between">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-emerald-800 transition">
-                <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Kembali ke Beranda
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200/80">
+            <a href="{{ route('home') }}" class="flex items-center gap-3 group">
+                <img src="/logo.png" alt="Logo Pondok Pesantren Hidayatullah" class="w-10 h-10 object-contain shrink-0 group-hover:scale-105 transition">
+                <div class="flex flex-col justify-center">
+                    <img src="/logo1.png" alt="معهد هداية الله للتربية الإسلامية" class="h-7 w-auto object-contain object-left">
+                    <span class="font-sans text-[10px] font-semibold text-slate-600 tracking-tight">Pondok Pesantren Hidayatullah Tuksongo</span>
+                </div>
             </a>
-            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::get('kontak_hotline_1', '6281234567890')) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs hover:bg-emerald-100 transition">
-                <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                Bantuan Panitia PSB
-            </a>
+            <div class="flex items-center gap-2.5">
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-emerald-800 transition shadow-2xs">
+                    <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Kembali ke Beranda</span>
+                </a>
+                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::get('kontak_hotline_1', '6281234567890')) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-2xs hover:bg-emerald-100 transition">
+                    <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    Bantuan Panitia
+                </a>
+            </div>
         </div>
 
         <!-- Header Card -->
         <div class="bg-gradient-to-r from-[#0d3b1e] to-[#1a6b38] text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden text-center">
-            <div class="w-16 h-16 bg-white rounded-2xl p-2.5 mx-auto mb-3 shadow-md flex items-center justify-center">
-                <img src="/logo.png" alt="Logo Pesantren" class="w-full h-full object-contain">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <img src="/logo.png" alt="Logo" class="w-12 h-12 object-contain">
+                <div class="text-left flex flex-col justify-center">
+                    <img src="/logo1.png" alt="معهد هداية الله" class="h-8 w-auto object-contain brightness-0 invert">
+                    <span class="text-[10px] text-emerald-100 font-medium">Pondok Pesantren Hidayatullah Tuksongo</span>
+                </div>
             </div>
             <span class="text-xs uppercase tracking-widest text-[#e8cc5a] font-bold block mb-1">Layanan Informasi Mandiri Santri Baru</span>
             <h1 class="text-2xl sm:text-3xl font-serif font-bold">Cek Status Verifikasi Pendaftaran</h1>
@@ -149,32 +162,47 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <!-- 1. Status Seleksi Utama -->
-                <div class="rounded-2xl p-5 border {{ $registration->status === 'Diterima' ? 'bg-emerald-50/80 border-emerald-200' : ($registration->status === 'Ditolak' ? 'bg-rose-50/80 border-rose-200' : 'bg-amber-50/80 border-amber-200') }} space-y-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Status Hasil Seleksi:</span>
-                    <div class="flex items-center gap-2.5">
+                <div class="rounded-2xl p-5 border {{ $registration->status === 'Diterima' ? 'bg-emerald-50/80 border-emerald-200' : ($registration->status === 'Ditolak' ? 'bg-rose-50/80 border-rose-200' : 'bg-amber-50/80 border-amber-200') }} space-y-2.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Status Hasil Seleksi Santri Baru:</span>
+                    <div class="flex items-start gap-2.5">
                         @if($registration->status === 'Diterima')
-                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <svg class="icon-svg w-5 h-5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </div>
-                        <div>
-                            <strong class="text-base font-bold text-emerald-900 block">DITERIMA SEBAGAI SANTRI BARU</strong>
-                            <p class="text-xs text-emerald-800">Selamat! Berkas dan persyaratan pendaftaran dinyatakan lulus seleksi.</p>
+                        <div class="space-y-1">
+                            <strong class="text-base font-bold text-emerald-900 block">ALHAMDULILLAH, DINYATAKAN DITERIMA</strong>
+                            <p class="text-xs text-emerald-800 leading-relaxed">
+                                Calon santri telah memenuhi kriteria seleksi (Nilai Ujian CBT: <strong>{{ $registration->nilai_ujian ?? '—' }}</strong> &amp; Administrasi Pembayaran Terverifikasi) serta dinyatakan resmi diterima sebagai santri baru.
+                            </p>
                         </div>
                         @elseif($registration->status === 'Ditolak')
-                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
-                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <div class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <svg class="icon-svg w-5 h-5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </div>
-                        <div>
+                        <div class="space-y-1">
                             <strong class="text-base font-bold text-rose-900 block">BELUM MEMENUHI KETENTUAN</strong>
-                            <p class="text-xs text-rose-800">Mohon maaf, pendaftaran belum memenuhi kuota atau ketentuan seleksi.</p>
+                            <p class="text-xs text-rose-800 leading-relaxed">Mohon maaf, pendaftaran belum memenuhi kuota atau kriteria kelulusan panitia seleksi.</p>
                         </div>
                         @else
-                        <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 animate-pulse">
-                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <div class="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 animate-pulse shadow-sm">
+                            <svg class="icon-svg w-5 h-5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </div>
-                        <div>
-                            <strong class="text-base font-bold text-amber-900 block">MENUNGGU VERIFIKASI PANITIA</strong>
-                            <p class="text-xs text-amber-800">Berkas dan mutasi transfer Anda sedang dalam antrean pemeriksaan panitia PSB.</p>
+                        <div class="space-y-1">
+                            <strong class="text-base font-bold text-amber-900 block">DALAM PROSES SELEKSI &amp; VERIFIKASI</strong>
+                            <p class="text-xs text-amber-800 leading-relaxed">
+                                Penentuan penerimaan ditentukan berdasarkan <strong>Nilai Tinggi Ujian CBT (&ge; {{ \App\Models\Setting::get('cbt_passing_grade', 70) }})</strong> dan <strong>Bukti Pembayaran Pendaftaran</strong>, atau penetapan khusus panitia.
+                            </p>
+                            @php
+                                $evalStatus = $registration->evaluasiSyaratPenerimaan();
+                            @endphp
+                            <div class="pt-1 flex flex-wrap gap-1.5 text-[10.5px]">
+                                <span class="px-2 py-0.5 rounded-full font-bold {{ $evalStatus['sudah_bayar'] ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600' }}">
+                                    {{ $evalStatus['sudah_bayar'] ? '✓ Biaya Terbayar' : '⏳ Menunggu Bukti Transfer' }}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full font-bold {{ $evalStatus['nilai_tinggi'] ? 'bg-emerald-100 text-emerald-800' : ($evalStatus['sudah_ujian'] ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600') }}">
+                                    {{ $evalStatus['nilai_tinggi'] ? '✓ Nilai Lulus (' . $registration->nilai_ujian . ')' : ($evalStatus['sudah_ujian'] ? '✕ Nilai ' . $registration->nilai_ujian . ' (Belum KKM)' : '⏳ Belum Ujian CBT') }}
+                                </span>
+                            </div>
                         </div>
                         @endif
                     </div>
@@ -218,12 +246,126 @@
 
             </div>
 
+            <!-- 3. BERKAS DOKUMEN HASIL UJIAN SELEKSI MASUK (CBT ONLINE) -->
+            @php
+                $cbtKkm = (int) \App\Models\Setting::get('cbt_passing_grade', 70);
+                $examFinished = ($registration->status_ujian === 'Selesai' && $registration->nilai_ujian !== null);
+                $examStarted = ($registration->status_ujian === 'Sedang Ujian');
+                $kelulusanStatus = $registration->status_kelulusan;
+                $evaluasi = $registration->evaluasiSyaratPenerimaan();
+            @endphp
+
+            <div class="rounded-3xl p-6 sm:p-7 border border-slate-200 bg-gradient-to-br from-slate-50/70 via-white to-emerald-50/30 shadow-sm space-y-4">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-lg bg-emerald-800 text-white shadow-xs">
+                            <svg class="icon-svg w-5 h-5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Dokumen Resmi Pendaftaran</span>
+                            <h3 class="text-base sm:text-lg font-serif font-bold text-slate-900">Berkas Lembar Hasil Ujian CBT &amp; Nilai Santri</h3>
+                        </div>
+                    </div>
+
+                    @if($examFinished)
+                        <span class="px-3.5 py-1.5 rounded-full text-xs font-bold {{ $kelulusanStatus === 'Lulus' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : ($kelulusanStatus === 'Tidak Lulus' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300') }} flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full {{ $kelulusanStatus === 'Lulus' ? 'bg-emerald-600' : 'bg-rose-600' }}"></span>
+                            {{ $kelulusanStatus === 'Lulus' ? 'Lulus CBT (Nilai ' . $registration->nilai_ujian . ')' : $kelulusanStatus }}
+                        </span>
+                    @else
+                        <span class="px-3.5 py-1.5 rounded-full text-xs font-bold {{ $examStarted ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700' }} flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full {{ $examStarted ? 'bg-blue-500 animate-ping' : 'bg-slate-500' }}"></span>
+                            {{ $examStarted ? 'Sedang Ujian' : 'Belum Ujian CBT' }}
+                        </span>
+                    @endif
+                </div>
+
+                @if($examFinished)
+                    <!-- Kartu Berkas Hasil Ujian (Official Document Card) -->
+                    <div class="p-5 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold uppercase tracking-wider">
+                                        Dokumen Sah CBT-{{ date('y') }}
+                                    </span>
+                                    <span class="text-xs text-slate-400">&bull;</span>
+                                    <span class="text-xs text-slate-500 font-medium">Standar KKM: {{ $cbtKkm }} Poin</span>
+                                </div>
+                                <h4 class="text-base font-bold text-slate-900">Lembar Hasil Ujian Seleksi Masuk (CBT Online)</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed max-w-xl">
+                                    Nilai akhir ujian seleksi, rincian skor per mata pelajaran, serta stempel verifikasi online telah tersimpan dalam berkas resmi pendaftaran. Anda dapat melihat atau mengunduh lembar berkas ini dalam format PDF siap cetak.
+                                </p>
+                            </div>
+
+                            <!-- Tombol Aksi Buka Berkas -->
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full sm:w-auto">
+                                <a href="{{ route('psb.printCard', ['id' => $registration->id, 'mode' => 'ujian']) }}" target="_blank" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 text-center">
+                                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                    <span>Cetak Lembar Nilai CBT</span>
+                                </a>
+                                <a href="{{ route('psb.printCard', ['id' => $registration->id, 'mode' => 'all']) }}" target="_blank" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5 text-center">
+                                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                    <span>Berkas Lengkap (CV + Nilai)</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Ringkasan Singkat Nilai Ujian (Compact) -->
+                        <div class="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-center">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Nilai Akhir CBT</span>
+                                <span class="text-2xl font-black font-serif {{ $registration->nilai_ujian >= $cbtKkm ? 'text-emerald-700' : 'text-rose-600' }}">
+                                    {{ $registration->nilai_ujian }}
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Predikat Kelulusan</span>
+                                <span class="text-sm font-bold block mt-1 {{ $kelulusanStatus === 'Lulus' ? 'text-emerald-700' : 'text-rose-600' }}">
+                                    {{ $kelulusanStatus }}
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Status Pembayaran</span>
+                                <span class="text-xs font-bold block mt-1 {{ $registration->bukti_transfer ? 'text-emerald-700' : 'text-amber-700' }}">
+                                    {{ $registration->bukti_transfer ? '✓ Terverifikasi Lunas' : 'Belum Ada' }}
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block">Waktu Selesai</span>
+                                <span class="text-[11px] font-semibold text-slate-700 block mt-1">
+                                    {{ $registration->ujian_selesai_at ? $registration->ujian_selesai_at->format('d/m/Y H:i') : '—' }} WIB
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <!-- Santri Belum Mengerjakan Ujian CBT -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <h4 class="text-sm font-bold text-slate-800">Calon Santri Belum Mengikuti Ujian Seleksi Online</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Ujian Seleksi Masuk (CBT Online) bersifat wajib untuk menentukan kelulusan. Silakan login ke portal ujian menggunakan <strong>Nomor Registrasi</strong> dan <strong>Nama Lengkap</strong> calon santri.
+                                </p>
+                            </div>
+                            <a href="{{ route('ujian.index') }}?no_reg={{ urlencode($registration->no_registrasi) }}" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md hover:shadow-lg transition shrink-0">
+                                <span>Mulai Ujian CBT Sekarang</span>
+                                <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
+            </div>
+
             <!-- FORM UPLOAD ULANG FOTO (Tampil jika Perlu Perbaikan ATAU saat diklik tombol ganti foto) -->
             <div id="form-ganti-foto" class="{{ ($registration->foto_status ?? '') === 'Perlu Perbaikan' ? '' : 'hidden' }} p-5 bg-amber-50 rounded-2xl border border-amber-300 space-y-3 transition">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 text-amber-950 font-bold text-sm">
                         <svg class="icon-svg w-4.5 h-4.5 text-amber-700" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        Formulir Unggah / Penggantian Pas Foto Santri:
+                        Formulir Unggah / Pergantian Pas Foto Santri:
                     </div>
                     @if(($registration->foto_status ?? '') !== 'Perlu Perbaikan')
                     <button type="button" onclick="document.getElementById('form-ganti-foto').classList.add('hidden')" class="text-xs font-semibold text-slate-500 hover:text-slate-800">

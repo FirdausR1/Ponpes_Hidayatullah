@@ -6,7 +6,7 @@
     <title>Warta & Berita Santri — Pondok Pesantren Hidayatullah Tuksongo</title>
     <meta name="description" content="Kabar terkini, kegiatan dakwah, prestasi santri, kajian kitab kuning, dan informasi resmi Pondok Pesantren Hidayatullah Tuksongo Pringsurat Temanggung.">
     <link rel="icon" href="/logo.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Grenze:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -66,7 +66,7 @@
         .navbar-inner { display: flex; align-items: center; justify-content: space-between; }
         .navbar-brand { display: flex; align-items: center; gap: 12px; }
         .navbar-brand img { width: 42px; height: 42px; object-fit: contain; }
-        .navbar-brand strong { font-family: 'EB Garamond', serif; font-size: 19px; color: var(--green-900); display: block; line-height: 1.1; }
+        .navbar-brand strong { font-family: 'Grenze', Georgia, serif; font-size: 19px; color: var(--green-900); display: block; line-height: 1.1; }
         .navbar-brand span { font-size: 11px; color: var(--text-muted); }
         .nav-actions { display: flex; align-items: center; gap: 12px; }
         .btn-nav {
@@ -87,7 +87,7 @@
         .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
         .breadcrumb a:hover { color: var(--green-800); }
         .page-title {
-            font-family: 'EB Garamond', serif;
+            font-family: 'Grenze', Georgia, serif;
             font-size: clamp(32px, 4vw, 44px);
             font-weight: 600; color: var(--green-950);
             line-height: 1.2; margin-bottom: 10px;
@@ -146,7 +146,7 @@
             border: 1px solid var(--green-200);
         }
         .featured-body h2 {
-            font-family: 'EB Garamond', serif; font-size: 26px;
+            font-family: 'Grenze', Georgia, serif; font-size: 26px;
             color: var(--green-950); line-height: 1.3; margin-bottom: 12px;
         }
         .featured-body p { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
@@ -175,7 +175,7 @@
         .news-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
         .news-date { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
         .news-card-body h3 {
-            font-family: 'EB Garamond', serif; font-size: 19px;
+            font-family: 'Grenze', Georgia, serif; font-size: 19px;
             font-weight: 600; color: var(--text-primary);
             line-height: 1.35; margin-bottom: 8px;
         }
@@ -212,7 +212,7 @@
             border: 1px dashed var(--border); border-radius: var(--radius-md);
             margin: 40px 0;
         }
-        .empty-state h3 { font-family: 'EB Garamond', serif; font-size: 24px; color: var(--green-900); margin-bottom: 8px; }
+        .empty-state h3 { font-family: 'Grenze', Georgia, serif; font-size: 24px; color: var(--green-900); margin-bottom: 8px; }
         .empty-state p { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
 
         /* FOOTER */
@@ -232,28 +232,8 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <header class="navbar">
-        <div class="container">
-            <div class="navbar-inner">
-                <a href="{{ route('home') }}" class="navbar-brand">
-                    <img src="/logo.png" alt="Logo Pondok Hidayatullah">
-                    <div>
-                        <strong>Hidayatullah Tuksongo</strong>
-                        <span>Pringsurat Temanggung</span>
-                    </div>
-                </a>
-                <div class="nav-actions">
-                    <a href="{{ route('home') }}" class="btn-link">← Beranda Utama</a>
-                    <a href="{{ route('admin.dashboard') }}" class="btn-link" target="_blank">Admin Panel</a>
-                    <a href="{{ route('home') }}#psb" class="btn-nav">
-                        Pendaftaran Santri
-                        <svg class="icon-svg" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <!-- OFFICIAL UNIFIED HEADER NAVBAR -->
+    @include('partials.navbar', ['isLanding' => false])
 
     <!-- HEADER -->
     <section class="news-header">

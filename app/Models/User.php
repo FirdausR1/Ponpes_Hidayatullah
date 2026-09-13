@@ -20,8 +20,80 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'role',
+        'signature_image',
+        'jabatan',
         'password',
     ];
+
+    /**
+     * Cek apakah user memiliki peran superadmin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return ($this->role ?? 'admin') === 'superadmin';
+    }
+
+    /**
+     * Cek apakah user memiliki peran admin biasa.
+     */
+    public function isAdmin(): bool
+    {
+        return ($this->role ?? 'admin') === 'admin';
+    }
+
+    /**
+     * Cek apakah user memiliki peran bendahara.
+     */
+    public function isBendahara(): bool
+    {
+        return ($this->role ?? '') === 'bendahara';
+    }
+
+    /**
+     * Cek izin kelola Pengguna (Superadmin saja).
+     */
+    public function canManageUsers(): bool
+    {
+        return $this->isSuperAdmin();
+    }
+
+    /**
+     * Cek izin kelola Pengaturan Web & Berita (Superadmin & Admin).
+     */
+    public function canManageSettings(): bool
+    {
+        return in_array($this->role ?? '', ['superadmin', 'admin']);
+    }
+
+    public function canManageBerita(): bool
+    {
+        return in_array($this->role ?? '', ['superadmin', 'admin']);
+    }
+
+    /**
+     * Cek izin kelola Bank Soal CBT (Superadmin & Admin).
+     */
+    public function canManageCbt(): bool
+    {
+        return in_array($this->role ?? '', ['superadmin', 'admin']);
+    }
+
+    /**
+     * Cek izin kelola Data Santri (Superadmin, Admin, & Bendahara).
+     */
+    public function canManageStudents(): bool
+    {
+        return in_array($this->role ?? '', ['superadmin', 'admin', 'bendahara']);
+    }
+
+    /**
+     * Cek izin kelola Pembayaran (Hanya Superadmin & Bendahara, Admin Biasa TIDAK BISA).
+     */
+    public function canManagePayments(): bool
+    {
+        return in_array($this->role ?? '', ['superadmin', 'bendahara']);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
