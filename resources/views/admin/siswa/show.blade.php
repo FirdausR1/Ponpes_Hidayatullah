@@ -312,6 +312,23 @@
             </div>
         </div>
 
+        @php
+            // Format tanggal lahir properly & safely (handles d/m/Y, Y-m-d, and text)
+            $tglLahirFormatted = '—';
+            if ($student->tanggal_lahir) {
+                try {
+                    $rawTgl = trim($student->tanggal_lahir);
+                    if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $rawTgl)) {
+                        $tglLahirFormatted = \Carbon\Carbon::createFromFormat('d/m/Y', $rawTgl)->translatedFormat('d F Y');
+                    } else {
+                        $tglLahirFormatted = \Carbon\Carbon::parse($rawTgl)->translatedFormat('d F Y');
+                    }
+                } catch (\Throwable $e) {
+                    $tglLahirFormatted = $student->tanggal_lahir;
+                }
+            }
+        @endphp
+
         <!-- ===== PRINT-ONLY: Photo + Identity Summary ===== -->
         <div class="print-only print-photo-section">
             @if($student->foto)
@@ -331,7 +348,7 @@
                     <tr><td>Jenis Kelamin</td><td>: {{ $student->jenis_kelamin }}</td></tr>
                     <tr>
                         <td>Tempat, Tgl Lahir</td>
-                        <td>: {{ $student->tempat_lahir ?: '—' }}, {{ $student->tanggal_lahir ? \Carbon\Carbon::parse($student->tanggal_lahir)->translatedFormat('d F Y') : '—' }}</td>
+                        <td>: {{ $student->tempat_lahir ?: '—' }}, {{ $tglLahirFormatted }}</td>
                     </tr>
                 </table>
             </div>
@@ -339,18 +356,6 @@
 
         <!-- Detail Information -->
         <div class="p-6 sm:p-8 space-y-6">
-
-            @php
-                // Format tanggal lahir properly
-                $tglLahirFormatted = '—';
-                if ($student->tanggal_lahir) {
-                    try {
-                        $tglLahirFormatted = \Carbon\Carbon::parse($student->tanggal_lahir)->translatedFormat('d F Y');
-                    } catch (\Exception $e) {
-                        $tglLahirFormatted = $student->tanggal_lahir;
-                    }
-                }
-            @endphp
 
             <!-- Grid: Section 1 & 2 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 print-data-grid">
