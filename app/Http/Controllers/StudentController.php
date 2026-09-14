@@ -8,6 +8,7 @@ use App\Models\PsbRegistration;
 use App\Models\Setting;
 use App\Models\Classroom;
 use App\Models\StudentPayment;
+use App\Models\StudentMutation;
 use App\Models\Dormitory;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -1831,10 +1832,152 @@ class StudentController extends Controller
 
         $student->update([
             'dormitory_id' => null,
-            'kamar_asrama' => null,
+            'kamar_asrama'  => null,
         ]);
 
         return redirect()->back()->with('success', "Santri {$student->nama_lengkap} berhasil dikeluarkan dari kamar {$oldRoom}.");
+    }
+
+    /* =========================================================
+     *  MUTASI SANTRI
+     * ========================================================= */
+
+    /**
+     * AJAX search santri untuk autocomplete di modal mutasi.
+     */
+    public function mutasiSearch(Request $request)
+    {
+        $q = $request->get('q', '');
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $students = Student::where(function ($query) use ($q) {
+                        $query->where('nama_lengkap', 'like', "%{$q}%")
+                              ->orWhere('nis', 'like', "%{$q}%");
+                    })
+                    ->whereIn('status', ['Aktif', 'Tidak Aktif'])
+                    ->select('id', 'nama_lengkap', 'nis', 'kelas', 'jenjang', 'status')
+                    ->limit(10)
+                    ->get();
+
+        return response()->json($students);
+    }
+
+    /**
+     * Daftar seluruh riwayat mutasi santri.
+     */
+    public function mutasiIndex(Request $request)
+    {
+        $query = StudentMutation::with('student')->latest('tanggal_mutasi');
+
+        if ($request->filled('jenis')) {
+            $query->where('jenis_mutasi', $request->jenis);
+        }
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($sq) use ($search) {
+                    $sq->where('nama_lengkap', 'like', "%{$search}%")
+                       ->orWhere('nis', 'like', "%{$search}%");
+                })->orWhere('alasan', 'like', "%{$search}%")
+                  ->orWhere('sekolah_asal_tujuan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal_mutasi', $request->tahun);
+        }
+
+        $mutations = $query->paginate(20)->withQueryString();
+
+        $stats = [
+            'total_keluar'    => StudentMutation::where('jenis_mutasi', 'Keluar')->count(),
+            'total_masuk'     => StudentMutation::where('jenis_mutasi', 'Masuk')->count(),
+            'bulan_ini'       => StudentMutation::whereMonth('tanggal_mutasi', now()->month)
+                                                ->whereYear('tanggal_mutasi', now()->year)->count(),
+        ];
+
+        $allClasses = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->pluck('nama_kelas')->toArray();
+        if (empty($allClasses)) {
+            $allClasses = Student::select('kelas')->distinct()->whereNotNull('kelas')->pluck('kelas')->toArray();
+            sort($allClasses);
+        }
+
+        $alasanOptions = StudentMutation::alasanOptions();
+        $tahunList     = StudentMutation::selectRaw('YEAR(tanggal_mutasi) as tahun')
+                            ->distinct()->orderByDesc('tahun')->pluck('tahun')->toArray();
+
+        return view('admin.siswa.mutasi', compact(
+            'mutations', 'stats', 'allClasses', 'alasanOptions', 'tahunList'
+        ));
+    }
+
+    /**
+     * Simpan catatan mutasi baru.
+     */
+    public function mutasiStore(Request $request)
+    {
+        $request->validate([
+            'student_id'         => 'required|exists:students,id',
+            'jenis_mutasi'       => 'required|in:Keluar,Masuk',
+            'tanggal_mutasi'     => 'required|date',
+            'alasan'             => 'required_if:jenis_mutasi,Keluar|nullable|string|max:100',
+            'sekolah_asal_tujuan'=> 'nullable|string|max:200',
+            'kelas_ke'           => 'nullable|string|max:50',
+            'keterangan'         => 'nullable|string|max:1000',
+        ]);
+
+        $student = Student::findOrFail($request->student_id);
+        $statusLama = $student->status;
+
+        // Catat mutasi
+        StudentMutation::create([
+            'student_id'          => $student->id,
+            'jenis_mutasi'        => $request->jenis_mutasi,
+            'tanggal_mutasi'      => $request->tanggal_mutasi,
+            'alasan'              => $request->alasan,
+            'kelas_dari'          => $student->kelas,
+            'sekolah_asal_tujuan' => $request->sekolah_asal_tujuan,
+            'kelas_ke'            => $request->kelas_ke,
+            'status_sebelumnya'   => $statusLama,
+            'keterangan'          => $request->keterangan,
+            'dicatat_oleh'        => auth()->user()->name ?? 'Admin',
+        ]);
+
+        // Update status santri
+        if ($request->jenis_mutasi === 'Keluar') {
+            $student->update(['status' => 'Mutasi Keluar']);
+        } elseif ($request->jenis_mutasi === 'Masuk' && $request->filled('kelas_ke')) {
+            // Untuk santri masuk: update kelas jika diisi
+            $student->update([
+                'kelas'  => $request->kelas_ke,
+                'status' => 'Aktif',
+            ]);
+        }
+
+        return redirect()->route('admin.siswa.mutasi.index')
+                         ->with('success', "Mutasi {$request->jenis_mutasi} santri {$student->nama_lengkap} berhasil dicatat.");
+    }
+
+    /**
+     * Hapus catatan mutasi dan pulihkan status santri.
+     */
+    public function mutasiDestroy($id)
+    {
+        $mutation = StudentMutation::findOrFail($id);
+        $student  = Student::find($mutation->student_id);
+
+        // Restore status santri ke sebelum mutasi jika masih bisa ditemukan
+        if ($student && $mutation->status_sebelumnya) {
+            $student->update(['status' => $mutation->status_sebelumnya]);
+        }
+
+        $mutation->delete();
+
+        return redirect()->route('admin.siswa.mutasi.index')
+                         ->with('success', 'Catatan mutasi berhasil dihapus. Status santri dipulihkan.');
     }
 }
 

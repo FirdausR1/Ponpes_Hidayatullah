@@ -205,7 +205,11 @@
                         </a></li>
                         <li><a href="{{ route('admin.siswa.kenaikanKelas') }}" class="menu-item {{ request()->routeIs('admin.siswa.kenaikanKelas*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.siswa.kenaikanKelas*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="17 11 12 6 7 11"></polyline><polyline points="17 18 12 13 7 18"></polyline></svg></span>
-                            Kenaikan Kelas &amp; Mutasi
+                            Kenaikan Kelas &amp; Promosi
+                        </a></li>
+                        <li><a href="{{ route('admin.siswa.mutasi.index') }}" class="menu-item {{ request()->routeIs('admin.siswa.mutasi.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ request()->routeIs('admin.siswa.mutasi.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7"/><path d="M7 8l-4 4 4 4"/></svg></span>
+                            Mutasi Santri
                         </a></li>
                         <li><a href="{{ route('admin.siswa.akunLogin') }}" class="menu-item {{ request()->routeIs('admin.siswa.akunLogin*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.siswa.akunLogin*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>

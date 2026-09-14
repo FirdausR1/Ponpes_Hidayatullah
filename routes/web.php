@@ -112,6 +112,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::delete('/siswa/{id}', [StudentController::class, 'destroy'])->name('siswa.destroy');
     Route::post('/siswa/import-psb/{psbId}', [StudentController::class, 'importFromPsb'])->name('siswa.importPsb');
 
+    // Mutasi Santri
+    Route::get('/siswa/mutasi', [StudentController::class, 'mutasiIndex'])->name('siswa.mutasi.index');
+    Route::post('/siswa/mutasi', [StudentController::class, 'mutasiStore'])->name('siswa.mutasi.store');
+    Route::delete('/siswa/mutasi/{id}', [StudentController::class, 'mutasiDestroy'])->name('siswa.mutasi.destroy');
+    Route::get('/siswa/mutasi-search', [StudentController::class, 'mutasiSearch'])->name('siswa.mutasi.search');
+
+
     // Manajemen Pembayaran & Keuangan (Hanya Superadmin & Bendahara)
     Route::middleware('role:superadmin,bendahara')->group(function () {
         Route::get('/pembayaran', [PaymentController::class, 'index'])->name('pembayaran.index');
