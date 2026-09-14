@@ -432,29 +432,7 @@ $totalJumlahKwitansi = $payments->count();
                             </div>
                         </div>
 
-                        <!-- Status Sisa Tabungan & Tunggakan -->
-                        <div class="pt-1 space-y-0.5 text-[10px] border-t border-slate-200 mt-1">
-                            {{-- Sisa saldo tabungan disembunyikan jika penarikan tabungan sesuai permintaan user --}}
-                            @if(isset($payment->student) && $payment->student && !$isPenarikanTabungan)
-                                <div class="flex items-center justify-between text-slate-600">
-                                    <span class="font-semibold text-slate-600">
-                                        Sisa Saldo Tabungan:
-                                    </span>
-                                    <span class="font-mono font-bold text-emerald-700">
-                                        Rp {{ number_format($saldoTabungan, 0, ',', '.') }}
-                                    </span>
-                                </div>
-                            @endif
-
-                            @if(isset($sisaTunggakan))
-                                <div class="flex items-center justify-between text-slate-500">
-                                    <span>Sisa Tunggakan:</span>
-                                    <span class="font-mono font-bold {{ $sisaTunggakan > 0 ? 'text-rose-600' : 'text-emerald-700' }}">
-                                        {{ $sisaTunggakan > 0 ? 'Rp ' . number_format($sisaTunggakan, 0, ',', '.') : 'Lunas Bebas Tunggakan' }}
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
+                        {{-- Sisa Saldo Tabungan & Sisa Tunggakan disembunyikan dari kwitansi (permintaan admin) --}}
 
                     </div>
 

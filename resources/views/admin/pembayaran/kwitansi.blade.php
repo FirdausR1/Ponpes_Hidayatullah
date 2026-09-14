@@ -399,32 +399,7 @@ $targetRowCount = max(6, $itemsList->count());
                     </div>
                 </div>
 
-                <!-- Status Bebas Tunggakan / Sisa Tunggakan & Sisa Tabungan (Keterangan Transparansi Santri) -->
-                <div class="pt-2 space-y-1 text-[11px] border-t border-slate-200 mt-2">
-                    @php
-                        $tabunganSantri = isset($sisaTabunganSantri) ? $sisaTabunganSantri : ($payment->student->saldo_tabungan ?? 0);
-                    @endphp
-                    {{-- Sisa saldo tabungan disembunyikan jika jenis transaksi adalah PENARIKAN TABUNGAN sesuai permintaan user --}}
-                    @if(isset($payment->student) && $payment->student && !$isPenarikanTabungan)
-                        <div class="flex items-center justify-between text-slate-600">
-                            <span class="font-semibold text-slate-600">
-                                Sisa Saldo Tabungan:
-                            </span>
-                            <span class="font-mono font-bold text-emerald-700 text-xs">
-                                Rp {{ number_format($tabunganSantri, 0, ',', '.') }}
-                            </span>
-                        </div>
-                    @endif
-
-                    @if(isset($sisaTunggakanSantri))
-                        <div class="flex items-center justify-between text-slate-500">
-                            <span>Sisa Tunggakan Aktif:</span>
-                            <span class="font-mono font-bold {{ $sisaTunggakanSantri > 0 ? 'text-rose-600' : 'text-emerald-700' }}">
-                                {{ $sisaTunggakanSantri > 0 ? 'Rp ' . number_format($sisaTunggakanSantri, 0, ',', '.') : 'Lunas Bebas Tunggakan' }}
-                            </span>
-                        </div>
-                    @endif
-                </div>
+                {{-- Sisa Saldo Tabungan & Sisa Tunggakan disembunyikan dari kwitansi (permintaan admin) --}}
 
             </div>
 
