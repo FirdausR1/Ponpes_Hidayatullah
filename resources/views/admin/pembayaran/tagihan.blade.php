@@ -237,8 +237,42 @@
     </div>
 
     <!-- Filter & Pencarian Lengkap (TailAdmin Form Style) -->
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs">
-        <form method="GET" action="{{ route('admin.pembayaran.tagihan.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-xs overflow-hidden">
+
+        {{-- Tab Status Santri --}}
+        <div class="flex items-center gap-1 px-5 pt-4 pb-0 border-b border-gray-100">
+            @php $currentStatusSantri = $statusSantri ?? 'aktif'; @endphp
+            <a href="{{ request()->fullUrlWithQuery(['status_santri' => 'aktif', 'page' => null]) }}"
+               class="px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-colors
+                      {{ $currentStatusSantri === 'aktif' ? 'border-brand-500 text-brand-600 bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    Santri Aktif
+                </span>
+            </a>
+            <a href="{{ request()->fullUrlWithQuery(['status_santri' => 'arsip', 'page' => null]) }}"
+               class="px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-colors
+                      {{ $currentStatusSantri === 'arsip' ? 'border-amber-500 text-amber-700 bg-amber-50/50' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                    Arsip Alumni & Mutasi
+                </span>
+            </a>
+            <a href="{{ request()->fullUrlWithQuery(['status_santri' => 'all', 'page' => null]) }}"
+               class="px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-colors
+                      {{ $currentStatusSantri === 'all' ? 'border-gray-500 text-gray-700 bg-gray-50/50' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                Semua
+            </a>
+            @if($currentStatusSantri === 'arsip')
+            <span class="ml-auto mr-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v6M14 12v6"/></svg>
+                Mode Arsip — tagihan santri alumni &amp; mutasi
+            </span>
+            @endif
+        </div>
+
+        <form method="GET" action="{{ route('admin.pembayaran.tagihan.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-5">
+            <input type="hidden" name="status_santri" value="{{ $currentStatusSantri }}">
             <!-- Filter Status -->
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1.5">Status Pembayaran</label>

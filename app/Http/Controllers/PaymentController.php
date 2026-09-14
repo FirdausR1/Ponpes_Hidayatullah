@@ -672,8 +672,21 @@ class PaymentController extends Controller
         $posFilter = $request->input('pos_biaya');
         $kelasFilter = $request->input('kelas');
         $search = $request->input('q');
+        $statusSantri = $request->input('status_santri', 'aktif'); // default hanya tampilkan santri aktif
 
         $query = StudentBill::with('student')->latest();
+
+        // Filter berdasarkan status santri (aktif / arsip alumni+mutasi / semua)
+        if ($statusSantri === 'aktif') {
+            $query->whereHas('student', function($q) {
+                $q->where('status', 'Aktif');
+            });
+        } elseif ($statusSantri === 'arsip') {
+            $query->whereHas('student', function($q) {
+                $q->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']);
+            });
+        }
+        // 'all' = tidak filter status santri
 
         if ($statusFilter === 'Ditangguhkan (Wisuda)' || $statusFilter === 'Ditangguhkan') {
             $query->where(function($q) {
@@ -726,6 +739,7 @@ class PaymentController extends Controller
         return view('admin.pembayaran.tagihan', compact(
             'bills',
             'statusFilter',
+            'statusSantri',
             'kategoriFilter',
             'posFilter',
             'kelasFilter',

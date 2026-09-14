@@ -492,7 +492,7 @@
     <!-- MODAL FORM TAMBAH KAS KELUAR                                             -->
     <!-- ========================================================================= -->
     <div x-show="modalTambah" x-cloak class="ta-modal-backdrop">
-        <div @click.away="modalTambah = false" class="ta-modal max-w-lg">
+        <div @click.away="modalTambah = false" class="ta-modal max-w-lg" style="max-height:92vh; display:flex; flex-direction:column;">
             <div class="ta-modal-header">
                 <div>
                     <h3 class="text-base font-bold text-gray-900">Catat Kas Keluar Baru</h3>
@@ -503,7 +503,7 @@
 
             <form action="{{ route('admin.pengeluaran.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="ta-modal-body space-y-3.5 text-xs">
+                <div class="ta-modal-body space-y-3.5 text-xs overflow-y-auto flex-1" style="overscroll-behavior:contain;">
                     <!-- Jenjang Sekolah & Sumber Pos Dana -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
