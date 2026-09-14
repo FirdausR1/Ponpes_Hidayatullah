@@ -6,6 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Question;
 use App\Models\PsbRegistration;
 use App\Models\Setting;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use PhpOffice\PhpSpreadsheet\Reader\Xls as XlsReader;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class AdminCbtController extends Controller
 {
@@ -947,21 +955,16 @@ class AdminCbtController extends Controller
     }
 
     // =========================================================
-    //  EXPORT & IMPORT SOAL VIA CSV
+    //  EXPORT & IMPORT SOAL VIA EXCEL (.XLSX) & CSV
     // =========================================================
 
     /**
-     * Download Template CSV Siap Pakai untuk Upload Soal Massal
+     * Download Template Spreadsheet Siap Pakai untuk Upload Soal Massal.
+     * Default format: Excel (.xlsx) dengan kolom rapi dan terpisah, mendukung juga CSV jika diminta.
      */
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="template_soal_cbt_pesantren.csv"',
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
-        ];
+        $format = strtolower($request->query('format', 'xlsx'));
 
         $columns = ['kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
 
@@ -1052,26 +1055,98 @@ class AdminCbtController extends Controller
             ],
         ];
 
-        $callback = function() use ($columns, $sampleRows) {
-            $file = fopen('php://output', 'w');
-            // Tulis BOM UTF-8 agar Excel langsung membaca huruf Arab & simbol matematika
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($file, $columns);
-            foreach ($sampleRows as $row) {
-                fputcsv($file, array_values($row));
-            }
-            fclose($file);
-        };
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type'        => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="template_soal_cbt_pesantren.csv"',
+                'Pragma'              => 'no-cache',
+                'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires'             => '0',
+            ];
 
-        return response()->stream($callback, 200, $headers);
+            $callback = function() use ($columns, $sampleRows) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($file, $columns);
+                foreach ($sampleRows as $row) {
+                    fputcsv($file, array_values($row));
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        // Generate Excel (.xlsx) dengan PhpSpreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Soal CBT');
+
+        $colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+        foreach ($columns as $idx => $col) {
+            $sheet->setCellValue($colLetters[$idx] . '1', $col);
+        }
+
+        // Header Style (Emerald Green)
+        $sheet->getStyle('A1:L1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF10B981');
+        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        // Baris Contoh
+        $rowNum = 2;
+        foreach ($sampleRows as $row) {
+            $sheet->setCellValueExplicit('A' . $rowNum, $row['kategori'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('B' . $rowNum, $row['soal'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C' . $rowNum, $row['opsi_a'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $rowNum, $row['opsi_b'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('E' . $rowNum, $row['opsi_c'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('F' . $rowNum, $row['opsi_d'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('G' . $rowNum, $row['opsi_e'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('H' . $rowNum, $row['kunci_jawaban'], DataType::TYPE_STRING);
+            $sheet->setCellValue('I' . $rowNum, (int)$row['bobot']);
+            $sheet->setCellValueExplicit('J' . $rowNum, $row['pembahasan'], DataType::TYPE_STRING);
+            $sheet->setCellValue('K' . $rowNum, (int)$row['is_math']);
+            $sheet->setCellValue('L' . $rowNum, (int)$row['is_arabic']);
+
+            $sheet->getStyle('H' . $rowNum . ':I' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('K' . $rowNum . ':L' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getRowDimension($rowNum)->setRowHeight(32);
+            $rowNum++;
+        }
+
+        $lastRow = $rowNum - 1;
+        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->getColor()->setARGB('FFD1D5DB');
+
+        $widths = [
+            'A' => 20, 'B' => 60, 'C' => 28, 'D' => 28, 'E' => 28, 'F' => 28,
+            'G' => 28, 'H' => 16, 'I' => 12, 'J' => 45, 'K' => 14, 'L' => 14
+        ];
+        foreach ($widths as $col => $w) {
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+        $sheet->getStyle('B2:B' . $lastRow)->getAlignment()->setWrapText(true);
+        $sheet->getStyle('J2:J' . $lastRow)->getAlignment()->setWrapText(true);
+
+        $filename = 'template_soal_cbt_pesantren.xlsx';
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     /**
-     * Export Seluruh / Sebagian Bank Soal ke File CSV
+     * Export Seluruh / Sebagian Bank Soal ke File Excel (.xlsx) atau CSV
      */
     public function soalExport(Request $request)
     {
         $kategori = $request->query('kategori');
+        $format   = strtolower($request->query('format', 'xlsx'));
+
         $query = Question::query();
         if (!empty($kategori)) {
             $query->where('kategori', $kategori);
@@ -1079,70 +1154,167 @@ class AdminCbtController extends Controller
         $questions = $query->orderBy('kategori')->orderBy('id')->get();
 
         $slug = !empty($kategori) ? \Illuminate\Support\Str::slug($kategori) . '_' : '';
-        $filename = 'bank_soal_cbt_' . $slug . date('Ymd_His') . '.csv';
-
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma'              => 'no-cache',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
-        ];
-
         $columns = ['kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
 
-        $callback = function() use ($columns, $questions) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($file, $columns);
-            foreach ($questions as $q) {
-                fputcsv($file, [
-                    $q->kategori,
-                    $q->soal,
-                    $q->opsi_a,
-                    $q->opsi_b,
-                    $q->opsi_c,
-                    $q->opsi_d,
-                    $q->opsi_e,
-                    $q->kunci_jawaban,
-                    $q->bobot,
-                    $q->pembahasan,
-                    $q->is_math ? '1' : '0',
-                    $q->is_arabic ? '1' : '0',
-                ]);
-            }
-            fclose($file);
-        };
+        if ($format === 'csv') {
+            $filename = 'bank_soal_cbt_' . $slug . date('Ymd_His') . '.csv';
 
-        return response()->stream($callback, 200, $headers);
+            $headers = [
+                'Content-Type'        => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                'Pragma'              => 'no-cache',
+                'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires'             => '0',
+            ];
+
+            $callback = function() use ($columns, $questions) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+                fputcsv($file, $columns);
+                foreach ($questions as $q) {
+                    fputcsv($file, [
+                        $q->kategori,
+                        $q->soal,
+                        $q->opsi_a,
+                        $q->opsi_b,
+                        $q->opsi_c,
+                        $q->opsi_d,
+                        $q->opsi_e,
+                        $q->kunci_jawaban,
+                        $q->bobot,
+                        $q->pembahasan,
+                        $q->is_math ? '1' : '0',
+                        $q->is_arabic ? '1' : '0',
+                    ]);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        // Export Native Excel (.xlsx)
+        $filename = 'bank_soal_cbt_' . $slug . date('Ymd_His') . '.xlsx';
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Bank Soal CBT');
+
+        $colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+        foreach ($columns as $idx => $col) {
+            $sheet->setCellValue($colLetters[$idx] . '1', $col);
+        }
+
+        $sheet->getStyle('A1:L1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF10B981');
+        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        $rowIdx = 2;
+        foreach ($questions as $q) {
+            $sheet->setCellValueExplicit('A' . $rowIdx, (string)$q->kategori, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('B' . $rowIdx, (string)$q->soal, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C' . $rowIdx, (string)$q->opsi_a, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $rowIdx, (string)$q->opsi_b, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('E' . $rowIdx, (string)$q->opsi_c, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('F' . $rowIdx, (string)$q->opsi_d, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('G' . $rowIdx, (string)($q->opsi_e ?? ''), DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('H' . $rowIdx, (string)$q->kunci_jawaban, DataType::TYPE_STRING);
+            $sheet->setCellValue('I' . $rowIdx, (int)$q->bobot);
+            $sheet->setCellValueExplicit('J' . $rowIdx, (string)($q->pembahasan ?? ''), DataType::TYPE_STRING);
+            $sheet->setCellValue('K' . $rowIdx, $q->is_math ? 1 : 0);
+            $sheet->setCellValue('L' . $rowIdx, $q->is_arabic ? 1 : 0);
+
+            $sheet->getStyle('H' . $rowIdx . ':I' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('K' . $rowIdx . ':L' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $rowIdx++;
+        }
+
+        $lastRow = max(2, $rowIdx - 1);
+        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->getColor()->setARGB('FFD1D5DB');
+
+        $widths = [
+            'A' => 20, 'B' => 60, 'C' => 28, 'D' => 28, 'E' => 28, 'F' => 28,
+            'G' => 28, 'H' => 16, 'I' => 12, 'J' => 45, 'K' => 14, 'L' => 14
+        ];
+        foreach ($widths as $col => $w) {
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+        $sheet->getStyle('B2:B' . $lastRow)->getAlignment()->setWrapText(true);
+        $sheet->getStyle('J2:J' . $lastRow)->getAlignment()->setWrapText(true);
+
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     /**
-     * Proses upload dan impor soal dari file CSV.
+     * Proses upload dan impor soal dari file Excel (.xlsx / .xls) atau CSV.
      *
-     * Format kolom CSV (header baris pertama):
+     * Format kolom (header baris pertama):
      * kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_math, is_arabic
      */
     public function soalImport(Request $request)
     {
         $request->validate([
             'kategori_import' => 'required|string|max:100',
-            'csv_file'        => 'required|file|mimes:csv,txt|max:4096',
+            'excel_file'      => 'nullable|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'csv_file'        => 'nullable|file|mimes:xlsx,xls,csv,txt|max:10240',
         ]);
 
         $defaultKategori = trim($request->input('kategori_import'));
-        $file            = $request->file('csv_file');
+        $file = $request->file('excel_file') ?? $request->file('csv_file');
 
-        $handle = fopen($file->getRealPath(), 'r');
-
-        if ($handle === false) {
-            return back()->with('error', 'Gagal membuka file CSV.');
+        if (!$file) {
+            return back()->with('error', 'Silakan pilih file Excel (.xlsx) atau CSV yang ingin diimpor.');
         }
 
-        // Cek dan buang UTF-8 BOM jika ada
-        $bom = fread($handle, 3);
-        if ($bom !== "\xEF\xBB\xBF") {
-            rewind($handle);
+        $ext = strtolower($file->getClientOriginalExtension());
+        $rows = [];
+
+        try {
+            if (in_array($ext, ['xlsx', 'xls'])) {
+                if ($ext === 'xlsx') {
+                    $reader = new XlsxReader();
+                } else {
+                    $reader = new XlsReader();
+                }
+                $reader->setReadDataOnly(true);
+                $spreadsheet = $reader->load($file->getRealPath());
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray(null, true, true, false);
+            } else {
+                // Membaca CSV
+                $handle = fopen($file->getRealPath(), 'r');
+                if ($handle === false) {
+                    return back()->with('error', 'Gagal membuka file CSV.');
+                }
+                $bom = fread($handle, 3);
+                if ($bom !== "\xEF\xBB\xBF") {
+                    rewind($handle);
+                }
+                $firstLine = fgets($handle);
+                rewind($handle);
+                if ($bom === "\xEF\xBB\xBF") {
+                    fread($handle, 3);
+                }
+                $delim = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
+
+                while (($r = fgetcsv($handle, 10000, $delim)) !== false) {
+                    $rows[] = $r;
+                }
+                fclose($handle);
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat membaca file: ' . $e->getMessage());
+        }
+
+        if (empty($rows)) {
+            return back()->with('error', 'File yang diunggah kosong atau tidak memiliki baris data.');
         }
 
         $header  = null;
@@ -1150,39 +1322,53 @@ class AdminCbtController extends Controller
         $errors  = [];
         $rowNum  = 0;
 
-        while (($row = fgetcsv($handle, 4000, ',')) !== false) {
+        foreach ($rows as $row) {
             $rowNum++;
 
-            // Baris pertama = header, normalisasi lowercase
+            // Normalisasi baris pertama sebagai header
             if ($rowNum === 1) {
-                $header = array_map(fn($h) => strtolower(trim(str_replace(['"', "'"], '', $h))), $row);
+                $header = array_map(fn($h) => strtolower(trim(str_replace(['"', "'"], '', (string)$h))), $row);
                 continue;
             }
 
-            if (count($row) < 4) continue; // baris kosong
+            // Abaikan jika seluruh kolom dalam baris kosong
+            $hasContent = false;
+            foreach ($row as $cell) {
+                if (trim((string)$cell) !== '') {
+                    $hasContent = true;
+                    break;
+                }
+            }
+            if (!$hasContent) continue;
 
-            $data = $header ? array_combine($header, array_pad($row, count($header), '')) : $row;
+            // Pemetaan data aman
+            $data = [];
+            if ($header) {
+                foreach ($header as $cIdx => $cKey) {
+                    $data[$cKey] = isset($row[$cIdx]) ? $row[$cIdx] : '';
+                }
+            } else {
+                $data = $row;
+            }
 
-            $soalText = trim($data['soal'] ?? $data[1] ?? $data[0] ?? '');
+            $soalText = trim((string)($data['soal'] ?? $data[1] ?? $data[0] ?? ''));
             if (empty($soalText)) continue;
 
-            // Kategori: jika file CSV memiliki kolom kategori dan diisi, gunakan kategori tersebut.
-            // Jika kosong atau pilihan dropdown bukan 'sesuai_csv', gunakan kategori dari dropdown.
-            $rowKategori = !empty($data['kategori']) ? trim($data['kategori']) : '';
+            $rowKategori = !empty($data['kategori']) ? trim((string)$data['kategori']) : '';
             if ($defaultKategori !== 'sesuai_csv' && !empty($defaultKategori) && empty($rowKategori)) {
                 $kategori = $defaultKategori;
             } else {
                 $kategori = !empty($rowKategori) ? $rowKategori : ($defaultKategori === 'sesuai_csv' ? 'Umum' : $defaultKategori);
             }
 
-            $opsiA  = trim($data['opsi_a'] ?? $data[2] ?? '');
-            $opsiB  = trim($data['opsi_b'] ?? $data[3] ?? '');
-            $opsiC  = trim($data['opsi_c'] ?? $data[4] ?? '');
-            $opsiD  = trim($data['opsi_d'] ?? $data[5] ?? '');
-            $opsiE  = trim($data['opsi_e'] ?? $data[6] ?? '') ?: null;
-            $kunci  = strtoupper(trim($data['kunci_jawaban'] ?? $data[7] ?? 'A'));
+            $opsiA  = trim((string)($data['opsi_a'] ?? $data[2] ?? ''));
+            $opsiB  = trim((string)($data['opsi_b'] ?? $data[3] ?? ''));
+            $opsiC  = trim((string)($data['opsi_c'] ?? $data[4] ?? ''));
+            $opsiD  = trim((string)($data['opsi_d'] ?? $data[5] ?? ''));
+            $opsiE  = trim((string)($data['opsi_e'] ?? $data[6] ?? '')) ?: null;
+            $kunci  = strtoupper(trim((string)($data['kunci_jawaban'] ?? $data[7] ?? 'A')));
             $bobot  = max(1, (int) ($data['bobot'] ?? $data[8] ?? 1));
-            $pembahasan = trim($data['pembahasan'] ?? $data[9] ?? '');
+            $pembahasan = trim((string)($data['pembahasan'] ?? $data[9] ?? ''));
 
             if (empty($opsiA) || empty($opsiB) || empty($opsiC) || empty($opsiD)) {
                 $errors[] = "Baris {$rowNum}: Opsi A-D tidak lengkap, dilewati.";
@@ -1194,16 +1380,16 @@ class AdminCbtController extends Controller
                 continue;
             }
 
-            // Auto-detect Arabic & Math flags dari seluruh konten soal + opsi
+            // Auto-detect Arabic & Math flags
             $allText = $soalText . ' ' . $opsiA . ' ' . $opsiB . ' ' . $opsiC . ' ' . $opsiD . ' ' . ($opsiE ?? '') . ' ' . $pembahasan;
             [$isMath, $isArabic] = $this->detectTextFlags($allText, $kategori);
 
-            // Izinkan override eksplisit dari kolom CSV jika ada
-            if (isset($data['is_math']) && $data['is_math'] !== '') {
-                $isMath = in_array(strtolower(trim($data['is_math'])), ['1', 'true', 'yes', 'ya']);
+            // Izinkan override eksplisit dari kolom jika ada
+            if (isset($data['is_math']) && trim((string)$data['is_math']) !== '') {
+                $isMath = in_array(strtolower(trim((string)$data['is_math'])), ['1', 'true', 'yes', 'ya']);
             }
-            if (isset($data['is_arabic']) && $data['is_arabic'] !== '') {
-                $isArabic = in_array(strtolower(trim($data['is_arabic'])), ['1', 'true', 'yes', 'ya']);
+            if (isset($data['is_arabic']) && trim((string)$data['is_arabic']) !== '') {
+                $isArabic = in_array(strtolower(trim((string)$data['is_arabic'])), ['1', 'true', 'yes', 'ya']);
             }
 
             Question::create([
@@ -1224,8 +1410,6 @@ class AdminCbtController extends Controller
 
             $count++;
         }
-
-        fclose($handle);
 
         $msg = "{$count} butir soal berhasil diimpor ke Bank Soal!";
         if (!empty($errors)) {

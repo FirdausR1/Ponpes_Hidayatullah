@@ -31,21 +31,21 @@
             <p class="text-sm text-gray-500 mt-1">Kelola bank butir soal ujian seleksi masuk santri baru, format rumus Matematika (KaTeX), dan Bahasa Arab.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
-            <a href="{{ route('admin.cbt.soal.downloadTemplate') }}" class="ta-btn-outline border-emerald-300 text-emerald-700 hover:bg-emerald-50 bg-white" title="Unduh file template Excel/CSV untuk input soal massal">
+            <a href="{{ route('admin.cbt.soal.downloadTemplate') }}" class="ta-btn-outline border-emerald-300 text-emerald-700 hover:bg-emerald-50 bg-white" title="Unduh file template Excel (.xlsx) rapi per kolom untuk input soal massal">
                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Download Template CSV
+                <span>Download Template Excel</span>
             </a>
-            <a href="{{ route('admin.cbt.soal.export', ['kategori' => $kategori]) }}" class="ta-btn-outline" title="Export butir soal bank saat ini ke file CSV">
+            <a href="{{ route('admin.cbt.soal.export', ['kategori' => $kategori]) }}" class="ta-btn-outline" title="Export butir soal bank saat ini ke file spreadsheet Excel (.xlsx)">
                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Export Soal CSV
+                <span>Export Excel</span>
             </a>
-            <button type="button" onclick="document.getElementById('modalImportCsv').classList.remove('hidden')" class="ta-btn-outline" title="Upload dan impor file CSV berisi banyak soal">
+            <button type="button" onclick="document.getElementById('modalImportCsv').classList.remove('hidden')" class="ta-btn-outline" title="Upload dan impor file Excel (.xlsx) atau CSV berisi banyak soal">
                 <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                Import CSV
+                <span>Import Excel / CSV</span>
             </button>
-            <button type="button" onclick="document.getElementById('modalTemplate').classList.remove('hidden')" class="ta-btn-outline text-gray-600" title="Isi database dengan paket contoh soal bawaan pesantren">
-                <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Muat Soal Bawaan
+            <button type="button" onclick="document.getElementById('modalTemplate').classList.remove('hidden')" class="ta-btn-outline text-amber-700 border-amber-200 hover:bg-amber-50" title="Isi database dengan 20 butir soal demo bawaan untuk uji coba sistem CBT tanpa perlu upload file">
+                <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>⚡ Soal Demo Bawaan</span>
             </button>
             <a href="{{ route('admin.cbt.cetakSoal', ['kategori' => $kategori]) }}" target="_blank" class="ta-btn-outline">
                 <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -237,13 +237,13 @@
 
 </div>
 
-<!-- MODAL IMPORT SOAL CSV -->
+<!-- MODAL IMPORT SOAL EXCEL / CSV -->
 <div id="modalImportCsv" class="ta-modal-backdrop hidden">
-    <div class="ta-modal max-w-lg">
+    <div class="ta-modal max-w-xl">
         <div class="ta-modal-header">
             <div>
-                <h3 class="text-base font-bold text-gray-800">Upload &amp; Import Soal Banyak (CSV)</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Unggah puluhan atau ratusan butir soal sekaligus dari file spreadsheet Excel/CSV.</p>
+                <h3 class="text-base font-bold text-gray-800">Upload &amp; Import Soal (Excel .xlsx / CSV)</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Unggah puluhan atau ratusan butir soal sekaligus dari file spreadsheet Microsoft Excel (.xlsx) atau CSV.</p>
             </div>
             <button type="button" onclick="document.getElementById('modalImportCsv').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
@@ -254,12 +254,15 @@
                 {{-- Download Template Banner --}}
                 <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
                     <div>
-                        <span class="text-xs font-bold text-emerald-900 block">Belum Memiliki Format Template?</span>
-                        <p class="text-[11px] text-emerald-700 mt-0.5">Unduh template CSV resmi yang siap dibuka di Excel, lengkap dengan contoh soal IPA, Matematika KaTeX, Arab, dan PAI.</p>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-emerald-900 block">Format Template Resmi Excel (.xlsx)</span>
+                            <span class="text-[10px] bg-emerald-200 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Rapi Per Kolom</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-700 mt-0.5">Unduh template Excel resmi yang sudah rapi per kolom (Kolom A s/d L), lengkap dengan contoh soal IPA Fisika, IPA Kimia, KaTeX Matematika, Arab, dan PAI.</p>
                     </div>
-                    <a href="{{ route('admin.cbt.soal.downloadTemplate') }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shrink-0 shadow-xs flex items-center gap-1.5 transition">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Download Template</span>
+                    <a href="{{ route('admin.cbt.soal.downloadTemplate') }}" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shrink-0 shadow-xs flex items-center gap-1.5 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Download Excel (.xlsx)</span>
                     </a>
                 </div>
 
@@ -269,33 +272,45 @@
                         Kategori / Mata Pelajaran <span class="text-red-500">*</span>
                     </label>
                     <select name="kategori_import" required class="ta-input text-xs">
-                        <option value="sesuai_csv">✨ Gunakan Kolom Kategori di File CSV (Mendukung Campuran/Multi-Pelajaran)</option>
+                        <option value="sesuai_csv">✨ Gunakan Kolom Kategori di File Spreadsheet (Mendukung Campuran/Multi-Pelajaran)</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat }}" {{ request('kategori') === $cat ? 'selected' : '' }}>Paksa ke Mata Pelajaran: {{ $cat }}</option>
                         @endforeach
                     </select>
-                    <p class="text-[11px] text-gray-400 mt-1">Pilih "Gunakan Kolom Kategori di File CSV" jika berkas Anda memuat berbagai mata pelajaran.</p>
+                    <p class="text-[11px] text-gray-400 mt-1">Pilih "Gunakan Kolom Kategori di File Spreadsheet" jika file Anda memuat berbagai mata pelajaran sekaligus.</p>
                 </div>
 
-                {{-- Upload File CSV --}}
+                {{-- Upload File Excel / CSV --}}
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                        File CSV Soal <span class="text-red-500">*</span>
+                        File Spreadsheet Soal <span class="text-red-500">*</span>
                     </label>
-                    <input type="file" name="csv_file" accept=".csv,.txt" required class="ta-input text-xs">
-                    <p class="text-[11px] text-gray-400 mt-1">Format: .csv (Bisa disimpan dari Save As CSV di Excel, Maksimal 4 MB)</p>
+                    <input type="file" name="excel_file" accept=".xlsx,.xls,.csv,.txt" required class="ta-input text-xs">
+                    <p class="text-[11px] text-gray-500 mt-1">
+                        Format yang didukung: <strong class="text-emerald-700">.xlsx (Sangat Direkomendasikan, kolom terpisah rapi di Excel)</strong>, .xls, atau .csv (Maksimal 10 MB).
+                    </p>
                 </div>
 
-                {{-- Panduan Format Kolom --}}
-                <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs space-y-1.5 text-gray-600">
-                    <span class="font-semibold text-gray-700 block">Urutan Kolom CSV (Otomatis Sesuai Template):</span>
-                    <code class="block font-mono text-[10.5px] bg-white border border-gray-200 rounded p-1.5 text-gray-800 overflow-x-auto leading-relaxed">
-                        kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_math, is_arabic
-                    </code>
-                    <ul class="text-[11px] text-gray-500 space-y-0.5 list-disc list-inside">
-                        <li>Kunci jawaban diisi huruf kapital: <strong>A / B / C / D / E</strong></li>
-                        <li>Rumus IPA &amp; Matematika diapit tanda dollar, misal: <code>$v = \frac{s}{t}$</code> atau <code>$\text{H}_2\text{O}$</code></li>
-                        <li>Teks Arab dapat diketik langsung dengan harakat maupun gundul</li>
+                {{-- Panduan Format Kolom Excel --}}
+                <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs space-y-2 text-gray-600">
+                    <span class="font-semibold text-gray-700 block">Panduan Kolom File Excel (Baris 1 = Header):</span>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[11px]">
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom A:</strong> kategori</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom B:</strong> soal</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom C:</strong> opsi_a</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom D:</strong> opsi_b</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom E:</strong> opsi_c</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom F:</strong> opsi_d</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom G:</strong> opsi_e <span class="text-gray-400">(opsional)</span></div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom H:</strong> kunci_jawaban <span class="text-brand-600">(A-E)</span></div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom I:</strong> bobot <span class="text-gray-400">(default 1)</span></div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom J:</strong> pembahasan</div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom K:</strong> is_math <span class="text-gray-400">(1/0)</span></div>
+                        <div class="bg-white p-1.5 rounded border border-gray-200"><strong>Kolom L:</strong> is_arabic <span class="text-gray-400">(1/0)</span></div>
+                    </div>
+                    <ul class="text-[11px] text-gray-500 space-y-0.5 list-disc list-inside mt-1">
+                        <li>Rumus IPA &amp; Matematika diapit tanda dollar, contoh: <code>$v = \frac{s}{t}$</code> atau <code>$\text{CO}_2$</code></li>
+                        <li>Teks Arab berharakat maupun gundul langsung terbaca jelas tanpa rusak di Excel</li>
                     </ul>
                 </div>
             </div>
@@ -304,7 +319,7 @@
                 <button type="button" onclick="document.getElementById('modalImportCsv').classList.add('hidden')" class="ta-btn-sm-outline">
                     Batal
                 </button>
-                <button type="submit" class="ta-btn-sm-primary">
+                <button type="submit" class="ta-btn-sm-primary bg-emerald-600 hover:bg-emerald-700">
                     Upload &amp; Mulai Import
                 </button>
             </div>
@@ -313,13 +328,13 @@
 </div>
 
 
-<!-- MODAL MUAT TEMPLATE SOAL -->
+<!-- MODAL MUAT PAKET SOAL DEMO BAWAAN -->
 <div id="modalTemplate" class="ta-modal-backdrop hidden">
-    <div class="ta-modal">
+    <div class="ta-modal max-w-lg">
         <div class="ta-modal-header">
             <div>
-                <h3 class="text-base font-bold text-gray-800">Muat Template Soal CBT</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Paket soal standar masuk santri baru.</p>
+                <h3 class="text-base font-bold text-gray-800">⚡ Muat Paket Soal Demo Bawaan (20 Butir)</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Paket butir soal latihan contoh standar seleksi masuk santri baru.</p>
             </div>
             <button type="button" onclick="document.getElementById('modalTemplate').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
@@ -327,26 +342,49 @@
         <form action="{{ route('admin.cbt.soal.loadTemplate') }}" method="POST">
             @csrf
             <div class="ta-modal-body space-y-4">
+                {{-- Penjelasan Fungsi Tombol Ini --}}
+                <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1.5">
+                    <div class="font-bold flex items-center gap-1.5 text-amber-900">
+                        <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Untuk Apa Fungsi Tombol Ini?</span>
+                    </div>
+                    <p class="text-[11.5px] leading-relaxed text-amber-800">
+                        Tombol ini adalah <strong>preset instan</strong> untuk memasukkan <strong>20 butir soal latihan contoh</strong> bawaan sistem langsung ke database tanpa perlu upload file apapun.
+                    </p>
+                    <p class="text-[11px] leading-relaxed text-amber-700">
+                        Sangat berguna jika Anda ingin <strong>langsung mengetes atau mensimulasikan ujian CBT santri</strong> (melihat tampilan rumus matematika, teks Arab, dan sistem penilaian).
+                    </p>
+                    <p class="text-[11px] text-amber-900 font-semibold pt-0.5 border-t border-amber-200">
+                        💡 Jika Anda ingin mengunggah soal buatan sendiri dalam jumlah banyak, gunakan tombol hijau <strong>"Download Template Excel"</strong> lalu unggah lewat tombol <strong>"Import Excel / CSV"</strong>.
+                    </p>
+                </div>
+
                 <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 space-y-1.5">
-                    <span class="font-semibold text-gray-800 block">Mata Pelajaran yang Termasuk:</span>
+                    <span class="font-semibold text-gray-800 block">20 Soal Demo ini Mencakup:</span>
                     <ul class="list-disc list-inside space-y-0.5 text-[11px] text-gray-600">
-                        <li>Matematika (Formula KaTeX)</li>
-                        <li>Bahasa Arab (Harakat &amp; Gundul)</li>
+                        <li>Matematika (Rumus KaTeX Pecahan, Aljabar, Akar Kuadrat)</li>
+                        <li>Bahasa Arab (Teks Harakat &amp; Mufrodat)</li>
                         <li>Bahasa Indonesia &amp; Bahasa Inggris</li>
-                        <li>Pendidikan Agama Islam (PAI &amp; Tajwid)</li>
+                        <li>Pendidikan Agama Islam (PAI, Rukun Islam, &amp; Tajwid)</li>
                     </ul>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Metode Pengisian:</label>
                     <div class="space-y-2">
-                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                            <input type="radio" name="mode" value="append" checked class="w-4 h-4 text-brand-500 focus:ring-brand-400">
-                            <span class="text-xs text-gray-700 font-medium">Tambahkan ke bank soal (Append)</span>
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="mode" value="append" checked class="w-4 h-4 text-brand-500 focus:ring-brand-400 mt-0.5">
+                            <div>
+                                <span class="text-xs text-gray-800 font-semibold block">Tambahkan ke bank soal (Append)</span>
+                                <span class="text-[11px] text-gray-500">Menambahkan 20 soal demo ini tanpa menghapus soal yang sudah ada di database.</span>
+                            </div>
                         </label>
-                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                            <input type="radio" name="mode" value="replace" class="w-4 h-4 text-brand-500 focus:ring-brand-400">
-                            <span class="text-xs text-red-600 font-medium">Ganti seluruh soal lama (Replace)</span>
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-red-200 hover:bg-red-50/40 cursor-pointer">
+                            <input type="radio" name="mode" value="replace" class="w-4 h-4 text-brand-500 focus:ring-brand-400 mt-0.5">
+                            <div>
+                                <span class="text-xs text-red-600 font-semibold block">Ganti seluruh soal lama (Replace)</span>
+                                <span class="text-[11px] text-red-500">Mengosongkan seluruh bank soal lama, lalu mengisinya dengan 20 butir soal demo bawaan ini.</span>
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -356,8 +394,8 @@
                 <button type="button" onclick="document.getElementById('modalTemplate').classList.add('hidden')" class="ta-btn-sm-outline">
                     Batal
                 </button>
-                <button type="submit" class="ta-btn-sm-primary">
-                    Muat Template
+                <button type="submit" class="ta-btn-sm-primary bg-amber-600 hover:bg-amber-700 border-amber-600">
+                    ⚡ Masukkan 20 Soal Demo
                 </button>
             </div>
         </form>
