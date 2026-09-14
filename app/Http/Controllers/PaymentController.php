@@ -233,6 +233,9 @@ class PaymentController extends Controller
     {
         $student = Student::with(['classroom', 'dormitory'])->findOrFail($studentId);
 
+        // Otomatis sinkronisasi potongan/SKTM aktif ke seluruh tagihan santri
+        StudentBill::syncDiscountsForStudent($student->id);
+
         $bills = StudentBill::where('student_id', $studentId)
             ->where('status', '!=', 'Lunas')
             ->where('penangguhan_wisuda', false)
@@ -1134,8 +1137,11 @@ class PaymentController extends Controller
                 'catatan' => $validated['catatan'] ?? $existing->catatan,
             ]);
 
+            // Sinkronisasi otomatis ke tagihan santri
+            StudentBill::syncDiscountsForStudent($student->id);
+
             return redirect()->route('admin.pembayaran.potongan.index')
-                ->with('success', "Potongan pos {$validated['pos_biaya']} untuk {$student->nama_lengkap} berhasil diperbarui.");
+                ->with('success', "Potongan pos {$validated['pos_biaya']} untuk {$student->nama_lengkap} berhasil diperbarui dan diterapkan ke tagihan.");
         }
 
         StudentDiscount::create([
@@ -1153,8 +1159,11 @@ class PaymentController extends Controller
             'created_by' => auth()->user()->name ?? 'Bendahara',
         ]);
 
+        // Sinkronisasi otomatis ke tagihan santri
+        StudentBill::syncDiscountsForStudent($student->id);
+
         return redirect()->route('admin.pembayaran.potongan.index')
-            ->with('success', "Keringanan {$validated['jenis_potongan']} untuk {$student->nama_lengkap} berhasil disimpan.");
+            ->with('success', "Keringanan {$validated['jenis_potongan']} untuk {$student->nama_lengkap} berhasil disimpan dan otomatis memotong tagihan santri.");
     }
 
     /**
@@ -1163,9 +1172,13 @@ class PaymentController extends Controller
     public function potonganDestroy($id)
     {
         $discount = StudentDiscount::findOrFail($id);
+        $studentId = $discount->student_id;
         $discount->delete();
 
-        return redirect()->back()->with('success', 'Data potongan biaya berhasil dihapus.');
+        // Sinkronisasi ulang tagihan santri setelah potongan dihapus
+        StudentBill::syncDiscountsForStudent($studentId);
+
+        return redirect()->back()->with('success', 'Data potongan biaya berhasil dihapus dan tagihan santri telah disesuaikan.');
     }
 
     /**

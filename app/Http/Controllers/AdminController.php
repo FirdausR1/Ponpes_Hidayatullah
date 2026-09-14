@@ -1416,12 +1416,15 @@ class AdminController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'signature_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'signature_canvas' => 'nullable|string',
+            'stempel_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'current_password' => 'required_with:password|string',
             'password' => 'nullable|string|min:6|confirmed',
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'signature_file.image' => 'File tanda tangan harus berupa gambar (PNG/JPG/WEBP).',
             'signature_file.max' => 'Ukuran file tanda tangan maksimal 3MB.',
+            'stempel_file.image' => 'File cap stempel harus berupa gambar (PNG/JPG/WEBP).',
+            'stempel_file.max' => 'Ukuran file cap stempel maksimal 3MB.',
             'current_password.required_with' => 'Masukkan kata sandi saat ini untuk menetapkan kata sandi baru.',
             'password.min' => 'Kata sandi baru minimal 6 karakter.',
             'password.confirmed' => 'Konfirmasi kata sandi baru tidak sesuai.',
@@ -1473,8 +1476,26 @@ class AdminController extends Controller
             }
         }
 
+        // Hapus Cap Stempel pribadi jika diminta
+        if ($request->boolean('remove_stempel')) {
+            if ($user->stempel_image && file_exists(public_path($user->stempel_image))) {
+                @unlink(public_path($user->stempel_image));
+            }
+            $user->stempel_image = null;
+        }
+        // Unggah file Cap Stempel baru
+        elseif ($request->hasFile('stempel_file')) {
+            if ($user->stempel_image && file_exists(public_path($user->stempel_image))) {
+                @unlink(public_path($user->stempel_image));
+            }
+            $file = $request->file('stempel_file');
+            $filename = 'stempel_user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/signatures'), $filename);
+            $user->stempel_image = '/uploads/signatures/' . $filename;
+        }
+
         $user->save();
 
-        return back()->with('success', 'Profil, jabatan, dan tanda tangan digital Anda berhasil diperbarui!');
+        return back()->with('success', 'Profil, jabatan, tanda tangan digital, dan cap stempel Anda berhasil diperbarui!');
     }
 }

@@ -29,23 +29,29 @@ if (!function_exists('terbilangAngka')) {
     }
 }
 
-$stempelImg = \App\Models\Setting::get('ttd_digital_stempel_image');
-if (!$stempelImg || !file_exists(public_path($stempelImg))) {
-    if (file_exists(public_path('uploads/settings/stempel_1788857044.png'))) {
-        $stempelImg = '/uploads/settings/stempel_1788857044.png';
-    } elseif (file_exists(public_path('uploads/settings/default_stempel_pesantren.png'))) {
-        $stempelImg = '/uploads/settings/default_stempel_pesantren.png';
-    } else {
-        $stempelImg = '/logo.png';
-    }
-}
-
 // Deteksi petugas pencatat transaksi atau bendahara yang sedang login
 $petugasUser = null;
 if (isset($payment->user) && $payment->user) {
     $petugasUser = $payment->user;
 } elseif (auth()->check()) {
     $petugasUser = auth()->user();
+}
+
+// Cap stempel: Utamakan cap stempel milik petugas/bendahara yang mencatat, jika tidak ada fallback ke stempel umum pondok
+$stempelImg = null;
+if ($petugasUser && !empty($petugasUser->stempel_image) && file_exists(public_path($petugasUser->stempel_image))) {
+    $stempelImg = $petugasUser->stempel_image;
+} else {
+    $stempelImg = \App\Models\Setting::get('ttd_digital_stempel_image');
+    if (!$stempelImg || !file_exists(public_path($stempelImg))) {
+        if (file_exists(public_path('uploads/settings/stempel_1788857044.png'))) {
+            $stempelImg = '/uploads/settings/stempel_1788857044.png';
+        } elseif (file_exists(public_path('uploads/settings/default_stempel_pesantren.png'))) {
+            $stempelImg = '/uploads/settings/default_stempel_pesantren.png';
+        } else {
+            $stempelImg = '/logo.png';
+        }
+    }
 }
 
 $ttdImg = null;
@@ -166,6 +172,18 @@ $targetRowCount = max(6, $itemsList->count());
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 <span id="downloadBtnText">Download Gambar (PNG)</span>
             </button>
+
+            <!-- Tombol Edit Stempel & TTD -->
+            <a href="{{ route('admin.settings.index') }}?open_tab=tab-ttd#tab-ttd"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition"
+               title="Edit gambar stempel dan tanda tangan yang muncul di kwitansi">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8.5 14.5l1.5-1.5 5-5"/>
+                    <path d="M14.5 8.5L16 10"/>
+                </svg>
+                <span>Edit Stempel & TTD</span>
+            </a>
 
             <!-- Tombol Cetak (Print) -->
             <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#208075] hover:bg-[#1a685f] text-white text-xs font-bold shadow-md transition cursor-pointer">

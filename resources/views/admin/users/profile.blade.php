@@ -203,7 +203,63 @@
             </div>
         </div>
 
-        <!-- CARD 3: KEAMANAN & GANTI PASSWORD -->
+        <!-- CARD 3: CAP STEMPEL KHUSUS KWITANSI (PER BENDAHARA / PETUGAS) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Cap Stempel Kwitansi Petugas / Bendahara
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Cap stempel ini khusus digunakan pada kwitansi pembayaran santri saat Anda bertugas sebagai kasir/bendahara pencatat.</p>
+                </div>
+                <span class="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                    Khusus Kwitansi Kasir
+                </span>
+            </div>
+
+            <!-- Preview Cap Stempel Aktif -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row items-center gap-4">
+                <div class="w-24 h-24 rounded-xl border border-slate-300 bg-[linear-gradient(45deg,#f1f5f9_25%,transparent_25%),linear-gradient(-45deg,#f1f5f9_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f1f5f9_75%),linear-gradient(-45deg,transparent_75%,#f1f5f9_75%)] bg-[size:16px_16px] bg-[position:0_0,0_8px,8px_-8px,-8px_0] p-2 flex items-center justify-center shrink-0">
+                    @if($user->stempel_image && file_exists(public_path($user->stempel_image)))
+                        <img id="currentStempelImg" src="{{ asset($user->stempel_image) }}" alt="Cap Stempel Petugas" class="max-h-full max-w-full object-contain">
+                    @else
+                        <div id="emptyStempelNotice" class="text-center">
+                            <span class="text-[10px] text-slate-400 block">Belum ada cap pribadi</span>
+                            <span class="text-[9px] text-emerald-600 font-medium">(Gunakan stempel umum)</span>
+                        </div>
+                        <img id="currentStempelImg" src="" alt="Cap Stempel Petugas" class="max-h-full max-w-full object-contain hidden">
+                    @endif
+                </div>
+
+                <div class="flex-1 space-y-2">
+                    <div class="text-xs text-slate-700">
+                        @if($user->stempel_image && file_exists(public_path($user->stempel_image)))
+                            <span class="font-bold text-emerald-700 flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Cap stempel kwitansi pribadi Anda aktif
+                            </span>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Kwitansi yang Anda terbitkan akan dicap otomatis dengan stempel khusus ini.</p>
+                            <label class="inline-flex items-center gap-2 mt-1.5 text-xs text-rose-600 hover:text-rose-700 cursor-pointer">
+                                <input type="checkbox" name="remove_stempel" value="1" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                                <span>Hapus cap stempel pribadi (gunakan stempel umum pesantren)</span>
+                            </label>
+                        @else
+                            <span class="font-medium text-slate-700">Saat ini kwitansi yang Anda cetak menggunakan stempel umum pesantren.</span>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Unggah gambar stempel berformat <strong>PNG transparan</strong> jika Anda memiliki cap stempel khusus.</p>
+                        @endif
+                    </div>
+
+                    <div class="pt-1">
+                        <input type="file" name="stempel_file" id="stempel_file" accept="image/png, image/jpeg, image/webp"
+                            onchange="previewStempelFile(this)"
+                            class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 4: KEAMANAN & GANTI PASSWORD -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -353,6 +409,22 @@
         } else {
             previewImg.classList.add('hidden');
             placeholder.classList.remove('hidden');
+        }
+    }
+
+    function previewStempelFile(input) {
+        const img = document.getElementById('currentStempelImg');
+        const notice = document.getElementById('emptyStempelNotice');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (notice) notice.classList.add('hidden');
+                if (img) {
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
         }
     }
 

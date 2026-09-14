@@ -127,6 +127,9 @@ class StudentAuthController extends Controller
             return redirect()->route('santri.login');
         }
 
+        // Pastikan potongan/keringanan aktif tersinkronisasi ke tagihan
+        StudentBill::syncDiscountsForStudent($student->id);
+
         // Tagihan santri
         $bills = $student->bills()->latest()->get();
         $unpaidBills = $bills->where('status', '!=', 'Lunas');

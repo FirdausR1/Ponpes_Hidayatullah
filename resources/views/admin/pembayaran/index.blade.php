@@ -778,6 +778,7 @@
                                                         <span>Tagihan: <span class="font-medium text-gray-700" x-text="formatRupiah(b.nominal_tagihan)"></span></span>
                                                         <span>&bull;</span>
                                                         <span>Sisa: <span class="text-rose-600 font-mono font-bold" x-text="formatRupiah(b.sisa_tagihan)"></span></span>
+                                                        <span x-show="b.nominal_potongan > 0" class="text-purple-700 font-semibold" x-text="'(Keringanan: -' + formatRupiah(b.nominal_potongan) + ')'"></span>
                                                         <span x-show="b.nominal_bayar > 0" class="text-gray-500" x-text="'(Dicicil: ' + formatRupiah(b.nominal_bayar) + ')'"></span>
                                                     </div>
                                                 </div>
@@ -877,6 +878,7 @@
                                                         <span>Tagihan: <span class="font-medium text-gray-700" x-text="formatRupiah(b.nominal_tagihan)"></span></span>
                                                         <span>&bull;</span>
                                                         <span>Sisa: <span class="text-blue-700 font-mono font-bold" x-text="formatRupiah(b.sisa_tagihan)"></span></span>
+                                                        <span x-show="b.nominal_potongan > 0" class="text-purple-700 font-semibold" x-text="'(Keringanan: -' + formatRupiah(b.nominal_potongan) + ')'"></span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -900,6 +902,15 @@
                                         </div>
                                     </div>
                                 </template>
+                            </div>
+
+                            <!-- NOTIFIKASI: TIDAK ADA TUNGGAKAN -->
+                            <div x-show="!loadingBills && studentBills.length === 0" class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-1">
+                                <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 mb-1">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wide">Semua Tagihan Lunas / Bebas</h4>
+                                <p class="text-xs text-emerald-700">Santri ini tidak memiliki tunggakan tagihan yang belum dibayar (seluruh pos telah lunas atau disubsidi penuh oleh beasiswa/SKTM).</p>
                             </div>
 
                             <!-- SECTION 4: PEMBAYARAN BULAN DEPAN (DI MUKA) -->

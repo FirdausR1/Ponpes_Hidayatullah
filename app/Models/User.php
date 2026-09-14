@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'role',
         'signature_image',
+        'stempel_image',
         'jabatan',
         'password',
     ];

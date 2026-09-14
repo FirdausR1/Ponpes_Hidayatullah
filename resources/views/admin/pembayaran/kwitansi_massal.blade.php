@@ -193,6 +193,12 @@ $totalJumlahKwitansi = $payments->count();
                 }
             }
 
+            // Cap stempel: Utamakan cap stempel pribadi petugas/bendahara pencatat
+            $stempelImgItem = $stempelImg;
+            if ($petugasUser && !empty($petugasUser->stempel_image) && file_exists(public_path($petugasUser->stempel_image))) {
+                $stempelImgItem = $petugasUser->stempel_image;
+            }
+
             // Rincian Pos Pembayaran (minimal 5-6 baris)
             $itemsList = (isset($payment->items) && $payment->items && $payment->items->count() > 0) ? $payment->items : collect();
             if ($itemsList->isEmpty()) {
@@ -321,7 +327,7 @@ $totalJumlahKwitansi = $payments->count();
                                 <div class="relative w-44 h-16 flex items-center justify-between">
                                     <!-- Stempel Cap Pondok Tuksongo -->
                                     <div class="w-16 h-16 flex items-center justify-center shrink-0 pointer-events-none transform -rotate-6 z-0">
-                                        <img src="{{ $stempelImg }}" alt="Cap Stempel Pondok" class="w-16 h-16 object-contain opacity-85 mix-blend-multiply" onerror="this.style.display='none'">
+                                        <img src="{{ $stempelImgItem }}" alt="Cap Stempel Pondok" class="w-16 h-16 object-contain opacity-85 mix-blend-multiply" onerror="this.style.display='none'">
                                         <svg class="w-16 h-16 text-[#208075] opacity-60 absolute" viewBox="0 0 100 100" fill="none" stroke="currentColor">
                                             <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
                                             <circle cx="50" cy="50" r="39" stroke-width="1.5"/>

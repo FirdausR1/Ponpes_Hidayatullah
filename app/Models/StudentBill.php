@@ -89,4 +89,107 @@ class StudentBill extends Model
     {
         return 'Rp ' . number_format($this->nominal_potongan, 0, ',', '.');
     }
+
+    /**
+     * Sinkronisasi otomatis potongan/beasiswa/SKTM aktif ke seluruh tagihan santri.
+     */
+    public static function syncDiscountsForStudent($studentId): void
+    {
+        $discounts = StudentDiscount::where('student_id', $studentId)
+            ->where('status', 'Aktif')
+            ->get();
+
+        $bills = self::where('student_id', $studentId)->get();
+
+        foreach ($bills as $bill) {
+            // Jangan ubah tagihan yang merupakan pembebasan manual dari approval surat dispensasi per-tagihan
+            if ($bill->status_dispensasi === 'disetujui' && !empty($bill->catatan_pembebasan)) {
+                continue;
+            }
+
+            // Pastikan nominal asli terisi
+            $nominalAsli = (float)($bill->nominal_asli > 0 ? $bill->nominal_asli : ($bill->nominal_tagihan + $bill->nominal_potongan));
+            if ($nominalAsli <= 0) {
+                continue;
+            }
+            $bill->nominal_asli = $nominalAsli;
+
+            // Jika sudah dibayar lunas murni dengan uang tunai tanpa potongan, jangan sentuh
+            if ($bill->nominal_potongan == 0 && $bill->nominal_bayar >= $nominalAsli) {
+                continue;
+            }
+
+            // Cari diskon yang cocok untuk pos ini
+            $potongan = 0;
+            $alasanPotongan = null;
+
+            foreach ($discounts as $disc) {
+                $isMatch = false;
+                $discPos = strtoupper(trim($disc->pos_biaya));
+                $billPos = strtoupper(trim($bill->pos_biaya));
+
+                if ($discPos === 'SEMUA') {
+                    $isMatch = true;
+                } elseif ($discPos === 'SEMUA BULANAN' && $bill->kategori === 'bulanan') {
+                    $isMatch = true;
+                } elseif ($discPos === $billPos) {
+                    $isMatch = true;
+                }
+
+                if ($isMatch) {
+                    $p = $disc->tipe_nilai === 'persen'
+                        ? ($disc->nilai / 100) * $nominalAsli
+                        : min($nominalAsli, (float)$disc->nilai);
+
+                    if ($p > $potongan) {
+                        $potongan = $p;
+                        $alasanPotongan = $disc->jenis_potongan . ($disc->no_surat_miskin ? " ({$disc->no_surat_miskin})" : "");
+                    }
+                }
+            }
+
+            if ($potongan > 0) {
+                $bill->nominal_potongan = $potongan;
+                $nominalTagihanBersih = max(0, $nominalAsli - $potongan);
+                $bill->nominal_tagihan = $nominalTagihanBersih;
+                
+                $nominalBayar = (float)$bill->nominal_bayar;
+                $sisa = max(0, $nominalTagihanBersih - $nominalBayar);
+                $bill->sisa_tagihan = $sisa;
+
+                if ($sisa == 0) {
+                    $bill->status = 'Lunas';
+                } elseif ($nominalBayar > 0) {
+                    $bill->status = 'Cicilan';
+                } else {
+                    $bill->status = 'Belum Bayar';
+                }
+
+                $bill->alasan_potongan = $alasanPotongan;
+                $bill->save();
+            } else {
+                // Jika tidak ada diskon aktif yang cocok, dan sebelumnya memiliki potongan otomatis (bukan dispensasi surat)
+                if ($bill->nominal_potongan > 0 && empty($bill->catatan_pembebasan)) {
+                    $bill->nominal_potongan = 0;
+                    $bill->nominal_tagihan = $nominalAsli;
+                    $nominalBayar = (float)$bill->nominal_bayar;
+                    $sisa = max(0, $nominalAsli - $nominalBayar);
+                    $bill->sisa_tagihan = $sisa;
+
+                    if ($sisa == 0 && $nominalAsli == 0) {
+                        $bill->status = 'Lunas';
+                    } elseif ($sisa == 0 && $nominalBayar >= $nominalAsli) {
+                        $bill->status = 'Lunas';
+                    } elseif ($nominalBayar > 0) {
+                        $bill->status = 'Cicilan';
+                    } else {
+                        $bill->status = 'Belum Bayar';
+                    }
+
+                    $bill->alasan_potongan = null;
+                    $bill->save();
+                }
+            }
+        }
+    }
 }
