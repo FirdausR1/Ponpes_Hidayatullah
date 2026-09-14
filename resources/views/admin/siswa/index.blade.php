@@ -22,13 +22,13 @@
             <!-- 1. Tombol Export Excel Santri (Sesuai Filter yang Aktif) -->
             <a href="{{ route('admin.siswa.exportExcel', request()->query()) }}" class="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-800 shadow-theme-xs hover:bg-emerald-100 transition cursor-pointer" title="Unduh data santri aktif dalam format Excel (.xlsx)">
                 <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                <span>Export Excel</span>
+                <span>Export Data Siswa</span>
             </a>
 
             <!-- 2. Tombol Import Massal Template Excel -->
             <button type="button" onclick="document.getElementById('modalImportExcel').classList.remove('hidden')" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-emerald-700 transition cursor-pointer" title="Import data banyak santri sekaligus dengan template Excel/CSV">
                 <svg class="w-4 h-4 text-emerald-600 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-                <span>Import Excel</span>
+                <span>Import Siswa Masal</span>
             </button>
 
             <!-- Tombol Kenaikan Kelas -->
@@ -332,7 +332,7 @@
                         <tr>
                             <td colspan="7" class="px-6 py-12 text-center text-gray-400">
                                 <p class="text-sm font-semibold text-gray-700">Belum ada data santri ditemukan.</p>
-                                <p class="text-xs text-gray-400 mt-1">Gunakan tombol Import Excel atau Tambah Santri untuk mulai mengelola.</p>
+                                <p class="text-xs text-gray-400 mt-1">Gunakan tombol Import Siswa Masal atau Tambah Santri untuk mulai mengelola.</p>
                             </td>
                         </tr>
                     @endforelse
