@@ -155,7 +155,13 @@
                     Kontak & Alamat
                 </a>
 
-                <!-- 7. SEARCH BUTTON (MAGNIFYING GLASS) -->
+                <!-- 7. LOGIN SANTRI BUTTON -->
+                <a href="{{ route('santri.login') }}" class="official-nav-santri-btn" title="Masuk Portal Santri">
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Portal Santri</span>
+                </a>
+
+                <!-- 8. SEARCH BUTTON (MAGNIFYING GLASS) -->
                 <button type="button" class="official-nav-search-btn" id="officialSearchTrigger" aria-label="Buka Pencarian" title="Pencarian Berita & Informasi">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </button>
@@ -216,6 +222,12 @@
 
         <a href="{{ $isHome ? '#kontak' : $homeUrl . '#kontak' }}" onclick="closeOfficialMobileNav()" class="official-mobile-link">
             Kontak & Alamat
+        </a>
+
+        <a href="{{ route('santri.login') }}" onclick="closeOfficialMobileNav()" class="official-mobile-santri-link">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Portal Santri</span>
+            <span class="official-badge-santri">Login</span>
         </a>
 
         <a href="{{ route('admin.dashboard') }}" target="_blank" onclick="closeOfficialMobileNav()" class="official-mobile-admin-link">
@@ -684,6 +696,71 @@
         border-radius: 4px;
         background: #e8f5ed;
         color: #006837;
+        font-weight: 700;
+    }
+
+    /* PORTAL SANTRI BUTTON */
+    .official-nav-santri-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #006837;
+        background: #edfbf2;
+        border: 1.5px solid #a3e4b8;
+        padding: 7px 14px;
+        border-radius: 9999px;
+        text-decoration: none;
+        transition: all 0.22s ease;
+        white-space: nowrap;
+        letter-spacing: 0.1px;
+    }
+
+    .official-nav-santri-btn svg {
+        width: 15px;
+        height: 15px;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+        flex-shrink: 0;
+    }
+
+    .official-nav-santri-btn:hover {
+        background: #006837;
+        color: #ffffff;
+        border-color: #006837;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 104, 55, 0.25);
+    }
+
+    /* MOBILE PORTAL SANTRI LINK */
+    .official-mobile-santri-link {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px dashed #cbd5e1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #006837;
+        text-decoration: none;
+    }
+
+    .official-mobile-santri-link span:first-of-type {
+        flex: 1;
+    }
+
+    .official-badge-santri {
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        background: #006837;
+        color: #ffffff;
         font-weight: 700;
     }
 
