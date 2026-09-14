@@ -88,6 +88,14 @@ class Student extends Authenticatable
     }
 
     /**
+     * Relasi ke riwayat mutasi santri
+     */
+    public function mutations()
+    {
+        return $this->hasMany(StudentMutation::class, 'student_id')->latest();
+    }
+
+    /**
      * Total tagihan santri saat ini.
      */
     public function getTotalTagihanAttribute(): float
@@ -104,11 +112,14 @@ class Student extends Authenticatable
     }
 
     /**
-     * Total sisa tunggakan santri.
+     * Total sisa tunggakan santri aktif (tidak termasuk penangguhan wisuda).
      */
     public function getTotalTunggakanAttribute(): float
     {
-        return (float) $this->bills()->where('status', '!=', 'Lunas')->sum('sisa_tagihan');
+        return (float) $this->bills()
+            ->where('status', '!=', 'Lunas')
+            ->where('penangguhan_wisuda', false)
+            ->sum('sisa_tagihan');
     }
 
     /**
@@ -118,11 +129,11 @@ class Student extends Authenticatable
     {
         $setoran = \App\Models\StudentPaymentItem::whereHas('payment', function($q) {
             $q->where('student_id', $this->id)->where('status', 'Lunas');
-        })->where('pos_biaya', 'TAB')->sum('nominal');
+        })->whereIn('pos_biaya', ['TAB', 'TABUNGAN', 'Tabungan Wajib', 'TABUNGAN WAJIB'])->sum('nominal');
 
         $tarikan = \App\Models\StudentPaymentItem::whereHas('payment', function($q) {
             $q->where('student_id', $this->id)->where('status', 'Lunas');
-        })->where('pos_biaya', 'AMBIL TABUNGAN')->sum('nominal');
+        })->whereIn('pos_biaya', ['AMBIL TABUNGAN', 'TARIK TABUNGAN', 'Pengambilan Tabungan'])->sum('nominal');
 
         return (float) ($setoran - $tarikan);
     }

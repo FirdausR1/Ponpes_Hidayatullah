@@ -126,7 +126,10 @@ class PaymentController extends Controller
             ->whereHas('student', function($q) {
                 $q->where('jenjang', 'like', '%MA%');
             })->sum('nominal');
-        $totalTunggakan = StudentBill::where('status', '!=', 'Lunas')->sum('sisa_tagihan');
+        $totalTunggakan = StudentBill::where('status', '!=', 'Lunas')
+            ->where('penangguhan_wisuda', false)
+            ->whereHas('student', fn($q) => $q->where('status', 'Aktif'))
+            ->sum('sisa_tagihan');
         $psbPendingVerify = PsbRegistration::whereNotNull('bukti_transfer')
             ->where($eligiblePsbScope)
             ->where(function($q) {
@@ -733,7 +736,11 @@ class PaymentController extends Controller
         $totalTerbayarRp = $allBills->sum('nominal_bayar');
         $totalTunggakanRp = $allBills->where('status', '!=', 'Lunas')->where('penangguhan_wisuda', false)->sum('sisa_tagihan');
         $totalDitangguhkanRp = $allBills->where('penangguhan_wisuda', true)->sum('sisa_tagihan');
-        $totalSantriNunggak = StudentBill::where('status', '!=', 'Lunas')->where('penangguhan_wisuda', false)->distinct('student_id')->count('student_id');
+        $totalSantriNunggak = StudentBill::where('status', '!=', 'Lunas')
+            ->where('penangguhan_wisuda', false)
+            ->whereHas('student', fn($q) => $q->where('status', 'Aktif'))
+            ->distinct('student_id')
+            ->count('student_id');
 
         $classrooms = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->get();
         $activeStudents = Student::where('status', 'Aktif')->orderBy('nama_lengkap')->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang']);
@@ -868,7 +875,7 @@ class PaymentController extends Controller
                     'nominal_potongan' => $potongan,
                     'alasan_potongan' => $alasanPotongan,
                     'nominal_tagihan' => $nominalTagihan,
-                    'nominal_bayar' => $nominalTagihan == 0 ? $item['nominal'] : 0,
+                    'nominal_bayar' => 0,
                     'sisa_tagihan' => $nominalTagihan,
                     'status' => $status,
                     'jatuh_tempo' => $jatuhTempo,
@@ -1028,7 +1035,7 @@ class PaymentController extends Controller
                 'nominal_potongan' => $potongan,
                 'alasan_potongan' => $alasan,
                 'nominal_tagihan' => $tagihanBersih,
-                'nominal_bayar' => $tagihanBersih == 0 ? $nominalSantri : 0,
+                'nominal_bayar' => 0,
                 'sisa_tagihan' => $tagihanBersih,
                 'status' => $status,
                 'jatuh_tempo' => $jatuhTempo,
@@ -2400,11 +2407,19 @@ class PaymentController extends Controller
         $tingkatAkhirFilter = $request->input('tingkat_akhir');
         $search = $request->input('q') ?: $request->input('search');
 
+        $statusSantri = $request->input('status_santri', 'aktif');
+
         // Query seluruh tagihan yang belum lunas (menunggak)
         $unpaidQuery = StudentBill::with(['student.classroom'])
             ->where('status', '!=', 'Lunas')
             ->where('sisa_tagihan', '>', 0)
             ->where('penangguhan_wisuda', false);
+
+        if ($statusSantri === 'aktif') {
+            $unpaidQuery->whereHas('student', fn($q) => $q->where('status', 'Aktif'));
+        } elseif ($statusSantri === 'arsip') {
+            $unpaidQuery->whereHas('student', fn($q) => $q->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']));
+        }
 
         if (!empty($posFilter)) {
             $unpaidQuery->where('pos_biaya', $posFilter);
@@ -2620,11 +2635,18 @@ class PaymentController extends Controller
         $posFilter = $request->input('pos_biaya');
         $jenjangFilter = $request->input('jenjang');
         $tingkatAkhirFilter = $request->input('tingkat_akhir');
+        $statusSantri = $request->input('status_santri', 'aktif');
 
         $unpaidQuery = StudentBill::with(['student.classroom'])
             ->where('status', '!=', 'Lunas')
             ->where('sisa_tagihan', '>', 0)
             ->where('penangguhan_wisuda', false);
+
+        if ($statusSantri === 'aktif') {
+            $unpaidQuery->whereHas('student', fn($q) => $q->where('status', 'Aktif'));
+        } elseif ($statusSantri === 'arsip') {
+            $unpaidQuery->whereHas('student', fn($q) => $q->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']));
+        }
 
         if (!empty($posFilter)) {
             $unpaidQuery->where('pos_biaya', $posFilter);

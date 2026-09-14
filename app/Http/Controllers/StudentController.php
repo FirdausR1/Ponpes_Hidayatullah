@@ -384,6 +384,11 @@ class StudentController extends Controller
             $reg->update(['status' => 'Diterima']);
         }
 
+        // Hubungkan riwayat pembayaran PSB ke ID santri baru
+        \App\Models\StudentPayment::where('psb_registration_id', $reg->id)
+            ->whereNull('student_id')
+            ->update(['student_id' => $student->id]);
+
         return redirect()->back()->with('success', "Alhamdulillah! Calon santri {$reg->nama_lengkap} ({$reg->no_registrasi}) resmi didaftarkan sebagai Santri Aktif! NIS: {$student->nis}, Kelas: {$student->kelas}, Username: {$student->username}, Password Login: {$defaultPassword}");
     }
 
@@ -451,6 +456,11 @@ class StudentController extends Controller
                 'password' => Hash::make($defaultPassword),
                 'catatan' => "Impor Massal PSB TA {$tahunMasuk} (No Reg: {$reg->no_registrasi})",
             ]);
+
+            // Hubungkan riwayat pembayaran PSB ke ID santri baru
+            \App\Models\StudentPayment::where('psb_registration_id', $reg->id)
+                ->whereNull('student_id')
+                ->update(['student_id' => $student->id]);
 
             $successCount++;
         }

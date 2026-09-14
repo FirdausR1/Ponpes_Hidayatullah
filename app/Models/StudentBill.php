@@ -153,7 +153,15 @@ class StudentBill extends Model
                 $nominalTagihanBersih = max(0, $nominalAsli - $potongan);
                 $bill->nominal_tagihan = $nominalTagihanBersih;
                 
-                $nominalBayar = (float)$bill->nominal_bayar;
+                $actualPaid = (float) \App\Models\StudentPaymentItem::where('student_bill_id', $bill->id)
+                    ->whereHas('payment', fn($q) => $q->where('status', 'Lunas'))
+                    ->sum('nominal');
+
+                $nominalBayar = max($actualPaid, min((float)$bill->nominal_bayar, $nominalTagihanBersih));
+                if ($nominalTagihanBersih == 0 && $actualPaid == 0) {
+                    $nominalBayar = 0;
+                }
+                $bill->nominal_bayar = $nominalBayar;
                 $sisa = max(0, $nominalTagihanBersih - $nominalBayar);
                 $bill->sisa_tagihan = $sisa;
 
