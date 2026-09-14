@@ -323,15 +323,53 @@
         </div>
     </div>
 
-    <!-- TABEL UTAMA: DAFTAR SANTRI MENUNGGAK & RINCIANNYA -->
-    <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-xs overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <!-- TABEL UTAMA: DAFTAR SANTRI MENUNGGAK & RINCIANNYA (MODE RINGKAS & EXPANDABLE) -->
+    <div x-data="{
+        allExpanded: false,
+        openRows: {},
+        toggleRow(id) {
+            this.openRows[id] = !this.openRows[id];
+        },
+        isOpen(id) {
+            return this.allExpanded || !!this.openRows[id];
+        },
+        expandAll() {
+            this.allExpanded = true;
+        },
+        collapseAll() {
+            this.allExpanded = false;
+            this.openRows = {};
+        }
+    }" class="rounded-2xl border border-gray-200 bg-white shadow-theme-xs overflow-hidden">
+        
+        <!-- Header Tabel & Switch Mode Tampilan -->
+        <div class="px-5 py-4 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white">
             <div>
                 <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
-                    <span>Daftar Rincian Santri Menunggak</span>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">{{ $santriList->total() }} Santri</span>
+                    <span>Daftar Santri Menunggak</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">{{ $santriList->total() }} Santri</span>
                 </h3>
-                <p class="text-xs text-gray-500 mt-0.5">Rincian kekurangan tagihan per santri beserta tombol penagihan WhatsApp otomatis dan shortcut Kasir POS</p>
+                <p class="text-xs text-gray-500 mt-0.5">Tampilan ringkas &amp; cepat dipantau. Klik tombol <strong>Rincian</strong> untuk melihat detail tagihan per-bulan, atau gunakan tombol buka/tutup semua.</p>
+            </div>
+
+            <!-- Kontrol Mode Tampilan -->
+            <div class="flex items-center gap-2 no-print shrink-0">
+                <div class="inline-flex rounded-lg p-1 bg-gray-100 border border-gray-200 text-xs">
+                    <button type="button" 
+                            @click="collapseAll()" 
+                            :class="!allExpanded ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition text-xs font-medium cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <span>Mode Ringkas</span>
+                    </button>
+                    <button type="button" 
+                            @click="expandAll()" 
+                            :class="allExpanded ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-600 hover:text-gray-900'" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition text-xs font-medium cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        <span>Buka Semua Detail</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -339,12 +377,12 @@
             <table class="w-full text-xs text-left border-collapse">
                 <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-semibold border-b border-gray-100">
                     <tr>
-                        <th class="px-4 py-3 w-10 text-center">No</th>
-                        <th class="px-4 py-3">Data Santri</th>
-                        <th class="px-4 py-3">Kontak Wali</th>
-                        <th class="px-4 py-3">Bulan Tunggakan &amp; Rincian Tagihan</th>
-                        <th class="px-4 py-3 text-right">Total Kekurangan</th>
-                        <th class="px-4 py-3 text-center no-print">Aksi Bendahara</th>
+                        <th class="px-4 py-3 w-12 text-center">No</th>
+                        <th class="px-4 py-3 min-w-[200px]">Data Santri</th>
+                        <th class="px-4 py-3 min-w-[140px]">Kontak Wali</th>
+                        <th class="px-4 py-3 min-w-[280px]">Bulan &amp; Ringkasan Tagihan</th>
+                        <th class="px-4 py-3 text-right min-w-[130px]">Total Tunggakan</th>
+                        <th class="px-4 py-3 text-center no-print min-w-[180px]">Aksi Bendahara</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -362,7 +400,7 @@
                         $waNum = $st ? ($st->no_whatsapp ?: ($st->no_hp ?: $st->no_hp_wali)) : null;
                         $cleanWa = $waNum ? preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waNum)) : '';
 
-                        // Format pesan WhatsApp penagihan yang santun & profesional, dikelompokkan per bulan
+                        // Format pesan WhatsApp penagihan yang santun & profesional
                         $tagihanBlocks = [];
                         if ($monthlyList->count() > 0) {
                             $tagihanBlocks[] = "🗓️ *Bulan Yang Menunggak ({$bulanCount} Bulan):*";
@@ -420,15 +458,18 @@
                             . "Bendahara Pondok Pesantren Hidayatullah Tuksongo";
                         
                         $waUrl = $cleanWa ? "https://wa.me/{$cleanWa}?text=" . rawurlencode($waMessage) : null;
+                        $rowId = $st?->id ?: $idx;
                     @endphp
-                    <tr class="hover:bg-gray-50 transition">
+
+                    <!-- BARIS RINGKAS (COMPACT ROW) -->
+                    <tr class="hover:bg-amber-50/30 transition group" :class="isOpen('{{ $rowId }}') ? 'bg-amber-50/40' : ''">
                         <!-- No -->
-                        <td class="px-4 py-3.5 text-center text-gray-500 font-mono">
+                        <td class="px-4 py-3.5 text-center text-gray-500 font-mono align-middle">
                             {{ ($santriList->currentPage() - 1) * $santriList->perPage() + $idx + 1 }}
                         </td>
 
-                        <!-- Santri Info -->
-                        <td class="px-4 py-3.5">
+                        <!-- Data Santri -->
+                        <td class="px-4 py-3.5 align-middle">
                             <div class="flex items-center gap-3">
                                 @if($st?->foto)
                                     <img src="{{ $st->foto }}" alt="{{ $st->nama_lengkap }}" class="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0">
@@ -450,88 +491,64 @@
                                         @endif
                                         @if($st?->kamar_asrama)
                                             <span>•</span>
-                                            <span>Asrama: {{ $st->kamar_asrama }}</span>
+                                            <span class="text-gray-400">Asrama: {{ $st->kamar_asrama }}</span>
                                         @endif
                                     </div>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Wali Info -->
-                        <td class="px-4 py-3.5">
+                        <!-- Kontak Wali -->
+                        <td class="px-4 py-3.5 align-middle whitespace-nowrap">
                             <div class="text-gray-900 font-semibold text-xs">
                                 {{ $st?->nama_wali ?: ($st?->ayah_nama ?: ($st?->ibu_nama ?: '—')) }}
                             </div>
-                            <div class="text-gray-500 text-[11px] font-mono mt-0.5">
-                                {{ $waNum ?: 'No HP Tidak Ada' }}
+                            <div class="text-gray-500 text-[11px] font-mono mt-0.5 flex items-center gap-1">
+                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                <span>{{ $waNum ?: '—' }}</span>
                             </div>
                         </td>
 
-                        <!-- Rincian Bulan Tunggakan & Tagihan -->
-                        <td class="px-4 py-3.5 max-w-lg">
-                            <div class="space-y-2">
-                                <!-- Header Ringkasan Bulan Tunggakan -->
-                                <div class="flex items-center flex-wrap gap-1.5">
-                                    @if($bulanCount > 0)
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
-                                            <svg class="w-3.5 h-3.5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            <span>{{ $bulanCount }} Bulan Menunggak:</span>
-                                            <span class="font-extrabold text-amber-950">{{ $bulanListText }}</span>
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-700">
-                                            Hanya Tagihan Non-Bulanan
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <!-- Rincian Per Bulan (Kotak per bulan dengan subtotal & pos) -->
-                                @if($monthlyList->count() > 0)
-                                    <div class="space-y-1.5">
-                                        @foreach($monthlyList as $m)
-                                            <div class="p-2 rounded-lg bg-gray-50/90 border border-gray-200 text-[11px] space-y-1">
-                                                <div class="flex items-center justify-between font-bold">
-                                                    <span class="text-gray-900 flex items-center gap-1.5">
-                                                        <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                                                        <span>Bulan {{ $m['periode'] }}</span>
-                                                    </span>
-                                                    <span class="font-mono font-bold text-rose-600">Rp {{ number_format($m['total'], 0, ',', '.') }}</span>
-                                                </div>
-                                                <div class="flex flex-wrap gap-1 pt-0.5">
-                                                    @foreach($m['items'] as $item)
-                                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white border border-gray-200 text-[10px] text-gray-700 shadow-2xs">
-                                                            <span class="font-mono font-bold text-gray-500">{{ $item->pos_biaya }}</span>
-                                                            <span>{{ $item->judul_tagihan }}</span>
-                                                            <span class="font-mono font-semibold text-rose-600">Rp {{ number_format($item->sisa_tagihan, 0, ',', '.') }}</span>
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                        <!-- Bulan & Ringkasan Tagihan (COMPACT DENGAN TOMBOL EXPAND) -->
+                        <td class="px-4 py-3.5 align-middle">
+                            <div class="flex items-center flex-wrap gap-1.5">
+                                @if($bulanCount > 0)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
+                                        <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span>{{ $bulanCount }} Bulan:</span>
+                                        <span class="font-normal text-amber-800 text-[10.5px] max-w-[190px] truncate" title="{{ $bulanListText }}">{{ $bulanListText }}</span>
+                                    </span>
                                 @endif
 
-                                <!-- Rincian Non-Bulanan -->
                                 @if($nonMonthlyList->count() > 0)
-                                    <div class="flex flex-wrap gap-1.5 pt-0.5">
-                                        @foreach($nonMonthlyList as $nm)
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 border border-sky-200 text-[10.5px] font-medium text-sky-900">
-                                                <span class="font-bold text-sky-700">📌 {{ $nm['judul'] }}:</span>
-                                                <span class="font-mono font-bold text-rose-600">Rp {{ number_format($nm['total'], 0, ',', '.') }}</span>
-                                            </span>
-                                        @endforeach
-                                    </div>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+                                        <span>📌 +{{ $nonMonthlyList->count() }} Kegiatan</span>
+                                    </span>
                                 @endif
+
+                                <!-- Tombol Toggle Rincian -->
+                                <button type="button" 
+                                        @click="toggleRow('{{ $rowId }}')" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border shadow-2xs"
+                                        :class="isOpen('{{ $rowId }}') ? 'bg-gray-900 text-white border-gray-900' : 'bg-white hover:bg-gray-100 text-gray-700 border-gray-200'">
+                                    <span x-text="isOpen('{{ $rowId }}') ? 'Tutup Rincian' : 'Lihat Rincian'"></span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold" :class="isOpen('{{ $rowId }}') ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-600'">
+                                        {{ $row['item_count'] }} Pos
+                                    </span>
+                                    <svg class="w-3 h-3 transition-transform duration-200" :class="isOpen('{{ $rowId }}') ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
                             </div>
                         </td>
 
-                        <!-- Total Sisa Tunggakan -->
-                        <td class="px-4 py-3.5 text-right font-mono font-bold text-sm text-rose-600 whitespace-nowrap">
+                        <!-- Total Tunggakan -->
+                        <td class="px-4 py-3.5 text-right font-mono font-bold text-sm text-rose-600 whitespace-nowrap align-middle">
                             Rp {{ number_format($totalSisa, 0, ',', '.') }}
                         </td>
 
                         <!-- Aksi Bendahara -->
-                        <td class="px-4 py-3.5 text-center no-print whitespace-nowrap">
+                        <td class="px-4 py-3.5 text-center no-print whitespace-nowrap align-middle">
                             <div class="flex items-center justify-center gap-1.5">
                                 <!-- Tombol WA -->
                                 @if($waUrl)
@@ -550,6 +567,100 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                     <span>Bayar Kasir</span>
                                 </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- SUB-ROW DETAIL RINCIAN YANG DAPAT DI-EXPAND (ACCORDION DRAWER) -->
+                    <tr x-show="isOpen('{{ $rowId }}')" x-cloak class="bg-amber-50/20 border-b border-gray-200 transition">
+                        <td colspan="6" class="p-3 sm:p-5">
+                            <div class="rounded-xl border border-amber-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-4">
+                                <!-- Header Rincian Santri -->
+                                <div class="flex flex-wrap items-center justify-between pb-3 border-b border-gray-100 gap-2">
+                                    <div class="flex items-center flex-wrap gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                        <span class="font-bold text-gray-900 text-xs sm:text-sm">Rincian Lengkap Tunggakan: {{ $st?->nama_lengkap }} (Kelas {{ $st?->kelas }})</span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200 font-mono">Total: Rp {{ number_format($totalSisa, 0, ',', '.') }}</span>
+                                        <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[11px] font-medium">{{ $row['item_count'] }} Pos Tagihan</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="toggleRow('{{ $rowId }}')" class="text-xs text-gray-500 hover:text-gray-800 font-medium flex items-center gap-1 cursor-pointer">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                            <span>Sembunyikan Rincian</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Grid Kartu Tagihan Bulanan -->
+                                @if($monthlyList->count() > 0)
+                                    <div>
+                                        <div class="text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            <span>Tagihan Rutin Bulanan ({{ $monthlyList->count() }} Bulan Menunggak)</span>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                            @foreach($monthlyList as $m)
+                                                <div class="rounded-xl border border-amber-200/90 bg-amber-50/15 p-3 flex flex-col justify-between hover:shadow-xs transition">
+                                                    <div>
+                                                        <div class="flex items-center justify-between font-bold border-b border-amber-100 pb-1.5 mb-2">
+                                                            <span class="text-gray-900 text-xs flex items-center gap-1.5">
+                                                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                                                <span>Bulan {{ $m['periode'] }}</span>
+                                                            </span>
+                                                            <span class="font-mono text-xs font-bold text-rose-600">Rp {{ number_format($m['total'], 0, ',', '.') }}</span>
+                                                        </div>
+                                                        <div class="space-y-1 text-[11px]">
+                                                            @foreach($m['items'] as $item)
+                                                                <div class="flex items-center justify-between text-gray-600 py-0.5 border-b border-dashed border-gray-100 last:border-0">
+                                                                    <span class="truncate pr-2 font-medium" title="{{ $item->judul_tagihan }}">
+                                                                        <span class="text-gray-400 font-mono text-[10px]">[{{ $item->pos_biaya }}]</span> {{ $item->judul_tagihan }}
+                                                                    </span>
+                                                                    <span class="font-mono font-semibold text-gray-900 shrink-0">Rp {{ number_format($item->sisa_tagihan, 0, ',', '.') }}</span>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Tagihan Kegiatan & Non-Bulanan -->
+                                @if($nonMonthlyList->count() > 0)
+                                    <div class="pt-2 border-t border-gray-100">
+                                        <div class="text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                            <span>Tagihan Non-Bulanan / Kegiatan ({{ $nonMonthlyList->count() }} Tagihan)</span>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                            @foreach($nonMonthlyList as $nm)
+                                                <div class="p-2.5 rounded-lg border border-sky-200/80 bg-sky-50/30 flex items-center justify-between text-xs">
+                                                    <div class="font-medium text-gray-800 flex items-center gap-1.5 truncate pr-2">
+                                                        <span class="text-sky-600">📌</span>
+                                                        <span class="truncate" title="{{ $nm['judul'] }}">{{ $nm['judul'] }}</span>
+                                                        <span class="text-[10px] text-gray-400 font-mono shrink-0">({{ $nm['pos'] }})</span>
+                                                    </div>
+                                                    <span class="font-mono font-bold text-rose-600 shrink-0">Rp {{ number_format($nm['total'], 0, ',', '.') }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Quick Action Bar -->
+                                <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 no-print">
+                                    @if($waUrl)
+                                        <a href="{{ $waUrl }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.772.78 2.791.78h.001c3.181 0 5.768-2.587 5.768-5.766.001-3.181-2.585-5.766-5.769-5.766zm3.377 8.21c-.143.403-.834.774-1.157.825-.323.051-.735.084-2.18-.517-1.446-.601-2.385-2.072-2.457-2.168-.072-.096-.583-.777-.583-1.481 0-.704.368-1.05.5-1.193.132-.143.288-.179.384-.179.096 0 .192.001.276.005.09.004.21-.034.329.252.126.3.432 1.05.47 1.128.038.078.064.168.013.269-.051.101-.077.164-.153.253-.077.089-.161.199-.23.267-.077.076-.157.159-.067.313.09.154.4 1.082 1.206 1.8 1.036.924 1.91 1.21 2.181 1.344.271.134.43.117.59-.068.16-.185.688-.802.871-1.076.183-.274.367-.229.617-.137.25.092 1.584.747 1.856.883.272.136.453.204.519.317.066.113.066.657-.077 1.06z"/></svg>
+                                            <span>Kirim Tagihan WA</span>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('admin.pembayaran.index', ['santri_id' => $st?->id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold shadow-xs transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                        <span>Buka di Kasir POS</span>
+                                    </a>
+                                </div>
                             </div>
                         </td>
                     </tr>
