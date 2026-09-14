@@ -1,5 +1,6 @@
 @php
-$isPenarikanTabungan = stripos($payment->jenis_pembayaran, 'AMBIL TABUNGAN') !== false || stripos($payment->jenis_pembayaran, 'Pengambilan Tabungan') !== false;
+$jenisPembayaran = $payment->jenis_pembayaran ?? '';
+$isPenarikanTabungan = stripos($jenisPembayaran, 'AMBIL TABUNGAN') !== false || stripos($jenisPembayaran, 'Pengambilan Tabungan') !== false;
 
 if (!function_exists('terbilangAngka')) {
     function terbilangAngka($angka) {
@@ -79,12 +80,12 @@ if (empty($ttdImg)) {
 }
 
 // Persiapkan rows pos pembayaran (minimal 6 baris agar identik dengan fisik bukti setoran)
-$itemsList = $payment->items && $payment->items->count() > 0 ? $payment->items : collect();
+$itemsList = (isset($payment->items) && $payment->items && $payment->items->count() > 0) ? $payment->items : collect();
 if ($itemsList->isEmpty()) {
     $itemsList = collect([
         (object)[
-            'pos_biaya' => $payment->jenis_pembayaran ?: 'SPP / Syahriyah',
-            'nominal' => $payment->nominal,
+            'pos_biaya' => ($payment->jenis_pembayaran ?? '') ?: 'SPP / Syahriyah',
+            'nominal' => $payment->nominal ?? 0,
         ]
     ]);
 }
@@ -100,6 +101,13 @@ $targetRowCount = max(6, $itemsList->count());
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Amiri:wght@700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style id="page-print-style">
+        @page {
+            size: 210mm 140mm; /* Standar Ukuran Kwitansi Landscape */
+            margin: 4mm 5mm;
+        }
+    </style>
     <style>
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -115,22 +123,22 @@ $targetRowCount = max(6, $itemsList->count());
 
         @media print {
             .no-print { display: none !important; }
-            body { 
+            html, body { 
                 background: white !important; 
-                margin: 0; 
-                padding: 0; 
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 200mm !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .slip-container {
                 box-shadow: none !important;
-                border: 1px solid #208075 !important;
+                border: 1.5px solid #208075 !important;
                 margin: 0 auto !important;
-                page-break-inside: avoid;
-            }
-            @page {
-                size: 210mm 140mm; /* Standar Slip Setoran Landscape */
-                margin: 6mm;
+                width: 200mm !important;
+                max-width: 200mm !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
         }
     </style>
@@ -138,14 +146,31 @@ $targetRowCount = max(6, $itemsList->count());
 <body class="bg-slate-100 p-3 sm:p-6 flex flex-col items-center justify-center min-h-screen">
 
     <!-- Action Toolbar (Hidden When Printing) -->
-    <div class="no-print max-w-4xl w-full mb-4 flex items-center justify-between gap-3">
+    <div class="no-print max-w-4xl w-full mb-4 flex flex-wrap items-center justify-between gap-3">
         <a href="{{ auth()->guard('santri')->check() ? route('santri.pembayaran') : route('admin.pembayaran.index') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition">
             &larr; Kembali ke Pembayaran
         </a>
-        <div class="flex items-center gap-2">
-            <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#208075] hover:bg-[#1a685f] text-white text-xs font-bold shadow-md transition cursor-pointer">
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Pilihan Ukuran Kertas Cetak -->
+            <div class="inline-flex items-center bg-white border border-slate-300 rounded-xl p-1 shadow-xs text-xs">
+                <span class="px-2 text-slate-500 font-semibold">Ukuran Cetak:</span>
+                <select id="selectPaperSize" onchange="setPaperSize(this.value)" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#208075]">
+                    <option value="kwitansi" selected>Kwitansi (210 × 140 mm)</option>
+                    <option value="a4">Kertas A4 Penuh</option>
+                    <option value="a5">Kertas A5 Landscape</option>
+                </select>
+            </div>
+
+            <!-- Tombol Download Gambar (PNG) -->
+            <button type="button" id="btnDownloadImage" onclick="downloadReceiptImage()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span id="downloadBtnText">Download Gambar (PNG)</span>
+            </button>
+
+            <!-- Tombol Cetak (Print) -->
+            <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#208075] hover:bg-[#1a685f] text-white text-xs font-bold shadow-md transition cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                <span>Cetak Bukti Setoran (Print)</span>
+                <span>Cetak Kwitansi (Print)</span>
             </button>
         </div>
     </div>
@@ -153,7 +178,7 @@ $targetRowCount = max(6, $itemsList->count());
     <!-- ========================================================================= -->
     <!-- LEMBAR BUKTI SETORAN RESMI (IDENTIK DENGAN SLIP FISIK PONDOK TUKSONGO)     -->
     <!-- ========================================================================= -->
-    <div class="slip-container max-w-4xl w-full bg-white rounded-xl shadow-lg border-2 border-[#208075] overflow-hidden relative">
+    <div id="receipt-slip" class="slip-container max-w-4xl w-full bg-white rounded-xl shadow-lg border-2 border-[#208075] overflow-hidden relative">
         
         <!-- HEADER STRIP TOSKA: LOGO, ARABIC, PONDOK TUKSONGO & BUKTI SETORAN/PENARIKAN -->
         <div class="{{ $isPenarikanTabungan ? 'bg-[#b45309]' : 'bg-[#208075]' }} text-white px-5 py-2.5 flex items-center justify-between">
@@ -210,10 +235,10 @@ $targetRowCount = max(6, $itemsList->count());
                     <span class="w-28 text-slate-700 font-semibold shrink-0">Berita/Keterangan</span>
                     <span class="text-slate-400 shrink-0">:</span>
                     <span class="flex-1 text-slate-800 border-b border-dotted border-slate-400 pb-0.5">
-                        @if($payment->catatan)
+                        @if(!empty($payment->catatan))
                             {{ $payment->catatan }}
-                        @elseif($payment->bulan)
-                            Iuran / SPP Bulan {{ $payment->bulan }} {{ $payment->tahun }}
+                        @elseif(!empty($payment->bulan))
+                            Iuran / SPP Bulan {{ $payment->bulan }} {{ $payment->tahun ?? date('Y') }}
                         @else
                             {{ $itemsList->pluck('pos_biaya')->implode(', ') ?: 'Pembayaran Santri' }}
                         @endif
@@ -310,7 +335,7 @@ $targetRowCount = max(6, $itemsList->count());
                 
                 <!-- Tanggal Transaksi (Right Aligned seperti di contoh slip) -->
                 <div class="text-right text-xs font-semibold text-slate-800 mb-1">
-                    Tanggal : <span class="font-bold border-b border-dotted border-slate-400 pb-0.5 px-2">{{ optional($payment->tanggal_bayar)->translatedFormat('d F Y') ?? date('d F Y') }}</span>
+                    Tanggal : <span class="font-bold border-b border-dotted border-slate-400 pb-0.5 px-2">{{ isset($payment->tanggal_bayar) && $payment->tanggal_bayar ? (is_string($payment->tanggal_bayar) ? \Carbon\Carbon::parse($payment->tanggal_bayar)->translatedFormat('d F Y') : optional($payment->tanggal_bayar)->translatedFormat('d F Y')) : date('d F Y') }}</span>
                 </div>
 
                 <!-- TABEL MATRIKS RINCIAN POS PEMBAYARAN -->
@@ -328,12 +353,17 @@ $targetRowCount = max(6, $itemsList->count());
                             
                             <!-- Cetak Seluruh Pos yang Dibayarkan -->
                             @foreach($itemsList as $it)
-                                <tr class="h-7 hover:bg-slate-50">
-                                    <td class="py-1 px-3 border-r border-[#208075]/30 font-bold uppercase text-[11px]">
-                                        {{ $it->pos_biaya }}
+                                <tr class="h-7 hover:bg-slate-50 {{ ($it->nominal ?? 0) < 0 ? 'bg-purple-50/50' : '' }}">
+                                    <td class="py-1 px-3 border-r border-[#208075]/30 font-bold uppercase text-[11px] {{ ($it->nominal ?? 0) < 0 ? 'text-purple-800' : '' }}">
+                                        <div>{{ $it->pos_biaya }}</div>
+                                        @if(isset($it->bill) && $it->bill && $it->bill->nominal_potongan > 0)
+                                            <div class="text-[9px] font-medium text-purple-700 normal-case tracking-normal">
+                                                (Tarif Asli: Rp {{ number_format($it->bill->nominal_asli, 0, ',', '.') }} &bull; Subsidi/Potongan: -Rp {{ number_format($it->bill->nominal_potongan, 0, ',', '.') }}{{ $it->bill->alasan_potongan ? ' - ' . $it->bill->alasan_potongan : '' }})
+                                            </div>
+                                        @endif
                                     </td>
-                                    <td class="py-1 px-3 text-right font-mono font-bold">
-                                        Rp {{ number_format($it->nominal, 0, ',', '.') }}
+                                    <td class="py-1 px-3 text-right font-mono font-bold {{ ($it->nominal ?? 0) < 0 ? 'text-purple-700' : '' }}">
+                                        {{ ($it->nominal ?? 0) < 0 ? '- Rp ' . number_format(abs($it->nominal), 0, ',', '.') : 'Rp ' . number_format($it->nominal ?? 0, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endforeach
@@ -374,10 +404,11 @@ $targetRowCount = max(6, $itemsList->count());
                     @php
                         $tabunganSantri = isset($sisaTabunganSantri) ? $sisaTabunganSantri : ($payment->student->saldo_tabungan ?? 0);
                     @endphp
-                    @if(isset($payment->student) && $payment->student)
-                        <div class="flex items-center justify-between {{ $isPenarikanTabungan ? 'bg-amber-50 px-2 py-1 rounded border border-amber-200' : 'text-slate-600' }}">
-                            <span class="font-semibold {{ $isPenarikanTabungan ? 'text-amber-900' : 'text-slate-600' }}">
-                                Sisa Saldo Tabungan {{ $isPenarikanTabungan ? 'Saat Ini' : '' }}:
+                    {{-- Sisa saldo tabungan disembunyikan jika jenis transaksi adalah PENARIKAN TABUNGAN sesuai permintaan user --}}
+                    @if(isset($payment->student) && $payment->student && !$isPenarikanTabungan)
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span class="font-semibold text-slate-600">
+                                Sisa Saldo Tabungan:
                             </span>
                             <span class="font-mono font-bold text-emerald-700 text-xs">
                                 Rp {{ number_format($tabunganSantri, 0, ',', '.') }}
@@ -407,5 +438,69 @@ $targetRowCount = max(6, $itemsList->count());
 
     </div>
 
+    <script>
+        function setPaperSize(size) {
+            const styleTag = document.getElementById('page-print-style');
+            if (!styleTag) return;
+            if (size === 'a4') {
+                styleTag.innerHTML = '@page { size: A4 portrait; margin: 10mm; }';
+            } else if (size === 'a5') {
+                styleTag.innerHTML = '@page { size: A5 landscape; margin: 5mm; }';
+            } else {
+                // Standar Kwitansi 210 x 140 mm
+                styleTag.innerHTML = '@page { size: 210mm 140mm; margin: 4mm 5mm; }';
+            }
+        }
+
+        function downloadReceiptImage() {
+            const slip = document.getElementById('receipt-slip');
+            const btn = document.getElementById('btnDownloadImage');
+            const btnText = document.getElementById('downloadBtnText');
+            if (!slip) return;
+
+            if (typeof html2canvas === 'undefined') {
+                alert('Library pembuat gambar sedang dimuat, mohon coba sesaat lagi.');
+                return;
+            }
+
+            const originalHtml = btnText.innerHTML;
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            btnText.innerHTML = 'Memproses Gambar...';
+
+            html2canvas(slip, {
+                scale: 2.5, // 2.5x HD Resolution untuk hasil tajam
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                scrollX: 0,
+                scrollY: 0
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const rawName = "{{ $payment->student->nama_lengkap ?? ($payment->penerima_nama ?? 'Santri') }}";
+                const cleanName = rawName.replace(/[^a-zA-Z0-9]/g, '_');
+                const noTransaksi = "{{ preg_replace('/[^A-Za-z0-9_-]/', '', $payment->no_transaksi) }}";
+                link.download = `Kwitansi_${noTransaksi}_${cleanName}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                btnText.innerHTML = '✓ Berhasil Diunduh';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75');
+                    btnText.innerHTML = originalHtml;
+                }, 2000);
+            }).catch(err => {
+                console.error(err);
+                alert('Gagal mendownload gambar kwitansi: ' + err.message);
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btnText.innerHTML = originalHtml;
+            });
+        }
+    </script>
 </body>
 </html>

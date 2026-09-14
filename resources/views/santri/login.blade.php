@@ -333,7 +333,7 @@
                     Portal Santri &amp; Wali Santri
                 </h2>
                 <p class="text-xs font-semibold tracking-widest text-emerald-300 uppercase mt-1">
-                    Pondok Pesantren Hidayatullah Tuksongo &bull; Borobudur
+                    Pondok Pesantren Hidayatullah Tuksongo &bull; Temanggung
                 </p>
 
                 <!-- Kutipan / Tagline -->

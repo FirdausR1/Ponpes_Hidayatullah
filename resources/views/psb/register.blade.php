@@ -554,14 +554,14 @@
                             <div class="bg-white/10 backdrop-blur-xs border border-white/20 p-4 rounded-xl space-y-2 hover:bg-white/15 transition">
                                 <div class="flex items-center justify-between">
                                     <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[11px] font-bold">BANK BRI</span>
-                                    <button type="button" onclick="copyRek('010201022009537', this)" class="text-[11px] bg-white/20 hover:bg-white/30 text-gold-300 px-2.5 py-1 rounded-md font-semibold transition flex items-center gap-1">
+                                    <button type="button" onclick="copyRek('{{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }}', this)" class="text-[11px] bg-white/20 hover:bg-white/30 text-gold-300 px-2.5 py-1 rounded-md font-semibold transition flex items-center gap-1">
                                         <svg class="icon-svg w-3 h-3" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         <span>Salin No. Rek</span>
                                     </button>
                                 </div>
                                 <div>
-                                    <span class="text-lg font-mono font-bold tracking-wider text-white block">0102-01-022009-53-7</span>
-                                    <span class="text-xs text-slate-300 block">Atas Nama: <strong>Diky Fachri Husein</strong> (Panitia PSB)</span>
+                                    <span class="text-lg font-mono font-bold tracking-wider text-white block">{{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }}</span>
+                                    <span class="text-xs text-slate-300 block">Atas Nama: <strong>{{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }}</strong> (Panitia PSB)</span>
                                 </div>
                             </div>
 
@@ -569,21 +569,21 @@
                             <div class="bg-white/10 backdrop-blur-xs border border-white/20 p-4 rounded-xl space-y-2 hover:bg-white/15 transition">
                                 <div class="flex items-center justify-between">
                                     <span class="px-2 py-0.5 rounded bg-indigo-600 text-white text-[11px] font-bold">BANK BCA</span>
-                                    <button type="button" onclick="copyRek('1221220167', this)" class="text-[11px] bg-white/20 hover:bg-white/30 text-gold-300 px-2.5 py-1 rounded-md font-semibold transition flex items-center gap-1">
+                                    <button type="button" onclick="copyRek('{{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }}', this)" class="text-[11px] bg-white/20 hover:bg-white/30 text-gold-300 px-2.5 py-1 rounded-md font-semibold transition flex items-center gap-1">
                                         <svg class="icon-svg w-3 h-3" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         <span>Salin No. Rek</span>
                                     </button>
                                 </div>
                                 <div>
-                                    <span class="text-lg font-mono font-bold tracking-wider text-white block">1221220167</span>
-                                    <span class="text-xs text-slate-300 block">Atas Nama: <strong>Diky Fachri Husein</strong> (Panitia PSB)</span>
+                                    <span class="text-lg font-mono font-bold tracking-wider text-white block">{{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }}</span>
+                                    <span class="text-xs text-slate-300 block">Atas Nama: <strong>{{ \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN') }}</strong> (Panitia PSB)</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="text-[11px] text-slate-300/90 pt-1 flex items-center justify-between flex-wrap gap-2">
                             <span>* Pembayaran tunai dapat dilakukan di Sekretariat PSB Pondok (Kampus 2) dan difoto nota kwitansinya.</span>
-                            <span class="text-gold-300 font-medium">CS Konfirmasi WA: 0852-9042-9617</span>
+                            <span class="text-gold-300 font-medium">CS Konfirmasi WA: {{ \App\Models\Setting::get('rek_admin_konfirmasi_phone', '0852-9042-9617') }} ({{ \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A') }})</span>
                         </div>
                     </div>
 
@@ -693,7 +693,7 @@
 
     <!-- FOOTER -->
     <footer class="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500 px-4">
-        <p>© {{ date('Y') }} Pondok Pesantren Hidayatullah Tuksongo Pringsurat Temanggung. Hotline Panitia PSB: {{ \App\Models\Setting::get('kontak_hotline_1', '0852-9042-9617') }}</p>
+        <p>© {{ date('Y') }} Pondok Pesantren Hidayatullah Tuksongo Pringsurat Temanggung. Hotline Panitia PSB: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }}</p>
     </footer>
 
     <!-- JAVASCRIPT WIZARD, CLIPBOARD & PREVIEW -->

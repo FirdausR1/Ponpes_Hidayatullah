@@ -504,7 +504,7 @@ class StudentController extends Controller
 
         // Judul Header
         $sheet->setCellValue('A1', 'DATA POKOK SANTRI / SISWA PONDOK PESANTREN HIDAYATULLAH');
-        $sheet->setCellValue('A2', 'Kec. Borobudur, Kab. Magelang / Temanggung, Jawa Tengah');
+        $sheet->setCellValue('A2', 'Dusun Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah');
         $sheet->setCellValue('A3', 'Tanggal Unduh: ' . date('d F Y, H:i') . ' WIB' . ($request->filled('kelas') ? ' | Kelas: ' . $request->kelas : '') . ($request->filled('status') ? ' | Status: ' . $request->status : ''));
         $sheet->getStyle('A1:A2')->getFont()->setBold(true)->setSize(13);
 

@@ -50,7 +50,14 @@ $totalJumlahKwitansi = $payments->count();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Amiri:wght@700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style id="page-print-style">
+        @page {
+            size: 210mm 140mm; /* Standar Ukuran Kwitansi Landscape per lembar */
+            margin: 4mm 5mm;
+        }
+    </style>
     <style>
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -65,28 +72,27 @@ $totalJumlahKwitansi = $payments->count();
 
         @media print {
             .no-print { display: none !important; }
-            body { 
+            html, body { 
                 background: white !important; 
                 margin: 0 !important; 
                 padding: 0 !important; 
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                width: 200mm !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .slip-container {
                 box-shadow: none !important;
-                border: 1px solid #208075 !important;
+                border: 1.5px solid #208075 !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
+                width: 200mm !important;
+                max-width: 200mm !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
             .page-break-always {
                 page-break-after: always !important;
                 break-after: page !important;
-            }
-            @page {
-                size: 210mm 145mm; /* Standar Slip Setoran Landscape per lembar */
-                margin: 5mm;
             }
         }
     </style>
@@ -114,11 +120,21 @@ $totalJumlahKwitansi = $payments->count();
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Pilihan Ukuran Kertas Cetak -->
+                <div class="inline-flex items-center bg-white border border-slate-300 rounded-xl p-1 shadow-xs text-xs">
+                    <span class="px-2 text-slate-500 font-semibold">Ukuran:</span>
+                    <select id="selectPaperSize" onchange="setPaperSize(this.value)" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#208075]">
+                        <option value="kwitansi" selected>Kwitansi (210 × 140 mm)</option>
+                        <option value="a4">Kertas A4</option>
+                        <option value="a5">Kertas A5 Landscape</option>
+                    </select>
+                </div>
+
                 <!-- Tombol Buka Rekap Register -->
                 <a href="{{ route('admin.pembayaran.rekapKwitansi', request()->query()) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-300 text-teal-800 text-xs font-bold transition">
                     <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>Lihat Rekap Tabel Register</span>
+                    <span>Lihat Rekap Register</span>
                 </a>
 
                 <!-- Tombol Cetak / Print -->
@@ -135,7 +151,8 @@ $totalJumlahKwitansi = $payments->count();
     <main class="max-w-4xl mx-auto space-y-6 print:space-y-0">
         @foreach($payments as $index => $payment)
             @php
-            $isPenarikanTabungan = stripos($payment->jenis_pembayaran, 'AMBIL TABUNGAN') !== false || stripos($payment->jenis_pembayaran, 'Pengambilan Tabungan') !== false;
+            $jenisPembayaran = $payment->jenis_pembayaran ?? '';
+            $isPenarikanTabungan = stripos($jenisPembayaran, 'AMBIL TABUNGAN') !== false || stripos($jenisPembayaran, 'Pengambilan Tabungan') !== false;
 
             // Deteksi petugas pencatat transaksi atau bendahara yang sedang login
             $petugasUser = null;
@@ -158,7 +175,7 @@ $totalJumlahKwitansi = $payments->count();
             }
 
             if (empty($pejabatNama)) {
-                $pejabatNama = $payment->penerima_nama ?: \App\Models\Setting::get('ttd_digital_nama', 'Ust. Ahmad Fauzi, S.Pd.I');
+                $pejabatNama = ($payment->penerima_nama ?? null) ?: \App\Models\Setting::get('ttd_digital_nama', 'Ust. Ahmad Fauzi, S.Pd.I');
             }
             if (empty($pejabatJabatan)) {
                 $pejabatJabatan = $isPenarikanTabungan ? 'Petugas Kasir Tabungan' : \App\Models\Setting::get('ttd_digital_jabatan', 'Bendahara Pesantren');
@@ -177,12 +194,12 @@ $totalJumlahKwitansi = $payments->count();
             }
 
             // Rincian Pos Pembayaran (minimal 5-6 baris)
-            $itemsList = $payment->items && $payment->items->count() > 0 ? $payment->items : collect();
+            $itemsList = (isset($payment->items) && $payment->items && $payment->items->count() > 0) ? $payment->items : collect();
             if ($itemsList->isEmpty()) {
                 $itemsList = collect([
                     (object)[
-                        'pos_biaya' => $payment->jenis_pembayaran ?: 'SPP / Syahriyah',
-                        'nominal' => $payment->nominal,
+                        'pos_biaya' => ($payment->jenis_pembayaran ?? '') ?: 'SPP / Syahriyah',
+                        'nominal' => $payment->nominal ?? 0,
                     ]
                 ]);
             }
@@ -193,7 +210,7 @@ $totalJumlahKwitansi = $payments->count();
             @endphp
 
             <!-- LEMBAR SLIP KWITANSI -->
-            <div class="slip-container bg-white rounded-xl shadow-lg border-2 border-[#208075] overflow-hidden relative mb-6 print:mb-0">
+            <div id="receipt-slip-{{ $payment->id }}" class="slip-container bg-white rounded-xl shadow-lg border-2 border-[#208075] overflow-hidden relative mb-6 print:mb-0">
                 
                 <!-- HEADER STRIP TOSKA: LOGO, ARABIC, PONDOK TUKSONGO & BUKTI SETORAN/PENARIKAN -->
                 <div class="{{ $isPenarikanTabungan ? 'bg-[#b45309]' : 'bg-[#208075]' }} text-white px-5 py-2 flex items-center justify-between">
@@ -207,8 +224,14 @@ $totalJumlahKwitansi = $payments->count();
                         </div>
                     </div>
 
-                    <div class="text-right">
-                        <span class="text-xs text-white/80 block font-mono">Lembar #{{ $index + 1 }} dari {{ $totalJumlahKwitansi }}</span>
+                    <div class="text-right flex flex-col items-end">
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <button type="button" onclick="downloadSingleMassSlip('receipt-slip-{{ $payment->id }}', '{{ $payment->no_transaksi }}', '{{ $payment->student->nama_lengkap ?? 'Santri' }}')" class="no-print inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition cursor-pointer" title="Download kwitansi ini sebagai file gambar PNG">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                <span>Unduh Gambar</span>
+                            </button>
+                            <span class="text-xs text-white/80 font-mono">Lembar #{{ $index + 1 }} dari {{ $totalJumlahKwitansi }}</span>
+                        </div>
                         <h3 class="text-base sm:text-xl font-black tracking-widest uppercase">{{ $isPenarikanTabungan ? 'BUKTI PENARIKAN' : 'BUKTI SETORAN' }}</h3>
                     </div>
                 </div>
@@ -362,16 +385,21 @@ $totalJumlahKwitansi = $payments->count();
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-[#208075]/30 text-slate-800">
-                                    @foreach($itemsList as $it)
-                                        <tr class="h-6 hover:bg-slate-50">
-                                            <td class="py-0.5 px-3 border-r border-[#208075]/30 font-bold uppercase text-[10px]">
-                                                {{ $it->pos_biaya }}
-                                            </td>
-                                            <td class="py-0.5 px-3 text-right font-mono font-bold text-[11px]">
-                                                Rp {{ number_format($it->nominal, 0, ',', '.') }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
+                                     @foreach($itemsList as $it)
+                                         <tr class="h-6 hover:bg-slate-50 {{ ($it->nominal ?? 0) < 0 ? 'bg-purple-50/50' : '' }}">
+                                             <td class="py-0.5 px-3 border-r border-[#208075]/30 font-bold uppercase text-[10px] {{ ($it->nominal ?? 0) < 0 ? 'text-purple-800' : '' }}">
+                                                 <div>{{ $it->pos_biaya }}</div>
+                                                 @if(isset($it->bill) && $it->bill && $it->bill->nominal_potongan > 0)
+                                                     <div class="text-[8px] font-medium text-purple-700 normal-case tracking-normal">
+                                                         (Asli: Rp {{ number_format($it->bill->nominal_asli, 0, ',', '.') }} &bull; Subsidi: -Rp {{ number_format($it->bill->nominal_potongan, 0, ',', '.') }})
+                                                     </div>
+                                                 @endif
+                                             </td>
+                                             <td class="py-0.5 px-3 text-right font-mono font-bold text-[11px] {{ ($it->nominal ?? 0) < 0 ? 'text-purple-700' : '' }}">
+                                                 {{ ($it->nominal ?? 0) < 0 ? '- Rp ' . number_format(abs($it->nominal), 0, ',', '.') : 'Rp ' . number_format($it->nominal ?? 0, 0, ',', '.') }}
+                                             </td>
+                                         </tr>
+                                     @endforeach
 
                                     <!-- Padding Baris Kosong agar Persis Buku Slip Cetakan Fisik -->
                                     @for($i = $itemsList->count(); $i < $targetRowCount; $i++)
@@ -406,9 +434,10 @@ $totalJumlahKwitansi = $payments->count();
 
                         <!-- Status Sisa Tabungan & Tunggakan -->
                         <div class="pt-1 space-y-0.5 text-[10px] border-t border-slate-200 mt-1">
-                            @if(isset($payment->student) && $payment->student)
-                                <div class="flex items-center justify-between {{ $isPenarikanTabungan ? 'bg-amber-50 px-2 py-0.5 rounded border border-amber-200' : 'text-slate-600' }}">
-                                    <span class="font-semibold {{ $isPenarikanTabungan ? 'text-amber-900' : 'text-slate-600' }}">
+                            {{-- Sisa saldo tabungan disembunyikan jika penarikan tabungan sesuai permintaan user --}}
+                            @if(isset($payment->student) && $payment->student && !$isPenarikanTabungan)
+                                <div class="flex items-center justify-between text-slate-600">
+                                    <span class="font-semibold text-slate-600">
                                         Sisa Saldo Tabungan:
                                     </span>
                                     <span class="font-mono font-bold text-emerald-700">
@@ -447,5 +476,51 @@ $totalJumlahKwitansi = $payments->count();
         @endforeach
     </main>
 
+    <script>
+        function setPaperSize(size) {
+            const styleTag = document.getElementById('page-print-style');
+            if (!styleTag) return;
+            if (size === 'a4') {
+                styleTag.innerHTML = '@page { size: A4 portrait; margin: 10mm; }';
+            } else if (size === 'a5') {
+                styleTag.innerHTML = '@page { size: A5 landscape; margin: 5mm; }';
+            } else {
+                // Standar Kwitansi 210 x 140 mm
+                styleTag.innerHTML = '@page { size: 210mm 140mm; margin: 4mm 5mm; }';
+            }
+        }
+
+        function downloadSingleMassSlip(slipId, noTransaksi, namaSantri) {
+            const slip = document.getElementById(slipId);
+            if (!slip) return;
+
+            if (typeof html2canvas === 'undefined') {
+                alert('Sedang memuat sistem pembuatan gambar, silakan coba sesaat lagi.');
+                return;
+            }
+
+            html2canvas(slip, {
+                scale: 2.5,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                scrollX: 0,
+                scrollY: 0
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const cleanName = (namaSantri || 'Santri').replace(/[^a-zA-Z0-9]/g, '_');
+                const cleanNo = (noTransaksi || 'TRX').replace(/[^a-zA-Z0-9_-]/g, '');
+                link.download = `Kwitansi_${cleanNo}_${cleanName}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error(err);
+                alert('Gagal mendownload gambar: ' + err.message);
+            });
+        }
+    </script>
 </body>
 </html>

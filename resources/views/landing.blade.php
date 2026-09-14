@@ -3823,7 +3823,11 @@
                                     </svg>
                                     🔍 Cek Status Pendaftaran
                                 </a>
-                                <a href="https://wa.me/6285290429617?text=Assalamu%27alaikum%2C+saya+ingin+konsultasi+mengenai+Penerimaan+Santri+Baru+Ponpes+Hidayatullah+Tuksongo."
+                                @php
+                                    $konsultasiWa = \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966'));
+                                    $cleanKonsultasiWa = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $konsultasiWa));
+                                @endphp
+                                <a href="https://wa.me/{{ $cleanKonsultasiWa }}?text={{ urlencode('Assalamu\'alaikum, saya ingin konsultasi mengenai Penerimaan Santri Baru Ponpes Hidayatullah Tuksongo.') }}"
                                     target="_blank" class="btn-secondary"
                                     style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px;">
                                     <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
@@ -3862,6 +3866,7 @@
                 </div>
 
                 <div class="kontak-grid anim-fade-up">
+                    <!-- Kotak 1: Customer Service Pondok -->
                     <div class="kontak-box">
                         <div class="k-icon">
                             <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
@@ -3871,23 +3876,23 @@
                             </svg>
                         </div>
                         <h4>Customer Service Pondok</h4>
-                        <p>Pusat informasi umum dan penerimaan santri baru Tuksongo</p>
+                        <p>{{ \App\Models\Setting::get('kontak_cs_desc', 'Pusat informasi umum dan penerimaan santri baru Tuksongo') }}</p>
                         @php
                             $csWa = \App\Models\Setting::get('kontak_hotline', '0813-9110-9966');
                             $cleanCsWa = preg_replace('/[^0-9]/', '', $csWa);
-                            if (str_starts_with($cleanCsWa, '0'))
+                            if (str_starts_with($cleanCsWa, '0')) {
                                 $cleanCsWa = '62' . substr($cleanCsWa, 1);
+                            }
                         @endphp
                         <a class="phone-link" href="https://wa.me/{{ $cleanCsWa }}" target="_blank">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
                             {{ $csWa }}
                         </a>
                     </div>
 
+                    <!-- Kotak 2: Pengasuhan Putra & Putri -->
                     <div class="kontak-box">
                         <div class="k-icon">
                             <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
@@ -3897,27 +3902,29 @@
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
                         </div>
-                        <h4>Pengasuhan Putra & Putri</h4>
-                        <p>Ustd. Khoerul Rokhim & Ustdzh. Binti Isnaini</p>
-                        <a class="phone-link" href="https://wa.me/6288215217462" target="_blank"
-                            style="display:block; margin-bottom:4px;">
+                        <h4>Pengasuhan Putra &amp; Putri</h4>
+                        <p>{{ \App\Models\Setting::get('kontak_pengasuhan_nama', 'Ustd. Khoerul Rokhim & Ustdzh. Binti Isnaini') }}</p>
+                        @php
+                            $waPengasuhanPutra = \App\Models\Setting::get('kontak_pengasuhan_putra', '0882-1521-7462');
+                            $cleanPengasuhanPutra = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waPengasuhanPutra));
+                            $waPengasuhanPutri = \App\Models\Setting::get('kontak_pengasuhan_putri', '0821-3631-8239');
+                            $cleanPengasuhanPutri = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waPengasuhanPutri));
+                        @endphp
+                        <a class="phone-link" href="https://wa.me/{{ $cleanPengasuhanPutra }}" target="_blank" style="display:block; margin-bottom:4px;">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
-                            Putra: 0882-1521-7462
+                            Putra: {{ $waPengasuhanPutra }}
                         </a>
-                        <a class="phone-link" href="https://wa.me/6282136318239" target="_blank">
+                        <a class="phone-link" href="https://wa.me/{{ $cleanPengasuhanPutri }}" target="_blank">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
-                            Putri: 0821-3631-8239
+                            Putri: {{ $waPengasuhanPutri }}
                         </a>
                     </div>
 
+                    <!-- Kotak 3: Bidang Pengajaran & KBM -->
                     <div class="kontak-box">
                         <div class="k-icon">
                             <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
@@ -3925,27 +3932,29 @@
                                 <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                             </svg>
                         </div>
-                        <h4>Bidang Pengajaran & KBM</h4>
-                        <p>Ustd. Didi Utama & Ustdzh. Laela Fitroti</p>
-                        <a class="phone-link" href="https://wa.me/6285609201330" target="_blank"
-                            style="display:block; margin-bottom:4px;">
+                        <h4>Bidang Pengajaran &amp; KBM</h4>
+                        <p>{{ \App\Models\Setting::get('kontak_kbm_nama', 'Ustd. Didi Utama & Ustdzh. Laela Fitroti') }}</p>
+                        @php
+                            $waKbmPutra = \App\Models\Setting::get('kontak_kbm_putra', '0856-0920-1330');
+                            $cleanKbmPutra = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waKbmPutra));
+                            $waKbmPutri = \App\Models\Setting::get('kontak_kbm_putri', '0813-2617-4337');
+                            $cleanKbmPutri = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waKbmPutri));
+                        @endphp
+                        <a class="phone-link" href="https://wa.me/{{ $cleanKbmPutra }}" target="_blank" style="display:block; margin-bottom:4px;">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
-                            Putra: 0856-0920-1330
+                            Putra: {{ $waKbmPutra }}
                         </a>
-                        <a class="phone-link" href="https://wa.me/6281326174337" target="_blank">
+                        <a class="phone-link" href="https://wa.me/{{ $cleanKbmPutri }}" target="_blank">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
-                            Putri: 0813-2617-4337
+                            Putri: {{ $waKbmPutri }}
                         </a>
                     </div>
 
+                    <!-- Kotak 4: Keuangan & Infaq Wakaf -->
                     <div class="kontak-box">
                         <div class="k-icon">
                             <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
@@ -3953,25 +3962,185 @@
                                 <line x1="1" y1="10" x2="23" y2="10"></line>
                             </svg>
                         </div>
-                        <h4>Keuangan & Infaq Wakaf</h4>
-                        <p>Konfirmasi SPP bulanan, tabungan & infaq</p>
-                        <a class="phone-link" href="https://wa.me/6285290429617" target="_blank"
-                            style="display:block; margin-bottom:4px;">
+                        <h4>Keuangan &amp; Infaq Wakaf</h4>
+                        <p>{{ \App\Models\Setting::get('kontak_keuangan_desc', 'Konfirmasi SPP bulanan, tabungan & infaq') }}</p>
+                        @php
+                            $waKeuangan = \App\Models\Setting::get('kontak_keuangan_spp', '0852-9042-9617');
+                            $cleanKeuangan = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waKeuangan));
+                            $waInfaqSaku = \App\Models\Setting::get('kontak_infaq_saku', '0821-3342-5328');
+                            $cleanInfaqSaku = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waInfaqSaku));
+                        @endphp
+                        <a class="phone-link" href="https://wa.me/{{ $cleanKeuangan }}" target="_blank" style="display:block; margin-bottom:4px;">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
-                            Keuangan: 0852-9042-9617
+                            Keuangan: {{ $waKeuangan }}
                         </a>
-                        <a class="phone-link" href="https://wa.me/6282133425328" target="_blank">
+                        <a class="phone-link" href="https://wa.me/{{ $cleanInfaqSaku }}" target="_blank">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
-                            Infaq/Saku: 0821-3342-5328
+                            Infaq/Saku: {{ $waInfaqSaku }}
                         </a>
+                    </div>
+                </div>
+
+                <!-- PUSAT INFORMASI REKENING RESMI & FORMAT KONFIRMASI (SESUAI DESAIN KARTU RESMI) -->
+                <div class="anim-fade-up" style="margin-top: 10px; margin-bottom: 30px;">
+                    <div style="background: var(--surface-dim); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 22px;">
+                        <!-- Header Box -->
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: var(--green-800); padding: 4px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--green-200); margin-bottom: 8px;">
+                                🏦 Pusat Informasi Rekening Resmi Pesantren
+                            </span>
+                            <h3 style="font-size: 20px; font-weight: 800; color: var(--green-900); margin: 0 0 6px;">Rekening Pembayaran Administrasi &amp; Uang Saku</h3>
+                            <p style="font-size: 12.5px; color: var(--text-muted); max-width: 680px; margin: 0 auto;">
+                                Pastikan melakukan transfer hanya ke nomor rekening resmi pesantren di bawah ini sesuai peruntukan pembayaran.
+                            </p>
+                        </div>
+
+                        <!-- 3 Kolom Rekening dengan Model & Warna yang Selaras (.kontak-box) -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 22px;">
+                            
+                            <!-- 1. Pembayaran Administrasi (SPP, Syahriyah, SOT, PSB) -->
+                            <div class="kontak-box" style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                        <div class="k-icon" style="margin-bottom: 0;">
+                                            <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                        </div>
+                                        <span style="background: var(--green-50); color: var(--green-800); border: 1px solid var(--green-200); font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">
+                                            ADMINISTRASI &amp; PSB
+                                        </span>
+                                    </div>
+                                    <h4>Pembayaran Administrasi</h4>
+                                    <p>Untuk SPP bulanan, syahriyah, SOT &amp; pendaftaran santri baru</p>
+
+                                    <div style="background: var(--surface-dim); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: var(--green-800);">BANK BRI</div>
+                                        <div style="font-size: 15px; font-weight: 800; font-family: monospace; color: var(--green-950); letter-spacing: 0.5px;">
+                                            {{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">a.n. <strong>{{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }}</strong></div>
+                                    </div>
+
+                                    <div style="background: var(--surface-dim); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: var(--green-800);">BANK BCA</div>
+                                        <div style="font-size: 15px; font-weight: 800; font-family: monospace; color: var(--green-950); letter-spacing: 0.5px;">
+                                            {{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">a.n. <strong>{{ \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN') }}</strong></div>
+                                    </div>
+                                </div>
+
+                                @php
+                                    $konfPhone = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
+                                    $cleanKonfPhone = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $konfPhone));
+                                @endphp
+                                <a class="phone-link" href="https://wa.me/{{ $cleanKonfPhone }}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--green-700);">
+                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    <span>Konfirmasi: {{ $konfPhone }} ({{ \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A') }})</span>
+                                </a>
+                            </div>
+
+                            <!-- 2. Uang Saku Putra -->
+                            <div class="kontak-box" style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                        <div class="k-icon" style="margin-bottom: 0;">
+                                            <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                        </div>
+                                        <span style="background: var(--green-50); color: var(--green-800); border: 1px solid var(--green-200); font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">
+                                            UANG SAKU PUTRA
+                                        </span>
+                                    </div>
+                                    <h4>Uang Saku Santri Putra</h4>
+                                    <p>Khusus titipan uang jajan / saku santri putra</p>
+
+                                    <div style="background: var(--surface-dim); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: var(--green-800);">BANK BRI (Putra 1)</div>
+                                        <div style="font-size: 15px; font-weight: 800; font-family: monospace; color: var(--green-950); letter-spacing: 0.5px;">
+                                            {{ \App\Models\Setting::get('rek_saku_putra_1_no', '366701032851533') }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">a.n. <strong>{{ \App\Models\Setting::get('rek_saku_putra_1_an', 'ILHAM AKBAR ARIFIN') }}</strong></div>
+                                        @php
+                                            $saku1Phone = \App\Models\Setting::get('rek_saku_putra_1_phone', '0821-3342-5328');
+                                            $cleanSaku1 = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $saku1Phone));
+                                        @endphp
+                                        <a class="phone-link" href="https://wa.me/{{ $cleanSaku1 }}" target="_blank" style="margin-top: 4px; font-size: 11px; display: inline-flex;">
+                                            WA: {{ $saku1Phone }} ({{ \App\Models\Setting::get('rek_saku_putra_1_nama', 'Ustad Ilham') }})
+                                        </a>
+                                    </div>
+
+                                    <div style="background: var(--surface-dim); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: var(--green-800);">BANK BRI (Putra 2)</div>
+                                        <div style="font-size: 15px; font-weight: 800; font-family: monospace; color: var(--green-950); letter-spacing: 0.5px;">
+                                            {{ \App\Models\Setting::get('rek_saku_putra_2_no', '025101062991507') }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">a.n. <strong>{{ \App\Models\Setting::get('rek_saku_putra_2_an', 'ATA NUR RIFQI') }}</strong></div>
+                                        @php
+                                            $saku2Phone = \App\Models\Setting::get('rek_saku_putra_2_phone', '0858-6539-5879');
+                                            $cleanSaku2 = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $saku2Phone));
+                                        @endphp
+                                        <a class="phone-link" href="https://wa.me/{{ $cleanSaku2 }}" target="_blank" style="margin-top: 4px; font-size: 11px; display: inline-flex;">
+                                            WA: {{ $saku2Phone }} ({{ \App\Models\Setting::get('rek_saku_putra_2_nama', 'Ustad Ata') }})
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Uang Saku Putri -->
+                            <div class="kontak-box" style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                        <div class="k-icon" style="margin-bottom: 0;">
+                                            <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                        </div>
+                                        <span style="background: var(--green-50); color: var(--green-800); border: 1px solid var(--green-200); font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">
+                                            UANG SAKU PUTRI
+                                        </span>
+                                    </div>
+                                    <h4>Uang Saku Santri Putri</h4>
+                                    <p>Khusus titipan uang jajan / saku santri putri</p>
+
+                                    <div style="background: var(--surface-dim); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 11px; font-weight: 700; color: var(--green-800);">BANK BRI (Putri)</div>
+                                        <div style="font-size: 15px; font-weight: 800; font-family: monospace; color: var(--green-950); letter-spacing: 0.5px;">
+                                            {{ \App\Models\Setting::get('rek_saku_putri_no', '366701040613539') }}
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">a.n. <strong>{{ \App\Models\Setting::get('rek_saku_putri_an', 'LAELATUL MUNAWAROH') }}</strong></div>
+                                        @php
+                                            $sakuPutriPhone = \App\Models\Setting::get('rek_saku_putri_phone', '0851-8484-2869');
+                                            $cleanSakuPutri = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $sakuPutriPhone));
+                                        @endphp
+                                        <a class="phone-link" href="https://wa.me/{{ $cleanSakuPutri }}" target="_blank" style="margin-top: 4px; font-size: 11px; display: inline-flex;">
+                                            WA: {{ $sakuPutriPhone }} ({{ \App\Models\Setting::get('rek_saku_putri_nama', 'Ustdh. Defi Nofita') }})
+                                        </a>
+                                    </div>
+
+                                    <div style="background: var(--green-50); border: 1px dashed var(--green-300); border-radius: 8px; padding: 10px 12px; font-size: 11px; color: var(--green-800); line-height: 1.4;">
+                                        💡 <em>Catatan:</em> Untuk kelancaran penyaluran saku putri, mohon kirim bukti transfer ke kontak Ustdh. Defi Nofita.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Format Konfirmasi & Warning Box -->
+                        <div style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 18px; font-size: 12px; color: var(--text-primary); line-height: 1.5;">
+                            <div style="font-weight: 700; color: var(--green-900); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                                <span>📋</span>
+                                <span>Konfirmasi Bukti Transfer Dengan Format:</span>
+                            </div>
+                            <div style="font-family: monospace; background: var(--surface-dim); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; color: var(--text-primary); font-size: 12px;">
+                                <strong>NAMA</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: (diisi nama lengkap santri)<br>
+                                <strong>KELAS</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: (diisi kelas santri)<br>
+                                <strong>JENIS PEMBAYARAN</strong> : (diisi jenis pembayaran + bulan) <em>contoh: Syahriyah Bulan Juli</em><br>
+                                <strong>NOMINAL</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: (diisi nominal pembayaran)
+                            </div>
+                            <div style="font-size: 11.5px; color: #854d0e; background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 8px 12px;">
+                                <strong>⚠️ Wajib Melakukan Konfirmasi:</strong> {{ \App\Models\Setting::get('rek_konfirmasi_petunjuk', 'Demi terciptanya komunikasi yang tertib dan menghindari miskomunikasi, setiap keperluan harap selalu diawali dengan konfirmasi kepada pihak terkait.') }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

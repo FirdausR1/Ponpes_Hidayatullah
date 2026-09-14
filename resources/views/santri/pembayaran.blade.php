@@ -43,9 +43,12 @@
 </head>
 <body class="min-h-screen bg-slate-50 flex flex-col justify-between font-sans antialiased text-slate-800"
       x-data="{
+          tabTagihan: 'unpaid',
           modalUpload: false,
           modalPreview: false,
           modalUploadSurat: false,
+          modalAjukanKeringanan: false,
+          ajukanBillId: '{{ $unpaidBills->first()->id ?? '' }}',
           suratTargetBill: {
               id: null,
               judul: '',
@@ -54,7 +57,7 @@
           },
           previewImgUrl: '',
           previewTitle: '',
-          selectedBank: 'Bank Syariah Indonesia (BSI) - 714 556 7890 (a.n. Pondok Pesantren Hidayatullah Tuksongo)',
+          selectedBank: 'Bank BRI - {{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }} (a.n. {{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }})',
           uploadNominal: {{ $unpaidBills->sum('sisa_tagihan') ?: 0 }},
           selectedBills: {{ json_encode($unpaidBills->pluck('id')->values()->toArray()) }},
           billsData: {{ json_encode($unpaidBills->map(fn($b) => ['id' => $b->id, 'sisa' => (float)$b->sisa_tagihan, 'judul' => $b->judul_tagihan, 'pos' => $b->pos_biaya])->values()) }},
@@ -232,10 +235,16 @@
                     @endif
 
                     @if($unpaidBills->count() > 0)
-                        <button type="button" @click="modalUpload = true" class="px-5 py-3 rounded-2xl bg-white text-emerald-900 hover:bg-emerald-50 font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                            <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            <span>Unggah Bukti Transfer</span>
-                        </button>
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <button type="button" @click="modalUpload = true" class="px-5 py-3 rounded-2xl bg-white text-emerald-900 hover:bg-emerald-50 font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                                <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                <span>Unggah Bukti Transfer</span>
+                            </button>
+                            <button type="button" @click="modalAjukanKeringanan = true" class="px-4 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                                <svg class="w-4 h-4 text-amber-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>+ Ajukan Keringanan / SKTM</span>
+                            </button>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -417,8 +426,41 @@
             </div>
         @endif
 
-        <!-- TABEL 1: TAGIHAN AKTIF / BELUM LUNAS -->
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <!-- Tab Switch Bar: Tagihan Belum Lunas vs Tagihan Sudah Lunas -->
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="inline-flex items-center gap-1.5 p-1.5 bg-slate-200/80 rounded-2xl">
+                <button type="button" 
+                        @click="tabTagihan = 'unpaid'" 
+                        :class="tabTagihan === 'unpaid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                        class="px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>Tagihan Belum Lunas</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="tabTagihan === 'unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-slate-300/70 text-slate-700'">
+                        {{ $unpaidBills->count() }}
+                    </span>
+                </button>
+                <button type="button" 
+                        @click="tabTagihan = 'paid'" 
+                        :class="tabTagihan === 'paid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                        class="px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Riwayat Tagihan Lunas</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" :class="tabTagihan === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/70 text-slate-700'">
+                        {{ $paidBills->count() }}
+                    </span>
+                </button>
+            </div>
+
+            @if($unpaidBills->count() > 0)
+                <button type="button" @click="modalAjukanKeringanan = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition cursor-pointer">
+                    <span>🏷️ Butuh Keringanan / Potongan Biaya?</span>
+                    <span class="underline font-extrabold">Ajukan Mandiri di Sini &rarr;</span>
+                </button>
+            @endif
+        </div>
+
+        <!-- TABEL 1A: TAGIHAN AKTIF / BELUM LUNAS -->
+        <div x-show="tabTagihan === 'unpaid'" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                     <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -454,7 +496,7 @@
                             <th class="px-4 py-3 text-right">Sudah Dibayar</th>
                             <th class="px-4 py-3 text-right">Sisa Tunggakan</th>
                             <th class="px-4 py-3 text-center">Status</th>
-                            <th class="px-4 py-3 text-center">Aksi Bayar</th>
+                            <th class="px-4 py-3 text-center">Aksi Bayar / Pengajuan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -547,6 +589,12 @@
                                         <span>{{ $b->penangguhan_wisuda ? 'Bayar Lebih Awal' : 'Bayar Pos Ini' }}</span>
                                         <span>&rarr;</span>
                                     </button>
+
+                                    @if(!$b->status_dispensasi || $b->status_dispensasi === 'none')
+                                        <button type="button" @click="ajukanBillId = '{{ $b->id }}'; modalAjukanKeringanan = true" class="w-full inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold text-[10px] transition cursor-pointer" title="Ajukan keringanan biaya untuk pos ini">
+                                            <span>🏷️ Ajukan Keringanan</span>
+                                        </button>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -576,6 +624,104 @@
                             </tr>
                         </tfoot>
                     @endif
+                </table>
+            </div>
+        </div>
+
+        <!-- TABEL 1B: RIWAYAT TAGIHAN SUDAH LUNAS -->
+        <div x-show="tabTagihan === 'paid'" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                        <span>Riwayat Tagihan Selesai &amp; Lunas</span>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-mono">
+                            {{ $paidBills->count() }} Tagihan Lunas
+                        </span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        Daftar seluruh kewajiban biaya santri yang telah dinyatakan LUNAS (termasuk tagihan yang disetujui pemutihan/keringanan).
+                    </p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-600 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-3 text-center w-12">No</th>
+                            <th class="px-4 py-3">Pos &amp; Rincian Tagihan</th>
+                            <th class="px-4 py-3 text-center">Periode / Bulan</th>
+                            <th class="px-4 py-3 text-right">Biaya Asli</th>
+                            <th class="px-4 py-3 text-right">Potongan</th>
+                            <th class="px-4 py-3 text-right">Total Terbayar</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3">Catatan / Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        @forelse($paidBills as $idx => $pb)
+                            <tr class="hover:bg-slate-50/60 transition">
+                                <td class="px-4 py-3.5 text-center text-slate-400 font-medium">{{ $loop->iteration }}</td>
+                                <td class="px-4 py-3.5">
+                                    <span class="inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-extrabold text-[10px] border border-blue-200 mb-0.5">
+                                        {{ $pb->pos_biaya }}
+                                    </span>
+                                    <div class="font-bold text-slate-900">{{ $pb->judul_tagihan }}</div>
+                                </td>
+                                <td class="px-4 py-3.5 text-center font-medium text-slate-800">
+                                    {{ $pb->bulan ? $pb->bulan . ' ' . $pb->tahun : ($pb->tahun ?: '—') }}
+                                </td>
+                                <td class="px-4 py-3.5 text-right font-mono text-slate-500">
+                                    Rp {{ number_format($pb->nominal_asli, 0, ',', '.') }}
+                                </td>
+                                <td class="px-4 py-3.5 text-right font-mono text-purple-700">
+                                    @if($pb->nominal_potongan > 0)
+                                        - Rp {{ number_format($pb->nominal_potongan, 0, ',', '.') }}
+                                    @else
+                                        <span class="text-slate-300">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3.5 text-right font-mono font-black text-emerald-700">
+                                    Rp {{ number_format($pb->nominal_bayar, 0, ',', '.') }}
+                                </td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        ✓ Lunas
+                                    </span>
+                                    @if($pb->status_dispensasi === 'disetujui')
+                                        <span class="block mt-1 text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                                            🏷️ Keringanan Disetujui
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3.5 text-slate-600 text-xs">
+                                    @if($pb->catatan_pembebasan)
+                                        <span class="text-emerald-800 font-semibold block">{{ $pb->catatan_pembebasan }}</span>
+                                    @elseif($pb->alasan_potongan)
+                                        <span class="text-purple-800 block">{{ $pb->alasan_potongan }}</span>
+                                    @elseif($pb->catatan)
+                                        <span class="text-slate-500 italic block">{{ $pb->catatan }}</span>
+                                    @else
+                                        <span class="text-slate-400">—</span>
+                                    @endif
+
+                                    @if($pb->file_surat_dispensasi)
+                                        <a href="{{ asset($pb->file_surat_dispensasi) }}" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline font-bold mt-1">
+                                            <span>📎 Lihat Surat Keringanan</span>
+                                        </a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-8 text-slate-400 text-xs">
+                                    <span class="text-3xl block mb-1">⏳</span>
+                                    Belum ada catatan tagihan yang selesai/lunas.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -693,29 +839,65 @@
         </div>
 
         <!-- Section: Informasi Rekening Resmi & Prosedur Pembayaran -->
-        <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4 text-xs">
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5 text-xs">
             <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
                 <span>🏦 Rekening Resmi Pembayaran Pesantren Hidayatullah Tuksongo</span>
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-2">
-                    <span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px] uppercase">Bank Syariah Indonesia (BSI)</span>
-                    <div class="text-lg font-mono font-bold text-slate-900">714 556 7890</div>
-                    <p class="text-slate-600 text-[11px]">a.n. <strong>Pondok Pesantren Hidayatullah Tuksongo</strong></p>
-                    <p class="text-slate-400 text-[10px]">Kode Bank: 451</p>
-                </div>
 
-                <div class="p-4 rounded-2xl border border-blue-200 bg-blue-50/50 space-y-2">
-                    <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] uppercase">Bank BRI</span>
-                    <div class="text-lg font-mono font-bold text-slate-900">0153 0100 2345 531</div>
-                    <p class="text-slate-600 text-[11px]">a.n. <strong>Ponpes Hidayatullah Temanggung</strong></p>
-                    <p class="text-slate-400 text-[10px]">Kode Bank: 002</p>
+            <!-- Rekening Administrasi (SPP, Syahriyah, Kegiatan) -->
+            <div>
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Rekening Pembayaran Administrasi (SPP / Syahriyah / SOT / PSB):</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl border border-blue-200 bg-blue-50/60 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] uppercase">Bank BRI</span>
+                            <span class="text-[10px] text-blue-700 font-mono font-bold">Kode: 002</span>
+                        </div>
+                        <div class="text-xl font-mono font-extrabold text-blue-950 tracking-wide">{{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }}</div>
+                        <p class="text-slate-700 text-xs">a.n. <strong>{{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }}</strong></p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/60 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10px] uppercase">Bank BCA</span>
+                            <span class="text-[10px] text-indigo-700 font-mono font-bold">Kode: 014</span>
+                        </div>
+                        <div class="text-xl font-mono font-extrabold text-indigo-950 tracking-wide">{{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }}</div>
+                        <p class="text-slate-700 text-xs">a.n. <strong>{{ \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN') }}</strong></p>
+                    </div>
                 </div>
             </div>
+
+            <!-- Rekening Khusus Titipan Uang Saku -->
+            <div class="pt-3 border-t border-slate-100">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Rekening Khusus Titipan Uang Saku Santri:</span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-1">
+                        <span class="text-[10px] font-bold text-emerald-800 uppercase block">Uang Saku Putra (1)</span>
+                        <div class="font-mono font-bold text-slate-900 text-sm">BRI {{ \App\Models\Setting::get('rek_saku_putra_1_no', '366701032851533') }}</div>
+                        <p class="text-slate-600 text-[11px]">a.n. <strong>{{ \App\Models\Setting::get('rek_saku_putra_1_an', 'ILHAM AKBAR ARIFIN') }}</strong></p>
+                        <p class="text-emerald-700 text-[11px] font-semibold pt-1">WA: {{ \App\Models\Setting::get('rek_saku_putra_1_phone', '0821-3342-5328') }} ({{ \App\Models\Setting::get('rek_saku_putra_1_nama', 'Ustad Ilham') }})</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-1">
+                        <span class="text-[10px] font-bold text-emerald-800 uppercase block">Uang Saku Putra (2)</span>
+                        <div class="font-mono font-bold text-slate-900 text-sm">BRI {{ \App\Models\Setting::get('rek_saku_putra_2_no', '025101062991507') }}</div>
+                        <p class="text-slate-600 text-[11px]">a.n. <strong>{{ \App\Models\Setting::get('rek_saku_putra_2_an', 'ATA NUR RIFQI') }}</strong></p>
+                        <p class="text-emerald-700 text-[11px] font-semibold pt-1">WA: {{ \App\Models\Setting::get('rek_saku_putra_2_phone', '0858-6539-5879') }} ({{ \App\Models\Setting::get('rek_saku_putra_2_nama', 'Ustad Ata') }})</p>
+                    </div>
+                    <div class="p-3.5 rounded-2xl border border-pink-200 bg-pink-50/50 space-y-1">
+                        <span class="text-[10px] font-bold text-pink-800 uppercase block">Uang Saku Putri</span>
+                        <div class="font-mono font-bold text-slate-900 text-sm">BRI {{ \App\Models\Setting::get('rek_saku_putri_no', '366701040613539') }}</div>
+                        <p class="text-slate-600 text-[11px]">a.n. <strong>{{ \App\Models\Setting::get('rek_saku_putri_an', 'LAELATUL MUNAWAROH') }}</strong></p>
+                        <p class="text-pink-700 text-[11px] font-semibold pt-1">WA: {{ \App\Models\Setting::get('rek_saku_putri_phone', '0851-8484-2869') }} ({{ \App\Models\Setting::get('rek_saku_putri_nama', 'Ustdh. Defi Nofita') }})</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Petunjuk Konfirmasi Transfer -->
             <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-[11px] leading-relaxed flex items-start gap-2.5">
-                <span class="text-base">💡</span>
+                <span class="text-base leading-none">⚠️</span>
                 <div>
-                    <strong>Petunjuk Pembayaran:</strong> Setelah transfer berhasil, Anda dapat mengunggah foto struk/slip transfer langsung melalui tombol <strong>"Unggah Bukti Transfer"</strong> di halaman ini, atau konfirmasi via WhatsApp resmi Bendahara Pesantren di <a href="https://wa.me/6285290429617" target="_blank" class="font-bold text-emerald-800 underline">0852-9042-9617</a> agar dapat langsung diverifikasi dan dibukukan ke dalam sistem.
+                    <strong>Konfirmasi Bukti Transfer:</strong> Setelah transfer administrasi berhasil, mohon unggah struk/slip di tombol <strong>"Unggah Bukti Transfer"</strong> di atas, atau konfirmasi via WhatsApp Keuangan di <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617')) }}" target="_blank" class="font-bold text-emerald-800 underline">{{ \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617') }} ({{ \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A') }})</a> dengan menyertakan format: <em>Nama Santri, Kelas, Jenis Pembayaran, dan Nominal</em> demi ketertiban administrasi.
                 </div>
             </div>
         </div>
@@ -784,11 +966,11 @@
                 <div>
                     <label class="block font-bold text-slate-800 mb-1">3. Rekening Bank Tujuan Pesantren:</label>
                     <select name="bank_tujuan" x-model="selectedBank" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:border-emerald-500">
-                        <option value="Bank Syariah Indonesia (BSI) - 714 556 7890 (a.n. Pondok Pesantren Hidayatullah Tuksongo)">
-                            Bank Syariah Indonesia (BSI) - 714 556 7890 (a.n. PP Hidayatullah Tuksongo)
+                        <option value="Bank BRI - {{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }} (a.n. {{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }})">
+                            Bank BRI - {{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }} (a.n. {{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }})
                         </option>
-                        <option value="Bank BRI - 0153 0100 2345 531 (a.n. Ponpes Hidayatullah Temanggung)">
-                            Bank BRI - 0153 0100 2345 531 (a.n. Ponpes Hidayatullah Temanggung)
+                        <option value="Bank BCA - {{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }} (a.n. {{ \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN') }})">
+                            Bank BCA - {{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }} (a.n. {{ \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN') }})
                         </option>
                     </select>
                 </div>
@@ -884,6 +1066,82 @@
                     <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         <span>Kirim &amp; Unggah Dokumen</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PENGAJUAN KERINGANAN / DISPENSASI MANDIRI OLEH SANTRI -->
+    <div x-show="modalAjukanKeringanan" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+        <div @click.away="modalAjukanKeringanan = false" class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 text-left space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                    <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span>📑 Pengajuan Keringanan Biaya / SKTM</span>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-0.5">Santri atau Wali Santri dapat mengajukan permohonan keringanan kapan saja secara mandiri.</p>
+                </div>
+                <button @click="modalAjukanKeringanan = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <form action="{{ route('santri.pembayaran.ajukanKeringanan') }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
+                @csrf
+
+                <!-- 1. Pilih Pos Tagihan Target -->
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">1. Pilih Pos Tagihan yang Dimohonkan Keringanan: <span class="text-rose-500">*</span></label>
+                    <select name="student_bill_id" x-model="ajukanBillId" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:border-amber-500 bg-white">
+                        <option value="" disabled>-- Pilih Tagihan Belum Lunas --</option>
+                        @foreach($unpaidBills as $ub)
+                            <option value="{{ $ub->id }}">
+                                {{ $ub->judul_tagihan }} ({{ $ub->pos_biaya }}) — Sisa: Rp {{ number_format($ub->sisa_tagihan, 0, ',', '.') }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 2. Jenis Dokumen / Surat -->
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">2. Jenis Dokumen / Keterangan Pendukung: <span class="text-rose-500">*</span></label>
+                    <select name="jenis_surat" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:border-amber-500 bg-white">
+                        <option value="Surat Keterangan Tidak Mampu (SKTM)">Surat Keterangan Tidak Mampu (SKTM Kelurahan/Desa)</option>
+                        <option value="Surat Keterangan Yatim / Piatu">Surat Keterangan Yatim / Piatu</option>
+                        <option value="Kartu Indonesia Pintar (KIP) / PKH">Kartu Indonesia Pintar (KIP) / PKH / KKS</option>
+                        <option value="Surat Permohonan Keringanan Wali Santri">Surat Permohonan Tertulis dari Wali Santri</option>
+                        <option value="Dokumen Keringanan Lainnya">Dokumen / Bukti Keringanan Lainnya</option>
+                    </select>
+                </div>
+
+                <!-- 3. Nomor Surat / Berkas (Opsional) -->
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">3. Nomor Surat / Dokumen (Opsional):</label>
+                    <input type="text" name="no_surat" placeholder="Contoh: 400/12/SKTM/2026 atau no. KIP" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-800 focus:border-amber-500">
+                </div>
+
+                <!-- 4. Alasan / Keterangan -->
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">4. Alasan Permohonan Keringanan: <span class="text-rose-500">*</span></label>
+                    <textarea name="alasan" rows="3" required placeholder="Tuliskan secara ringkas kondisi atau alasan permohonan keringanan biaya..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-800 focus:border-amber-500"></textarea>
+                </div>
+
+                <!-- 5. Unggah Berkas Dokumen -->
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <label class="block font-bold text-slate-800">
+                        5. Unggah Foto / Scan Dokumen Resmi (PDF atau Foto JPG/PNG, maks 5MB): <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="file" name="file_surat" accept=".pdf,image/*" required class="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-700 cursor-pointer">
+                    <p class="text-[10px] text-slate-400">Pastikan stempel desa/kelurahan atau tanda tangan resmi terbaca dengan jelas.</p>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="modalAjukanKeringanan = false" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Kirim Pengajuan Keringanan</span>
                     </button>
                 </div>
             </form>

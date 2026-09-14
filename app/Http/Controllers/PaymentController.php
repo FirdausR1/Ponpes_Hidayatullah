@@ -118,6 +118,14 @@ class PaymentController extends Controller
         }
 
         $totalPemasukanSpp = StudentPayment::where('status', 'Lunas')->sum('nominal');
+        $totalPemasukanSppMts = StudentPayment::where('status', 'Lunas')
+            ->whereHas('student', function($q) {
+                $q->where('jenjang', 'like', '%MTs%');
+            })->sum('nominal');
+        $totalPemasukanSppMa = StudentPayment::where('status', 'Lunas')
+            ->whereHas('student', function($q) {
+                $q->where('jenjang', 'like', '%MA%');
+            })->sum('nominal');
         $totalTunggakan = StudentBill::where('status', '!=', 'Lunas')->sum('sisa_tagihan');
         $psbPendingVerify = PsbRegistration::whereNotNull('bukti_transfer')
             ->where($eligiblePsbScope)
@@ -202,6 +210,8 @@ class PaymentController extends Controller
             'santriId',
             'totalPemasukanPsb',
             'totalPemasukanSpp',
+            'totalPemasukanSppMts',
+            'totalPemasukanSppMa',
             'totalTunggakan',
             'psbPendingVerify',
             'totalTransaksiSantri',
@@ -740,16 +750,22 @@ class PaymentController extends Controller
             'bulan' => 'required|string|max:30', // Januari s.d. Desember
             'tahun' => 'required|string|max:10',
             'target_jenjang' => 'required|string|in:all,MTs,MA',
+            'pos_bulanan' => 'nullable|array',
+            'pos_bulanan.*' => 'string|in:MAKAN,SYAHRIYAH,SOT,TAB',
             'jatuh_tempo' => 'nullable|date',
         ]);
 
         $bulan = $validated['bulan'];
         $tahun = $validated['tahun'];
         $jatuhTempo = $validated['jatuh_tempo'] ?: Carbon::parse("{$tahun}-" . date('m') . "-10");
+        $selectedPos = $request->input('pos_bulanan', ['MAKAN', 'SYAHRIYAH', 'SOT', 'TAB']);
+        if (empty($selectedPos)) {
+            $selectedPos = ['MAKAN', 'SYAHRIYAH', 'SOT', 'TAB'];
+        }
 
         $query = Student::where('status', 'Aktif');
         if ($validated['target_jenjang'] !== 'all') {
-            $query->where('jenjang', $validated['target_jenjang']);
+            $query->where('jenjang', 'like', '%' . $validated['target_jenjang'] . '%');
         }
         $students = $query->get();
 
@@ -766,7 +782,7 @@ class PaymentController extends Controller
 
         foreach ($students as $st) {
             $isMukim = !empty($st->kamar_asrama) && !str_contains(strtolower($st->kamar_asrama), 'laju');
-            $isMA = strtoupper($st->jenjang) === 'MA';
+            $isMA = strtoupper($st->jenjang ?? '') === 'MA' || str_contains(strtoupper($st->jenjang ?? ''), 'MA');
 
             $tarifMakan = $isMukim ? 300000 : 0;
             $tarifSyahriyah = $isMA ? ($isMukim ? 105000 : 75000) : ($isMukim ? 85000 : 55000);
@@ -786,6 +802,9 @@ class PaymentController extends Controller
             ];
 
             foreach ($posItems as $item) {
+                if (!in_array($item['pos'], $selectedPos)) {
+                    continue;
+                }
                 if ($item['nominal'] <= 0) {
                     continue;
                 }
@@ -805,7 +824,7 @@ class PaymentController extends Controller
                 $potongan = 0;
                 $alasanPotongan = null;
                 foreach ($discounts as $disc) {
-                    if ($disc->pos_biaya === 'Semua Bulanan' || $disc->pos_biaya === $item['pos']) {
+                    if ($disc->pos_biaya === 'Semua Bulanan' || $disc->pos_biaya === $item['pos'] || $disc->pos_biaya === 'SEMUA') {
                         if ($disc->tipe_nilai === 'persen') {
                             $p = ($disc->nilai / 100) * $item['nominal'];
                         } else {
@@ -848,7 +867,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Terbitkan Tagihan Tambahan / Insidental (Ziarah, Wisuda, Ujian, Study Tour, dll.).
+     * Terbitkan Tagihan Santri (Bulanan Rutin, Tambahan / Insidental, Sekali Bayar, Tahunan).
      */
     public function terbitkanTagihanTambahan(Request $request)
     {
@@ -856,13 +875,21 @@ class PaymentController extends Controller
             'pos_biaya' => 'required|string|max:50',
             'pos_biaya_kustom' => 'nullable|string|max:50',
             'judul_tagihan' => 'required|string|max:150',
-            'nominal' => 'required|numeric|min:1000',
-            'kategori' => 'required|string|in:tambahan,sekali_bayar,tahunan',
+            'nominal' => 'nullable|numeric|min:0',
+            'kategori' => 'required|string|in:tambahan,sekali_bayar,tahunan,bulanan',
             'sasaran_tipe' => 'required|string|in:semua,tingkat,kelas,santri',
             'sasaran_nilai' => 'nullable|string', // Contoh: X, IX, VII-A, atau ID santri
+            'bulan' => 'nullable|string|max:30',
+            'tahun' => 'nullable|string|max:10',
+            'tarif_otomatis_jenjang' => 'nullable',
             'jatuh_tempo' => 'nullable|date',
             'keterangan' => 'nullable|string|max:255',
         ]);
+
+        $kategori = $validated['kategori'];
+        $bulan = $kategori === 'bulanan' ? ($request->input('bulan') ?: null) : null;
+        $tahun = $request->input('tahun') ?: date('Y');
+        $useAutoTarif = $request->boolean('tarif_otomatis_jenjang');
 
         $rawPos = trim($validated['pos_biaya']);
         if ($rawPos === '__CUSTOM__' || $rawPos === 'KUSTOM' || $rawPos === 'LAINNYA') {
@@ -875,7 +902,7 @@ class PaymentController extends Controller
             $pos = strtoupper($rawPos);
         }
 
-        $nominal = floatval($validated['nominal']);
+        $inputNominal = floatval($validated['nominal'] ?? 0);
         $judul = trim($validated['judul_tagihan']);
         $jatuhTempo = ($validated['jatuh_tempo'] ?? null) ?: now()->addDays(30)->toDateString();
 
@@ -902,15 +929,49 @@ class PaymentController extends Controller
         $createdCount = 0;
         $skippedCount = 0;
         foreach ($targetStudents as $st) {
-            // Cek apakah santri sudah memiliki tagihan dengan pos_biaya dan judul yang sama di tahun ini
+            // Cek apakah santri sudah memiliki tagihan dengan pos_biaya dan judul/bulan yang sama di tahun ini
             // Agar tidak terduplikasi jika admin mengklik atau menerbitkan ulang
-            $exists = StudentBill::where('student_id', $st->id)
+            $existsQuery = StudentBill::where('student_id', $st->id)
                 ->where('pos_biaya', $pos)
-                ->where('judul_tagihan', $judul)
-                ->where('tahun', date('Y'))
-                ->exists();
+                ->where('tahun', $tahun);
 
-            if ($exists) {
+            if ($kategori === 'bulanan' && $bulan) {
+                $existsQuery->where('bulan', $bulan);
+            } else {
+                $existsQuery->where('judul_tagihan', $judul);
+            }
+
+            if ($existsQuery->exists()) {
+                $skippedCount++;
+                continue;
+            }
+
+            // Tentukan tarif spesifik santri ini (terutama perbedaan MA & MTs serta Mukim/Laju)
+            $isMukim = !empty($st->kamar_asrama) && !str_contains(strtolower($st->kamar_asrama), 'laju');
+            $isMA = strtoupper($st->jenjang ?? '') === 'MA' || str_contains(strtoupper($st->jenjang ?? ''), 'MA');
+
+            if ($useAutoTarif || ($kategori === 'bulanan' && $inputNominal <= 0)) {
+                if ($pos === 'SOT') {
+                    // SOT MTs = Rp 55.000, MA = Rp 75.000
+                    $nominalSantri = $isMA ? 75000 : 55000;
+                } elseif ($pos === 'MAKAN') {
+                    // Uang makan hanya untuk santri mukim
+                    $nominalSantri = $isMukim ? 300000 : 0;
+                } elseif ($pos === 'TAB') {
+                    // Tabungan wajib standar
+                    $nominalSantri = 25000;
+                } elseif ($pos === 'SYAHRIYAH') {
+                    // Syahriyah: MA Mukim 105k, MA Laju 75k, MTs Mukim 85k, MTs Laju 55k
+                    $nominalSantri = $isMA ? ($isMukim ? 105000 : 75000) : ($isMukim ? 85000 : 55000);
+                } else {
+                    $nominalSantri = $inputNominal;
+                }
+            } else {
+                $nominalSantri = $inputNominal;
+            }
+
+            // Jika santri laju dan tagihannya adalah uang makan (0), lewati
+            if ($nominalSantri <= 0 && $pos === 'MAKAN' && !$isMukim) {
                 $skippedCount++;
                 continue;
             }
@@ -918,33 +979,39 @@ class PaymentController extends Controller
             // Cek apakah santri punya beasiswa/SKTM untuk pos ini
             $discount = StudentDiscount::where('student_id', $st->id)
                 ->where('status', 'Aktif')
-                ->where('pos_biaya', $pos)
+                ->where(function($q) use ($pos, $kategori) {
+                    $q->where('pos_biaya', $pos)
+                      ->orWhere('pos_biaya', 'SEMUA');
+                    if ($kategori === 'bulanan') {
+                        $q->orWhere('pos_biaya', 'Semua Bulanan');
+                    }
+                })
                 ->first();
 
             $potongan = 0;
             $alasan = null;
             if ($discount) {
                 $potongan = $discount->tipe_nilai === 'persen' 
-                    ? ($discount->nilai / 100) * $nominal 
-                    : min($nominal, $discount->nilai);
+                    ? ($discount->nilai / 100) * $nominalSantri 
+                    : min($nominalSantri, $discount->nilai);
                 $alasan = "{$discount->jenis_potongan} " . ($discount->no_surat_miskin ? "({$discount->no_surat_miskin})" : "");
             }
 
-            $tagihanBersih = max(0, $nominal - $potongan);
+            $tagihanBersih = max(0, $nominalSantri - $potongan);
             $status = $tagihanBersih == 0 ? 'Lunas' : 'Belum Bayar';
 
             StudentBill::create([
                 'student_id' => $st->id,
-                'kategori' => $validated['kategori'],
+                'kategori' => $kategori,
                 'pos_biaya' => $pos,
                 'judul_tagihan' => $judul,
-                'bulan' => null,
-                'tahun' => date('Y'),
-                'nominal_asli' => $nominal,
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+                'nominal_asli' => $nominalSantri,
                 'nominal_potongan' => $potongan,
                 'alasan_potongan' => $alasan,
                 'nominal_tagihan' => $tagihanBersih,
-                'nominal_bayar' => $tagihanBersih == 0 ? $nominal : 0,
+                'nominal_bayar' => $tagihanBersih == 0 ? $nominalSantri : 0,
                 'sisa_tagihan' => $tagihanBersih,
                 'status' => $status,
                 'jatuh_tempo' => $jatuhTempo,
@@ -1718,13 +1785,71 @@ class PaymentController extends Controller
     {
         $reg = PsbRegistration::findOrFail($id);
 
+        $nominalBayar = floatval($reg->nominal_pembayaran ?: 3225000);
+        $jenjangStr = strtoupper($reg->jenjang ?? '');
+        $standardNominal = ($jenjangStr === 'MA') ? 3315000 : 3225000;
+
+        $items = collect();
+        $sisaTunggakanSantri = 0;
+        $catatanKwitansi = $reg->catatan_pembayaran;
+
+        // Cek apakah status pembayaran Cicilan atau Lunas dengan Potongan
+        if ($reg->status_pembayaran === 'Cicilan' && $nominalBayar < $standardNominal) {
+            $sisaTunggakanSantri = max(0, $standardNominal - $nominalBayar);
+            $items->push((object)[
+                'pos_biaya' => 'PENDAFTARAN & DAFTAR ULANG PSB (ANGSURAN / CICILAN)',
+                'nominal' => $nominalBayar,
+            ]);
+            if (empty($catatanKwitansi)) {
+                $catatanKwitansi = 'Pembayaran Angsuran PSB (Sisa Tagihan: Rp ' . number_format($sisaTunggakanSantri, 0, ',', '.') . ')';
+            }
+        } elseif ($nominalBayar < $standardNominal) {
+            // Status Lunas tetapi nominal di bawah standar -> Ada Potongan / Keringanan / Beasiswa
+            $potongan = $standardNominal - $nominalBayar;
+
+            $alasanPotongan = [];
+            if ($reg->jalur && !in_array(strtolower($reg->jalur), ['reguler', 'umum'])) {
+                $alasanPotongan[] = 'Jalur ' . $reg->jalur;
+            }
+            if (!empty($reg->bantuan_sosial)) {
+                $alasanPotongan[] = $reg->bantuan_sosial;
+            }
+            if (!empty($reg->catatan_pembayaran) && !str_contains($reg->catatan_pembayaran, 'Pembayaran Administrasi')) {
+                $alasanPotongan[] = $reg->catatan_pembayaran;
+            }
+
+            $labelPotongan = !empty($alasanPotongan) ? ' (' . implode(', ', $alasanPotongan) . ')' : '';
+
+            $items->push((object)[
+                'pos_biaya' => 'DAFTAR ULANG PSB (TARIF STANDAR)',
+                'nominal' => $standardNominal,
+            ]);
+            $items->push((object)[
+                'pos_biaya' => 'POTONGAN / KERINGANAN BIAYA' . $labelPotongan,
+                'nominal' => -$potongan,
+            ]);
+
+            if (empty($catatanKwitansi)) {
+                $catatanKwitansi = 'Biaya Pendaftaran & Daftar Ulang PSB TA 2026/2027 (Keringanan: Rp ' . number_format($potongan, 0, ',', '.') . $labelPotongan . ')';
+            }
+        } else {
+            $items->push((object)[
+                'pos_biaya' => 'PENDAFTARAN & DAFTAR ULANG PSB',
+                'nominal' => $nominalBayar,
+            ]);
+            if (empty($catatanKwitansi)) {
+                $catatanKwitansi = 'Biaya Pendaftaran & Daftar Ulang PSB TA 2026/2027';
+            }
+        }
+
         $payment = (object)[
             'id' => $reg->id,
             'no_transaksi' => 'PSB-' . ($reg->no_registrasi ?: $reg->id),
             'tanggal_bayar' => $reg->tanggal_bayar ? Carbon::parse($reg->tanggal_bayar) : ($reg->created_at ?: now()),
             'metode_pembayaran' => $reg->metode_pembayaran ?: 'Tunai',
-            'nominal' => $reg->nominal_pembayaran ?: 3225000,
-            'catatan' => $reg->catatan_pembayaran ?: 'Biaya Pendaftaran & Daftar Ulang PSB TA 2026/2027',
+            'jenis_pembayaran' => 'PENDAFTARAN & DAFTAR ULANG PSB',
+            'nominal' => $nominalBayar,
+            'catatan' => $catatanKwitansi,
             'penerima_nama' => auth()->user()->name ?? 'Panitia PSB & Bendahara',
             'bulan' => null,
             'tahun' => date('Y'),
@@ -1732,23 +1857,20 @@ class PaymentController extends Controller
                 'nama_lengkap' => $reg->nama_lengkap,
                 'nis' => $reg->no_registrasi,
                 'kelas' => 'Calon Santri Baru',
-                'jenjang' => $reg->jenjang,
+                'jenjang' => $reg->jenjang ?: 'MTs',
                 'nama_wali' => $reg->nama_wali ?: ($reg->ayah_nama ?: $reg->ibu_nama),
                 'alamat' => $reg->alamat_lengkap ?: ($reg->alamat ?: 'Pringsurat, Kab. Temanggung'),
                 'no_whatsapp' => $reg->no_whatsapp,
                 'no_hp' => $reg->no_whatsapp,
+                'saldo_tabungan' => 0,
             ],
-            'items' => collect([
-                (object)[
-                    'pos_biaya' => 'PENDAFTARAN & DAFTAR ULANG PSB',
-                    'nominal' => $reg->nominal_pembayaran ?: 3225000,
-                ]
-            ]),
+            'items' => $items,
         ];
 
         return view('admin.pembayaran.kwitansi', [
             'payment' => $payment,
-            'sisaTunggakanSantri' => 0
+            'sisaTunggakanSantri' => $sisaTunggakanSantri,
+            'sisaTabunganSantri' => 0,
         ]);
     }
 
@@ -2178,25 +2300,44 @@ class PaymentController extends Controller
     }
 
     /**
-     * Admin Menyetujui Berkas Surat Dispensasi yang Diunggah Santri & Nol-kan Tagihan.
+     * Admin Menyetujui Berkas Surat Dispensasi yang Diunggah Santri.
+     * Mendukung: Pembebasan Penuh (100% Lunas) atau Potongan Sebagian (Nominal).
      */
     public function setujuiSuratDispensasi(Request $request, $id)
     {
         $bill = StudentBill::with('student')->findOrFail($id);
 
+        $tipePersetujuan = $request->input('tipe_persetujuan', 'bebas_penuh');
         $catatanPersetujuan = $request->input('catatan_persetujuan') ?: ("Disetujui berdasarkan berkas " . ($bill->jenis_surat_diminta ?: "Surat Keringanan") . " yang diunggah santri.");
 
+        if ($tipePersetujuan === 'potongan_sebagian' && $request->filled('nominal_potongan')) {
+            $potongan = min($bill->nominal_asli, max(0, floatval($request->input('nominal_potongan'))));
+            $bill->nominal_potongan = $potongan;
+            $bill->nominal_tagihan = max(0, $bill->nominal_asli - $potongan);
+            $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $bill->nominal_bayar);
+            if ($bill->sisa_tagihan == 0) {
+                $bill->status = 'Lunas';
+            } elseif ($bill->nominal_bayar > 0) {
+                $bill->status = 'Cicilan';
+            } else {
+                $bill->status = 'Belum Bayar';
+            }
+            $pesanSukses = "Keringanan disetujui dengan potongan Rp " . number_format($potongan, 0, ',', '.') . ". Sisa tagihan kini menjadi Rp " . number_format($bill->sisa_tagihan, 0, ',', '.') . ".";
+        } else {
+            // Pembebasan Penuh (100% Lunas)
+            $bill->nominal_potongan = $bill->nominal_asli;
+            $bill->nominal_tagihan = 0;
+            $bill->sisa_tagihan = 0;
+            $bill->status = 'Lunas';
+            $pesanSukses = "Surat dispensasi disetujui. Tagihan '{$bill->judul_tagihan}' berhasil dinolkan (Lunas).";
+        }
+
         $bill->status_dispensasi = 'disetujui';
-        $bill->nominal_potongan = $bill->nominal_asli;
-        $bill->nominal_tagihan = 0;
-        $bill->sisa_tagihan = 0;
-        $bill->status = 'Lunas';
         $bill->alasan_potongan = $catatanPersetujuan;
         $bill->catatan_pembebasan = $catatanPersetujuan;
         $bill->save();
 
-        $namaSantri = $bill->student->nama_lengkap ?? 'Santri';
-        return redirect()->back()->with('success', "Surat dispensasi disetujui. Tagihan '{$bill->judul_tagihan}' berhasil dinolkan.");
+        return redirect()->back()->with('success', $pesanSukses);
     }
 
     /**
@@ -2229,7 +2370,8 @@ class PaymentController extends Controller
         $kelasFilter = $request->input('kelas');
         $posFilter = $request->input('pos_biaya');
         $jenjangFilter = $request->input('jenjang');
-        $search = $request->input('q');
+        $tingkatAkhirFilter = $request->input('tingkat_akhir');
+        $search = $request->input('q') ?: $request->input('search');
 
         // Query seluruh tagihan yang belum lunas (menunggak)
         $unpaidQuery = StudentBill::with(['student.classroom'])
@@ -2249,8 +2391,39 @@ class PaymentController extends Controller
 
         if (!empty($jenjangFilter)) {
             $unpaidQuery->whereHas('student', function($q) use ($jenjangFilter) {
-                $q->where('jenjang', $jenjangFilter);
+                $q->where('jenjang', 'like', "%{$jenjangFilter}%");
             });
+        }
+
+        // Filter Khusus Tingkat Akhir (Kelas 9 MTs & Kelas 12 MA)
+        if (!empty($tingkatAkhirFilter)) {
+            if ($tingkatAkhirFilter === '9' || $tingkatAkhirFilter === '9_mts') {
+                $unpaidQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%IX%')
+                           ->orWhere('kelas', 'like', '%9%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['IX', '9']));
+                    });
+                });
+            } elseif ($tingkatAkhirFilter === '12' || $tingkatAkhirFilter === '12_ma') {
+                $unpaidQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%XII%')
+                           ->orWhere('kelas', 'like', '%12%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['XII', '12']));
+                    });
+                });
+            } elseif ($tingkatAkhirFilter === 'all_final' || $tingkatAkhirFilter === '1') {
+                $unpaidQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%IX%')
+                           ->orWhere('kelas', 'like', '%9%')
+                           ->orWhere('kelas', 'like', '%XII%')
+                           ->orWhere('kelas', 'like', '%12%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['IX', '9', 'XII', '12']));
+                    });
+                });
+            }
         }
 
         if (!empty($search)) {
@@ -2272,7 +2445,16 @@ class PaymentController extends Controller
         $totalItemTagihan = $unpaidBills->count();
         $totalDitangguhkan = (float) StudentBill::where('penangguhan_wisuda', true)->sum('sisa_tagihan');
 
-        // 2. Rekap Tunggakan Per Pos Biaya (Menjawab: Pos biaya apa saja yang paling banyak kurang?)
+        // Statistik Tingkat Akhir (Kelas 9 & 12)
+        $tingkatAkhirBills = $unpaidBills->filter(function($b) {
+            $k = strtoupper($b->student?->kelas ?? '');
+            $t = strtoupper($b->student?->classroom?->tingkat ?? '');
+            return str_contains($k, 'IX') || str_contains($k, '9') || str_contains($k, 'XII') || str_contains($k, '12') || in_array($t, ['IX', '9', 'XII', '12']);
+        });
+        $totalTunggakanTingkatAkhir = (float) $tingkatAkhirBills->sum('sisa_tagihan');
+        $totalSantriTingkatAkhir = $tingkatAkhirBills->pluck('student_id')->unique()->count();
+
+        // 2. Rekap Tunggakan Per Pos Biaya
         $rekapPerPos = $unpaidBills->groupBy('pos_biaya')->map(function($items, $pos) {
             return [
                 'pos' => $pos,
@@ -2282,7 +2464,7 @@ class PaymentController extends Controller
             ];
         })->sortByDesc('total_sisa');
 
-        // 3. Rekap Tunggakan Per Kelas (Menjawab: Kelas mana yang paling banyak kurang?)
+        // 3. Rekap Tunggakan Per Kelas
         $rekapPerKelas = $unpaidBills->groupBy(function($b) {
             return $b->student?->kelas ?: 'Lainnya';
         })->map(function($items, $kelas) {
@@ -2294,14 +2476,77 @@ class PaymentController extends Controller
             ];
         })->sortByDesc('total_sisa');
 
-        // 4. Daftar Rincian Santri yang Menunggak Beserta Tagihannya
-        $santriGrouped = $unpaidBills->groupBy('student_id')->map(function($bills, $studentId) {
+        // Urutan nama bulan Indonesia untuk sorting kronologis
+        $monthOrder = [
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
+            'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
+            'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+        ];
+
+        // 4. Daftar Rincian Santri yang Menunggak Beserta Pengelompokan Per Bulan
+        $santriGrouped = $unpaidBills->groupBy('student_id')->map(function($bills, $studentId) use ($monthOrder) {
             $student = $bills->first()->student;
+
+            // Pengelompokan Tagihan Bulanan (Uang Makan, Syahriyah, SOT, Tabungan, dll)
+            $monthlyBills = $bills->filter(fn($b) => !empty(trim($b->bulan ?? '')))
+                ->groupBy(fn($b) => trim($b->bulan) . ' ' . trim($b->tahun))
+                ->map(function($mBills, $periode) use ($monthOrder) {
+                    $first = $mBills->first();
+                    $bName = strtolower(trim($first->bulan ?? ''));
+                    $mIndex = $monthOrder[$bName] ?? 99;
+                    $y = (int) ($first->tahun ?: date('Y'));
+                    $sortKey = ($y * 100) + $mIndex;
+
+                    return [
+                        'periode' => $periode,
+                        'bulan' => $first->bulan,
+                        'tahun' => $first->tahun,
+                        'sort_key' => $sortKey,
+                        'pos_list' => $mBills->pluck('pos_biaya')->unique()->values()->all(),
+                        'pos_text' => $mBills->pluck('pos_biaya')->unique()->implode(', '),
+                        'total' => (float) $mBills->sum('sisa_tagihan'),
+                        'items' => $mBills,
+                    ];
+                })->sortBy('sort_key')->values();
+
+            // Pengelompokan Tagihan Non-Bulanan (Ziarah, Qurban, Kegiatan, dll)
+            $nonMonthlyBills = $bills->filter(fn($b) => empty(trim($b->bulan ?? '')))
+                ->map(function($b) {
+                    return [
+                        'judul' => $b->judul_tagihan ?: $b->pos_biaya,
+                        'pos' => $b->pos_biaya,
+                        'tahun' => $b->tahun,
+                        'total' => (float) $b->sisa_tagihan,
+                    ];
+                })->values();
+
+            // Deteksi Santri Kelas 9 MTs atau 12 MA (Tingkat Akhir)
+            $k = strtoupper($student?->kelas ?? '');
+            $t = strtoupper($student?->classroom?->tingkat ?? '');
+            $isTingkatAkhir = false;
+            $labelTingkatAkhir = '';
+
+            if (str_contains($k, 'IX') || str_contains($k, '9') || $t === 'IX' || $t === '9') {
+                $isTingkatAkhir = true;
+                $labelTingkatAkhir = 'Kelas 9 MTs (Tingkat Akhir)';
+            } elseif (str_contains($k, 'XII') || str_contains($k, '12') || $t === 'XII' || $t === '12') {
+                $isTingkatAkhir = true;
+                $labelTingkatAkhir = 'Kelas 12 MA (Tingkat Akhir)';
+            }
+
+            $bulanListText = $monthlyBills->pluck('periode')->implode(', ');
+
             return [
                 'student' => $student,
                 'bills' => $bills,
                 'total_tunggakan' => (float) $bills->sum('sisa_tagihan'),
                 'item_count' => $bills->count(),
+                'monthly' => $monthlyBills,
+                'non_monthly' => $nonMonthlyBills,
+                'bulan_count' => $monthlyBills->count(),
+                'bulan_list_text' => $bulanListText,
+                'is_tingkat_akhir' => $isTingkatAkhir,
+                'label_tingkat_akhir' => $labelTingkatAkhir,
             ];
         })->sortByDesc('total_tunggakan');
 
@@ -2324,6 +2569,8 @@ class PaymentController extends Controller
             'totalSantriMenunggak',
             'totalItemTagihan',
             'totalDitangguhkan',
+            'totalTunggakanTingkatAkhir',
+            'totalSantriTingkatAkhir',
             'rekapPerPos',
             'rekapPerKelas',
             'santriList',
@@ -2332,6 +2579,7 @@ class PaymentController extends Controller
             'kelasFilter',
             'posFilter',
             'jenjangFilter',
+            'tingkatAkhirFilter',
             'search'
         ));
     }
@@ -2343,8 +2591,10 @@ class PaymentController extends Controller
     {
         $kelasFilter = $request->input('kelas');
         $posFilter = $request->input('pos_biaya');
+        $jenjangFilter = $request->input('jenjang');
+        $tingkatAkhirFilter = $request->input('tingkat_akhir');
 
-        $unpaidQuery = StudentBill::with('student')
+        $unpaidQuery = StudentBill::with(['student.classroom'])
             ->where('status', '!=', 'Lunas')
             ->where('sisa_tagihan', '>', 0)
             ->where('penangguhan_wisuda', false);
@@ -2357,6 +2607,41 @@ class PaymentController extends Controller
                 $q->where('kelas', $kelasFilter);
             });
         }
+        if (!empty($jenjangFilter)) {
+            $unpaidQuery->whereHas('student', function($q) use ($jenjangFilter) {
+                $q->where('jenjang', 'like', "%{$jenjangFilter}%");
+            });
+        }
+
+        if (!empty($tingkatAkhirFilter)) {
+            if ($tingkatAkhirFilter === '9' || $tingkatAkhirFilter === '9_mts') {
+                $unpaidQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%IX%')
+                           ->orWhere('kelas', 'like', '%9%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['IX', '9']));
+                    });
+                });
+            } elseif ($tingkatAkhirFilter === '12' || $tingkatAkhirFilter === '12_ma') {
+                $unpaidQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%XII%')
+                           ->orWhere('kelas', 'like', '%12%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['XII', '12']));
+                    });
+                });
+            } elseif ($tingkatAkhirFilter === 'all_final' || $tingkatAkhirFilter === '1') {
+                $unpaidQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%IX%')
+                           ->orWhere('kelas', 'like', '%9%')
+                           ->orWhere('kelas', 'like', '%XII%')
+                           ->orWhere('kelas', 'like', '%12%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['IX', '9', 'XII', '12']));
+                    });
+                });
+            }
+        }
 
         $unpaidBills = $unpaidQuery->get();
         $santriGrouped = $unpaidBills->groupBy('student_id')->sortByDesc(fn($b) => $b->sum('sisa_tagihan'));
@@ -2368,12 +2653,12 @@ class PaymentController extends Controller
         // Header Title
         $sheet->setCellValue('A1', 'REKAPITULASI KEKURANGAN & TUNGGAKAN BIAYA SANTRI');
         $sheet->setCellValue('A2', 'PONDOK PESANTREN HIDAYATULLAH TUKSONGO');
-        $sheet->setCellValue('A3', 'Tanggal Unduh: ' . date('d F Y, H:i') . ' WIB' . ($kelasFilter ? " | Kelas: {$kelasFilter}" : '') . ($posFilter ? " | Pos: {$posFilter}" : ''));
+        $sheet->setCellValue('A3', 'Tanggal Unduh: ' . date('d F Y, H:i') . ' WIB' . ($kelasFilter ? " | Kelas: {$kelasFilter}" : '') . ($posFilter ? " | Pos: {$posFilter}" : '') . ($tingkatAkhirFilter ? " | Filter: Tingkat Akhir" : ''));
         $sheet->getStyle('A1:A2')->getFont()->setBold(true)->setSize(13);
 
         // Header Columns
-        $headers = ['No', 'NIS', 'Nama Santri', 'Kelas', 'Wali Santri', 'No. WhatsApp', 'Rincian Tagihan Belum Lunas', 'Total Kekurangan (Rp)'];
-        $colLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        $headers = ['No', 'NIS', 'Nama Santri', 'Kelas', 'Jenjang', 'Status Siswa', 'Wali Santri', 'No. WhatsApp', 'Jml Bulan', 'Bulan Apa Saja Tunggakannya', 'Rincian Tagihan Belum Lunas', 'Total Kekurangan (Rp)'];
+        $colLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
         foreach ($headers as $idx => $h) {
             $col = $colLetters[$idx];
@@ -2386,8 +2671,46 @@ class PaymentController extends Controller
         $no = 1;
         $grandTotal = 0;
 
+        $monthOrder = [
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
+            'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
+            'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+        ];
+
         foreach ($santriGrouped as $bills) {
             $student = $bills->first()->student;
+            
+            // Pengelompokan Bulan
+            $monthlyBills = $bills->filter(fn($b) => !empty(trim($b->bulan ?? '')))
+                ->groupBy(fn($b) => trim($b->bulan) . ' ' . trim($b->tahun))
+                ->map(function($mBills, $periode) use ($monthOrder) {
+                    $first = $mBills->first();
+                    $bName = strtolower(trim($first->bulan ?? ''));
+                    $mIndex = $monthOrder[$bName] ?? 99;
+                    $y = (int) ($first->tahun ?: date('Y'));
+                    $sortKey = ($y * 100) + $mIndex;
+
+                    return [
+                        'periode' => $periode,
+                        'sort_key' => $sortKey,
+                        'total' => (float) $mBills->sum('sisa_tagihan'),
+                        'pos_list' => $mBills->pluck('pos_biaya')->unique()->implode(', '),
+                    ];
+                })->sortBy('sort_key')->values();
+
+            $bulanText = $monthlyBills->map(fn($m) => "{$m['periode']} [{$m['pos_list']}: Rp " . number_format($m['total'], 0, ',', '.') . "]")->implode('; ');
+            $bulanCount = $monthlyBills->count();
+
+            // Status Tingkat Akhir
+            $k = strtoupper($student?->kelas ?? '');
+            $t = strtoupper($student?->classroom?->tingkat ?? '');
+            $statusSiswa = 'Reguler';
+            if (str_contains($k, 'IX') || str_contains($k, '9') || $t === 'IX' || $t === '9') {
+                $statusSiswa = 'Tingkat Akhir MTs (Kls 9)';
+            } elseif (str_contains($k, 'XII') || str_contains($k, '12') || $t === 'XII' || $t === '12') {
+                $statusSiswa = 'Tingkat Akhir MA (Kls 12)';
+            }
+
             $rincian = $bills->map(fn($b) => $b->judul_tagihan . ' (Rp ' . number_format($b->sisa_tagihan, 0, ',', '.') . ')')->implode(', ');
             $totalSisa = (float) $bills->sum('sisa_tagihan');
             $grandTotal += $totalSisa;
@@ -2396,22 +2719,26 @@ class PaymentController extends Controller
             $sheet->setCellValue('B' . $rowNum, $student?->nis ?: '-');
             $sheet->setCellValue('C' . $rowNum, $student?->nama_lengkap ?: '-');
             $sheet->setCellValue('D' . $rowNum, $student?->kelas ?: '-');
-            $sheet->setCellValue('E' . $rowNum, $student?->nama_wali ?: '-');
-            $sheet->setCellValue('F' . $rowNum, $student?->no_whatsapp ?: '-');
-            $sheet->setCellValue('G' . $rowNum, $rincian);
-            $sheet->setCellValue('H' . $rowNum, $totalSisa);
-            $sheet->getStyle('H' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->setCellValue('E' . $rowNum, $student?->jenjang ?: '-');
+            $sheet->setCellValue('F' . $rowNum, $statusSiswa);
+            $sheet->setCellValue('G' . $rowNum, $student?->nama_wali ?: '-');
+            $sheet->setCellValue('H' . $rowNum, $student?->no_whatsapp ?: '-');
+            $sheet->setCellValue('I' . $rowNum, $bulanCount > 0 ? "{$bulanCount} Bulan" : '-');
+            $sheet->setCellValue('J' . $rowNum, $bulanText ?: '-');
+            $sheet->setCellValue('K' . $rowNum, $rincian);
+            $sheet->setCellValue('L' . $rowNum, $totalSisa);
+            $sheet->getStyle('L' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
 
             $rowNum++;
         }
 
         // Total Row
         $sheet->setCellValue('A' . $rowNum, 'TOTAL KEKURANGAN');
-        $sheet->mergeCells("A{$rowNum}:G{$rowNum}");
-        $sheet->setCellValue('H' . $rowNum, $grandTotal);
-        $sheet->getStyle("A{$rowNum}:H{$rowNum}")->getFont()->setBold(true);
-        $sheet->getStyle("A{$rowNum}:H{$rowNum}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFDCFCE7');
-        $sheet->getStyle('H' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->mergeCells("A{$rowNum}:K{$rowNum}");
+        $sheet->setCellValue('L' . $rowNum, $grandTotal);
+        $sheet->getStyle("A{$rowNum}:L{$rowNum}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$rowNum}:L{$rowNum}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFDCFCE7');
+        $sheet->getStyle('L' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
 
         foreach ($colLetters as $c) {
             $sheet->getColumnDimension($c)->setAutoSize(true);

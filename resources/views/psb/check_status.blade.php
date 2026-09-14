@@ -22,6 +22,10 @@
         }
     </style>
 </head>
+@php
+    $hotlinePanitia = \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966'));
+    $cleanHotline = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $hotlinePanitia));
+@endphp
 <body class="min-h-screen py-10 px-4 sm:px-6 flex flex-col items-center">
 
     <div class="max-w-3xl w-full space-y-6">
@@ -40,7 +44,7 @@
                     <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                     <span>Kembali ke Beranda</span>
                 </a>
-                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::get('kontak_hotline_1', '6281234567890')) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-2xs hover:bg-emerald-100 transition">
+                <a href="https://wa.me/{{ $cleanHotline }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-2xs hover:bg-emerald-100 transition">
                     <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                     Bantuan Panitia
                 </a>
@@ -97,7 +101,7 @@
                 <a href="{{ route('psb.register') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-emerald-800 transition">
                     Daftar Santri Baru Sekarang
                 </a>
-                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::get('kontak_hotline_1', '6281234567890')) }}?text={{ urlencode('Assalamu\'alaikum Panitia PSB, saya ingin menanyakan status pendaftaran dengan nomor: ' . $identifier) }}" target="_blank" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 transition">
+                <a href="https://wa.me/{{ $cleanHotline }}?text={{ urlencode('Assalamu\'alaikum Panitia PSB, saya ingin menanyakan status pendaftaran dengan nomor: ' . $identifier) }}" target="_blank" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 transition">
                     Tanya ke Panitia via WhatsApp
                 </a>
             </div>
@@ -421,7 +425,7 @@
             <!-- Action WhatsApp Hubungi Panitia -->
             <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                 <span class="text-xs text-slate-500">Butuh bantuan cepat atau konfirmasi berkas?</span>
-                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::get('kontak_hotline_1', '6281234567890')) }}?text={{ urlencode('Assalamu\'alaikum Panitia PSB Hidayatullah Tuksongo, saya ingin konfirmasi status pendaftaran santri atas nama ' . $registration->nama_lengkap . ' (No. Reg: ' . $registration->no_registrasi . '). Terima kasih.') }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                <a href="https://wa.me/{{ $cleanHotline }}?text={{ urlencode('Assalamu\'alaikum Panitia PSB Hidayatullah Tuksongo, saya ingin konfirmasi status pendaftaran santri atas nama ' . $registration->nama_lengkap . ' (No. Reg: ' . $registration->no_registrasi . '). Terima kasih.') }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
                     <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                     Hubungi Panitia via WhatsApp
                 </a>

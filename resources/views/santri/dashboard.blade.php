@@ -297,9 +297,13 @@
                     <p class="text-slate-500 text-[11px] leading-relaxed">
                         Jika terdapat ketidaksesuaian biodata santri atau membutuhkan surat keterangan aktif, silakan menghubungi kantor kesantrian pesantren.
                     </p>
+                    @php
+                        $santriWa = \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966'));
+                        $cleanSantriWa = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $santriWa));
+                    @endphp
                     <div class="p-3 bg-slate-50 rounded-xl font-mono text-slate-700 text-xs flex items-center gap-2">
                         <span>💬 WA Kesantrian:</span>
-                        <a href="https://wa.me/6285290429617" target="_blank" class="text-emerald-700 font-bold hover:underline">0852-9042-9617</a>
+                        <a href="https://wa.me/{{ $cleanSantriWa }}" target="_blank" class="text-emerald-700 font-bold hover:underline">{{ $santriWa }}</a>
                     </div>
                 </div>
 

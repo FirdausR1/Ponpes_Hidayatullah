@@ -201,7 +201,7 @@
                         </p>
                         <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
                             Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
-                            Hotline PSB / WhatsApp: 0852-9042-9617 &bull; Website: ponpeshidayatullahtuksongo.com
+                            Hotline PSB / WhatsApp: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }} &bull; Website: ponpeshidayatullahtuksongo.com
                         </p>
                     </div>
                     <div class="w-20 shrink-0 text-right">
@@ -656,7 +656,7 @@
                         </p>
                         <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
                             Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
-                            Hotline PSB / WhatsApp: 0852-9042-9617 &bull; Website: ponpeshidayatullahtuksongo.com
+                            Hotline PSB / WhatsApp: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }} &bull; Website: ponpeshidayatullahtuksongo.com
                         </p>
                     </div>
                     <div class="w-20 shrink-0 text-right">

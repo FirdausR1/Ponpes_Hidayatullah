@@ -313,7 +313,7 @@
                     Pondok Pesantren Hidayatullah
                 </h2>
                 <p class="text-xs font-semibold tracking-widest text-brand-300 uppercase mt-1">
-                    Tuksongo, Borobudur, Magelang &bull; Jawa Tengah
+                    Tuksongo, Temanggung &bull; Jawa Tengah
                 </p>
 
                 <!-- Kutipan / Tagline -->

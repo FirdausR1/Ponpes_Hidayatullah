@@ -1199,12 +1199,20 @@ class AdminController extends Controller
             $group = 'general';
             if (str_starts_with($key, 'hero_')) {
                 $group = 'hero';
-            } elseif (str_starts_with($key, 'sosmed_') || str_starts_with($key, 'kontak_') || str_starts_with($key, 'footer_') || $key === 'alamat_kampus') {
+            } elseif (str_starts_with($key, 'sosmed_') || str_starts_with($key, 'kontak_') || str_starts_with($key, 'rek_') || str_starts_with($key, 'footer_') || $key === 'alamat_kampus') {
                 $group = 'kontak';
             } elseif (str_starts_with($key, 'profil_') || str_starts_with($key, 'sejarah_') || str_starts_with($key, 'sambutan_') || str_starts_with($key, 'quran_') || in_array($key, ['visi', 'misi', 'nspp', 'mts_npsn', 'ma_npsn', 'status_tanah', 'falsafah_judul', 'falsafah_subjudul', 'filosofi_judul', 'filosofi_subjudul', 'pilar_title', 'pilar_subtitle'])) {
                 $group = 'profil';
             }
             Setting::set($key, $val, $group);
+        }
+
+        // Sinkronisasi otomatis nomor hotline panitia/CS ke semua alias key
+        if ($request->filled('kontak_hotline')) {
+            $hotlineVal = trim($request->kontak_hotline);
+            Setting::set('kontak_hotline_1', $hotlineVal, 'kontak');
+            Setting::set('kontak_cs_phone', $hotlineVal, 'kontak');
+            Setting::set('kontak_wa_psb', $hotlineVal, 'kontak');
         }
 
         return redirect()->back()

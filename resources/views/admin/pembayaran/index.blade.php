@@ -1276,6 +1276,31 @@
             this.selectAll = this.allIds.length > 0 && this.selectedPayments.length === this.allIds.length;
         }
     }">
+        <!-- Mini Stats Pembayaran Jenjang MTs vs MA -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-4 bg-white rounded-2xl border border-gray-200 flex items-center justify-between shadow-theme-xs">
+                <div>
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Total Masuk Santri</span>
+                    <span class="font-mono font-bold text-base text-gray-900">Rp {{ number_format($totalPemasukanSpp, 0, ',', '.') }}</span>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">Total</span>
+            </div>
+            <div class="p-4 bg-white rounded-2xl border border-sky-200 flex items-center justify-between shadow-theme-xs">
+                <div>
+                    <span class="text-[11px] font-semibold text-sky-700 uppercase tracking-wider block">Pemasukan MTs</span>
+                    <span class="font-mono font-bold text-base text-sky-900">Rp {{ number_format($totalPemasukanSppMts ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold text-xs border border-sky-200">MTs</span>
+            </div>
+            <div class="p-4 bg-white rounded-2xl border border-emerald-200 flex items-center justify-between shadow-theme-xs">
+                <div>
+                    <span class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block">Pemasukan MA</span>
+                    <span class="font-mono font-bold text-base text-emerald-900">Rp {{ number_format($totalPemasukanSppMa ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">MA</span>
+            </div>
+        </div>
+
         <!-- Filter Bar (TailAdmin Form Style) -->
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs space-y-3">
             <form method="GET" action="{{ route('admin.pembayaran.index') }}" class="space-y-3">
@@ -1740,15 +1765,29 @@
                                         @php
                                             $cleanWaPsb = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $psb->no_whatsapp));
                                             $nominalPsb = number_format($psb->nominal_pembayaran ?: 3225000, 0, ',', '.');
+                                            $rekBriNo = \App\Models\Setting::get('rek_admin_bri_no', '010201022009537');
+                                            $rekBriAn = \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN');
+                                            $rekBcaNo = \App\Models\Setting::get('rek_admin_bca_no', '1221220167');
+                                            $rekBcaAn = \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN');
+                                            $rekKonfPhone = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
+                                            $rekKonfNama = \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A');
+
                                             $waRemindPsb = "Assalamu'alaikum Wr. Wb.\n\n"
                                                 . "Yth. Orang Tua / Wali Calon Santri Baru: *{$psb->nama_lengkap}*\n"
                                                 . "No. Registrasi: *{$psb->no_registrasi}* ({$psb->jenjang})\n\n"
-                                                . "Mengingatkan untuk kelengkapan administrasi pembayaran biaya masuk PSB sebesar *Rp {$nominalPsb}*.\n\n"
-                                                . "Pembayaran dapat dilakukan di Kasir Kantor Pesantren atau transfer ke rekening resmi:\n"
-                                                . "- BSI: 714 556 7890 (a.n. Pondok Pesantren Hidayatullah Tuksongo)\n"
-                                                . "- BRI: 0153 0100 2345 531 (a.n. Ponpes Hidayatullah Temanggung)\n\n"
-                                                . "Setelah transfer, mohon konfirmasi ke panitia PSB. Terima kasih.\n\n"
-                                                . "Panitia PSB Ponpes Hidayatullah Tuksongo";
+                                                . "Mengingatkan untuk kelengkapan administrasi pembayaran biaya masuk santri baru (PSB) sebesar *Rp {$nominalPsb}*.\n\n"
+                                                . "Pembayaran dapat dilakukan di Kasir Kantor Pesantren (Tunai) atau melalui Transfer ke Rekening Resmi Administrasi:\n"
+                                                . "• BRI: *{$rekBriNo}* (a.n. {$rekBriAn})\n"
+                                                . "• BCA: *{$rekBcaNo}* (a.n. {$rekBcaAn})\n\n"
+                                                . "KONFIRMASI BUKTI TRANSFER DENGAN MENYERTAKAN DATA SEBAGAI BERIKUT:\n"
+                                                . "• NAMA : {$psb->nama_lengkap}\n"
+                                                . "• NO REGISTRASI : {$psb->no_registrasi} ({$psb->jenjang})\n"
+                                                . "• JENIS PEMBAYARAN : Biaya Masuk Santri Baru (PSB)\n"
+                                                . "• NOMINAL : Rp {$nominalPsb}\n\n"
+                                                . "Kirim konfirmasi bukti transfer ke WA Keuangan: {$rekKonfPhone} ({$rekKonfNama})\n\n"
+                                                . "⚠️ *Wajib Melakukan Konfirmasi*\n"
+                                                . "Demi terciptanya komunikasi yang tertib dan menghindari miskomunikasi, setiap keperluan transfer harap selalu diawali dengan konfirmasi kepada pihak terkait.\n\n"
+                                                . "Panitia PSB & Keuangan Pondok Pesantren Hidayatullah Tuksongo";
                                             $waRemindUrl = $cleanWaPsb ? ("https://wa.me/{$cleanWaPsb}?text=" . rawurlencode($waRemindPsb)) : null;
                                         @endphp
 

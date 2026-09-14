@@ -1040,17 +1040,302 @@
     <!-- ==================== TAB 6: MEDIA SOSIAL & KONTAK ==================== -->
     <div id="tab-kontak" class="tab-content hidden space-y-6">
 
-        <!-- Card 1: Media Sosial -->
-        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
+        <!-- Form 1: Layanan Komunikasi & Nomor Penting (4 Kotak di Beranda Website) -->
+        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
             @csrf
             <input type="hidden" name="active_tab" value="tab-kontak">
-            <input type="hidden" name="section_name" value="Tautan Media Sosial">
+            <input type="hidden" name="section_name" value="Nomor Penting Layanan Resmi Pesantren">
+
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">1</div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base">Nomor Penting &amp; Layanan Resmi Pesantren (4 Kotak di Beranda)</h2>
+                        <p class="text-xs text-slate-500">Atur nomor telepon, WhatsApp, dan dewan pengurus yang tampil pada 4 kotak layanan komunikasi di halaman depan website.</p>
+                    </div>
+                </div>
+                <span class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">Sinkron ke Landing Page</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Kotak 1: Customer Service Pondok -->
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                    <div class="flex items-center gap-2 text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                        <svg class="icon-svg w-4 h-4 text-emerald-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Kotak 1: Customer Service Pondok
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Singkat Layanan</label>
+                        <input type="text" name="kontak_cs_desc" value="{{ old('kontak_cs_desc', $settings['kontak_cs_desc'] ?? 'Pusat informasi umum dan penerimaan santri baru Tuksongo') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nomor WhatsApp / Hotline CS</label>
+                        <input type="text" name="kontak_hotline" value="{{ old('kontak_hotline', $settings['kontak_hotline'] ?? '0813-9110-9966') }}" placeholder="Contoh: 0813-9110-9966" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Kotak 2: Pengasuhan Putra & Putri -->
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                    <div class="flex items-center gap-2 text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                        <svg class="icon-svg w-4 h-4 text-emerald-600" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        Kotak 2: Pengasuhan Putra &amp; Putri
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Dewan Pengasuh</label>
+                        <input type="text" name="kontak_pengasuhan_nama" value="{{ old('kontak_pengasuhan_nama', $settings['kontak_pengasuhan_nama'] ?? 'Ustd. Khoerul Rokhim & Ustdzh. Binti Isnaini') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">WhatsApp Pengasuhan Putra</label>
+                            <input type="text" name="kontak_pengasuhan_putra" value="{{ old('kontak_pengasuhan_putra', $settings['kontak_pengasuhan_putra'] ?? '0882-1521-7462') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">WhatsApp Pengasuhan Putri</label>
+                            <input type="text" name="kontak_pengasuhan_putri" value="{{ old('kontak_pengasuhan_putri', $settings['kontak_pengasuhan_putri'] ?? '0821-3631-8239') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kotak 3: Bidang Pengajaran & KBM -->
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                    <div class="flex items-center gap-2 text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                        <svg class="icon-svg w-4 h-4 text-emerald-600" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                        Kotak 3: Bidang Pengajaran &amp; KBM
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Dewan Pengajar</label>
+                        <input type="text" name="kontak_kbm_nama" value="{{ old('kontak_kbm_nama', $settings['kontak_kbm_nama'] ?? 'Ustd. Didi Utama & Ustdzh. Laela Fitroti') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">WhatsApp Pengajaran Putra</label>
+                            <input type="text" name="kontak_kbm_putra" value="{{ old('kontak_kbm_putra', $settings['kontak_kbm_putra'] ?? '0856-0920-1330') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">WhatsApp Pengajaran Putri</label>
+                            <input type="text" name="kontak_kbm_putri" value="{{ old('kontak_kbm_putri', $settings['kontak_kbm_putri'] ?? '0813-2617-4337') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kotak 4: Keuangan & Infaq Wakaf -->
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                    <div class="flex items-center gap-2 text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                        <svg class="icon-svg w-4 h-4 text-emerald-600" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        Kotak 4: Keuangan &amp; Infaq Wakaf
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Singkat Layanan</label>
+                        <input type="text" name="kontak_keuangan_desc" value="{{ old('kontak_keuangan_desc', $settings['kontak_keuangan_desc'] ?? 'Konfirmasi SPP bulanan, tabungan & infaq') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">WhatsApp Keuangan (SPP/Syahriyah)</label>
+                            <input type="text" name="kontak_keuangan_spp" value="{{ old('kontak_keuangan_spp', $settings['kontak_keuangan_spp'] ?? '0852-9042-9617') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">WhatsApp Infaq / Titipan Uang Saku</label>
+                            <input type="text" name="kontak_infaq_saku" value="{{ old('kontak_infaq_saku', $settings['kontak_infaq_saku'] ?? '0821-3342-5328') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 font-mono focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow transition cursor-pointer">
+                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Simpan Perubahan Nomor Layanan
+                </button>
+            </div>
+        </form>
+
+        <!-- Form 2: Pusat Informasi Rekening Resmi Pesantren & Uang Saku Santri -->
+        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+            @csrf
+            <input type="hidden" name="active_tab" value="tab-kontak">
+            <input type="hidden" name="section_name" value="Rekening Resmi Pesantren & Uang Saku">
+
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">2</div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base">Pusat Rekening Pembayaran Resmi Pesantren &amp; Titipan Uang Saku</h2>
+                        <p class="text-xs text-slate-500">Pengaturan nomor rekening bank dan kontak konfirmasi yang otomatis terhubung ke template chat WhatsApp tagihan siswa, portal pembayaran santri, dan landing page.</p>
+                    </div>
+                </div>
+                <span class="text-[11px] font-semibold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200">Tersinkron ke WA Tagihan</span>
+            </div>
+
+            <!-- Bagian A: Rekening Pembayaran Administrasi (SPP, Syahriyah, SOT, PSB) -->
+            <div class="p-5 rounded-2xl border border-emerald-200 bg-emerald-50/40 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-emerald-900 text-sm flex items-center gap-2">
+                        <span>💳</span>
+                        <span>A. Rekening Pembayaran Administrasi (SPP, Syahriyah, SOT &amp; PSB)</span>
+                    </h3>
+                    <span class="text-[11px] text-emerald-700 font-medium">Dipakai untuk Tagihan Santri &amp; Rekap Tunggakan</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- BRI Administrasi -->
+                    <div class="p-3.5 bg-white rounded-xl border border-emerald-200 space-y-2">
+                        <span class="text-xs font-bold text-emerald-800 block">Bank BRI (Administrasi)</span>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nomor Rekening</label>
+                            <input type="text" name="rek_admin_bri_no" value="{{ old('rek_admin_bri_no', $settings['rek_admin_bri_no'] ?? '010201022009537') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Atas Nama (a.n)</label>
+                            <input type="text" name="rek_admin_bri_an" value="{{ old('rek_admin_bri_an', $settings['rek_admin_bri_an'] ?? 'DIKY FACHRI HUSEIN') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-emerald-500 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- BCA Administrasi -->
+                    <div class="p-3.5 bg-white rounded-xl border border-blue-200 space-y-2">
+                        <span class="text-xs font-bold text-blue-800 block">Bank BCA (Administrasi)</span>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nomor Rekening</label>
+                            <input type="text" name="rek_admin_bca_no" value="{{ old('rek_admin_bca_no', $settings['rek_admin_bca_no'] ?? '1221220167') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Atas Nama (a.n)</label>
+                            <input type="text" name="rek_admin_bca_an" value="{{ old('rek_admin_bca_an', $settings['rek_admin_bca_an'] ?? 'DIKY FACHRI HUSEIN') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kontak Konfirmasi WhatsApp Administrasi -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor WhatsApp Konfirmasi Bukti Transfer</label>
+                        <input type="text" name="rek_admin_konfirmasi_phone" value="{{ old('rek_admin_konfirmasi_phone', $settings['rek_admin_konfirmasi_phone'] ?? '085290429617') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-mono font-bold text-emerald-800 focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Petugas Konfirmasi Keuangan</label>
+                        <input type="text" name="rek_admin_konfirmasi_nama" value="{{ old('rek_admin_konfirmasi_nama', $settings['rek_admin_konfirmasi_nama'] ?? 'Ustdh. Harsih Nur A') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian B: Rekening Titipan Uang Saku Santri Putra -->
+            <div class="p-5 rounded-2xl border border-sky-200 bg-sky-50/40 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-sky-900 text-sm flex items-center gap-2">
+                        <span>👦</span>
+                        <span>B. Rekening Titipan Uang Saku Santri Putra</span>
+                    </h3>
+                    <span class="text-[11px] text-sky-700 font-medium">Khusus titipan uang jajan / saku santri putra</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Akun Putra 1 (Ustad Ilham) -->
+                    <div class="p-4 bg-white rounded-xl border border-sky-200 space-y-2.5">
+                        <span class="text-xs font-bold text-sky-800 block">Akun Uang Saku Putra 1</span>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nomor Rekening BRI</label>
+                            <input type="text" name="rek_saku_putra_1_no" value="{{ old('rek_saku_putra_1_no', $settings['rek_saku_putra_1_no'] ?? '366701032851533') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-mono font-bold text-slate-900 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Atas Nama (a.n)</label>
+                            <input type="text" name="rek_saku_putra_1_an" value="{{ old('rek_saku_putra_1_an', $settings['rek_saku_putra_1_an'] ?? 'ILHAM AKBAR ARIFIN') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-900 outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">No. Telp / WA</label>
+                                <input type="text" name="rek_saku_putra_1_phone" value="{{ old('rek_saku_putra_1_phone', $settings['rek_saku_putra_1_phone'] ?? '0821-3342-5328') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-mono outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nama Kontak</label>
+                                <input type="text" name="rek_saku_putra_1_nama" value="{{ old('rek_saku_putra_1_nama', $settings['rek_saku_putra_1_nama'] ?? 'Ustad Ilham') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Akun Putra 2 (Ustad Ata) -->
+                    <div class="p-4 bg-white rounded-xl border border-sky-200 space-y-2.5">
+                        <span class="text-xs font-bold text-sky-800 block">Akun Uang Saku Putra 2</span>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nomor Rekening BRI</label>
+                            <input type="text" name="rek_saku_putra_2_no" value="{{ old('rek_saku_putra_2_no', $settings['rek_saku_putra_2_no'] ?? '025101062991507') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-mono font-bold text-slate-900 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Atas Nama (a.n)</label>
+                            <input type="text" name="rek_saku_putra_2_an" value="{{ old('rek_saku_putra_2_an', $settings['rek_saku_putra_2_an'] ?? 'ATA NUR RIFQI') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-900 outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">No. Telp / WA</label>
+                                <input type="text" name="rek_saku_putra_2_phone" value="{{ old('rek_saku_putra_2_phone', $settings['rek_saku_putra_2_phone'] ?? '0858-6539-5879') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-mono outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nama Kontak</label>
+                                <input type="text" name="rek_saku_putra_2_nama" value="{{ old('rek_saku_putra_2_nama', $settings['rek_saku_putra_2_nama'] ?? 'Ustad Ata') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian C: Rekening Titipan Uang Saku Santri Putri -->
+            <div class="p-5 rounded-2xl border border-rose-200 bg-rose-50/40 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-rose-900 text-sm flex items-center gap-2">
+                        <span>👧</span>
+                        <span>C. Rekening Titipan Uang Saku Santri Putri</span>
+                    </h3>
+                    <span class="text-[11px] text-rose-700 font-medium">Khusus titipan uang jajan / saku santri putri</span>
+                </div>
+
+                <div class="p-4 bg-white rounded-xl border border-rose-200 space-y-2.5 max-w-xl">
+                    <span class="text-xs font-bold text-rose-800 block">Akun Uang Saku Putri (Ustdh. Defi Nofita)</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nomor Rekening BRI</label>
+                            <input type="text" name="rek_saku_putri_no" value="{{ old('rek_saku_putri_no', $settings['rek_saku_putri_no'] ?? '366701040613539') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-mono font-bold text-slate-900 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Atas Nama (a.n)</label>
+                            <input type="text" name="rek_saku_putri_an" value="{{ old('rek_saku_putri_an', $settings['rek_saku_putri_an'] ?? 'LAELATUL MUNAWAROH') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-900 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">No. Telp / WA</label>
+                            <input type="text" name="rek_saku_putri_phone" value="{{ old('rek_saku_putri_phone', $settings['rek_saku_putri_phone'] ?? '0851-8484-2869') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-mono outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Nama Kontak</label>
+                            <input type="text" name="rek_saku_putri_nama" value="{{ old('rek_saku_putri_nama', $settings['rek_saku_putri_nama'] ?? 'Ustdh. Defi Nofita') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian D: Petunjuk Wajib Konfirmasi -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Catatan / Petunjuk Konfirmasi Transfer</label>
+                <textarea name="rek_konfirmasi_petunjuk" rows="2" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-800 outline-none focus:bg-white focus:border-emerald-500">{{ old('rek_konfirmasi_petunjuk', $settings['rek_konfirmasi_petunjuk'] ?? 'Demi terciptanya komunikasi yang tertib dan menghindari miskomunikasi, setiap keperluan harap selalu diawali dengan konfirmasi kepada pihak terkait.') }}</textarea>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow transition cursor-pointer">
+                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Simpan Perubahan Rekening &amp; Konfirmasi
+                </button>
+            </div>
+        </form>
+
+        <!-- Form 3: Media Sosial & Alamat Kampus -->
+        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+            @csrf
+            <input type="hidden" name="active_tab" value="tab-kontak">
+            <input type="hidden" name="section_name" value="Media Sosial & Alamat Kampus">
 
             <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-                <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold">1</div>
+                <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold">3</div>
                 <div>
-                    <h2 class="font-bold text-slate-800 text-base">Tautan Akun Media Sosial Resmi</h2>
-                    <p class="text-xs text-slate-500">Link profil Instagram, YouTube channel, Facebook page, dan TikTok pondok.</p>
+                    <h2 class="font-bold text-slate-800 text-base">Media Sosial, Email Resmi &amp; Alamat Kampus</h2>
+                    <p class="text-xs text-slate-500">Tautan profil akun media sosial resmi dan lokasi fisik kampus pesantren.</p>
                 </div>
             </div>
 
@@ -1071,67 +1356,20 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">TikTok Official</label>
                     <input type="url" name="sosmed_tiktok" value="{{ old('sosmed_tiktok', $settings['sosmed_tiktok'] ?? '') }}" placeholder="https://tiktok.com/@pesantren" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
                 </div>
-            </div>
-
-            <div class="pt-4 border-t border-slate-100 flex justify-end">
-                <button type="submit" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm hover:shadow transition">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    Simpan Media Sosial
-                </button>
-            </div>
-        </form>
-
-        <!-- Card 2: Kontak & Hotline -->
-        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
-            @csrf
-            <input type="hidden" name="active_tab" value="tab-kontak">
-            <input type="hidden" name="section_name" value="Hotline & Rekening Bank">
-
-            <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-                <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold">2</div>
-                <div>
-                    <h2 class="font-bold text-slate-800 text-base">Hotline Informasi, WhatsApp & Rekening Resmi</h2>
-                    <p class="text-xs text-slate-500">Nomor WhatsApp panitia PSB, email resmi pesantren, dan rekening bank resmi.</p>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Email Resmi Pesantren</label>
+                    <input type="email" name="kontak_email" value="{{ old('kontak_email', $settings['kontak_email'] ?? 'info@hidayatullahtuksongo.ponpes.id') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
                 </div>
-            </div>
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Hotline 1 (Ustadz)</label>
-                        <input type="text" name="kontak_hotline_1" value="{{ old('kontak_hotline_1', $settings['kontak_hotline_1'] ?? '0812-3456-7890') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Hotline 2 (Sekretariat)</label>
-                        <input type="text" name="kontak_hotline_2" value="{{ old('kontak_hotline_2', $settings['kontak_hotline_2'] ?? '0857-1234-5678') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Email Resmi</label>
-                        <input type="email" name="kontak_email" value="{{ old('kontak_email', $settings['kontak_email'] ?? 'info@hidayatullahtuksongo.ponpes.id') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Rekening Bank BRI</label>
-                        <input type="text" name="kontak_rek_bri" value="{{ old('kontak_rek_bri', $settings['kontak_rek_bri'] ?? '0146-01-001234-53-8 (BRI a.n. Diky Fachri Husein)') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Rekening Bank BCA</label>
-                        <input type="text" name="kontak_rek_bca" value="{{ old('kontak_rek_bca', $settings['kontak_rek_bca'] ?? '122-098-7654 (BCA a.n. Diky Fachri Husein)') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">
-                    </div>
-                </div>
-
-                <div>
+                <div class="sm:col-span-2">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Alamat Lengkap Kampus Pesantren</label>
                     <textarea name="alamat_kampus" rows="2" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none transition">{{ old('alamat_kampus', $settings['alamat_kampus'] ?? 'Dusun Tuksongo RT 01/RW 01, Desa Nglorog, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272') }}</textarea>
                 </div>
             </div>
 
             <div class="pt-4 border-t border-slate-100 flex justify-end">
-                <button type="submit" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm hover:shadow transition">
+                <button type="submit" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow transition cursor-pointer">
                     <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    Simpan Kontak & Rekening
+                    Simpan Media Sosial &amp; Alamat
                 </button>
             </div>
         </form>

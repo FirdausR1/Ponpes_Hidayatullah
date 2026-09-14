@@ -6,7 +6,13 @@
 <div class="space-y-6" x-data="{ 
     modalBulanan: false, 
     modalTambahan: false,
-    selectedPosTambahan: 'ZIARAH',
+    selectedPosTambahan: 'SOT',
+    selectedKategori: 'bulanan',
+    selectedBulan: '{{ ['January'=>'Januari','February'=>'Februari','March'=>'Maret','April'=>'April','May'=>'Mei','June'=>'Juni','July'=>'Juli','August'=>'Agustus','September'=>'September','October'=>'Oktober','November'=>'November','December'=>'Desember'][date('F')] ?? 'September' }}',
+    selectedTahun: '{{ date('Y') }}',
+    useTarifOtomatis: true,
+    inputNominal: '',
+    judulTagihan: 'Iuran SOT ({{ ['January'=>'Januari','February'=>'Februari','March'=>'Maret','April'=>'April','May'=>'Mei','June'=>'Juni','July'=>'Juli','August'=>'Agustus','September'=>'September','October'=>'Oktober','November'=>'November','December'=>'Desember'][date('F')] ?? 'September' }} {{ date('Y') }})',
     modalTangguhkan: false,
     modalNolkan: false,
     modalMintaSurat: false,
@@ -24,6 +30,45 @@
         jenis_surat: '',
         instruksi: '',
         file_surat: ''
+    },
+    autoFillJudul() {
+        let posLabel = {
+            'MAKAN': 'Uang Makan',
+            'TAB': 'Tabungan Wajib',
+            'SOT': 'Iuran SOT',
+            'SYAHRIYAH': 'Syahriyah Pendidikan'
+        }[this.selectedPosTambahan] || this.selectedPosTambahan;
+        if (this.selectedKategori === 'bulanan') {
+            this.judulTagihan = posLabel + ' (' + this.selectedBulan + ' ' + this.selectedTahun + ')';
+        } else {
+            if (this.selectedPosTambahan !== '__CUSTOM__') {
+                this.judulTagihan = posLabel + ' ' + this.selectedTahun;
+            }
+        }
+    },
+    onPosOrKategoriChange() {
+        if (this.selectedPosTambahan === 'SOT') {
+            this.useTarifOtomatis = true;
+            this.inputNominal = '';
+        } else if (this.selectedPosTambahan === 'MAKAN') {
+            this.inputNominal = 300000;
+            this.useTarifOtomatis = false;
+        } else if (this.selectedPosTambahan === 'TAB') {
+            this.inputNominal = 25000;
+            this.useTarifOtomatis = false;
+        } else if (this.selectedPosTambahan === 'SYAHRIYAH') {
+            this.useTarifOtomatis = true;
+            this.inputNominal = '';
+        } else {
+            this.useTarifOtomatis = false;
+        }
+        this.autoFillJudul();
+    },
+    openModalTambahan(kategori = 'bulanan', pos = 'SOT') {
+        this.selectedKategori = kategori;
+        this.selectedPosTambahan = pos;
+        this.onPosOrKategoriChange();
+        this.modalTambahan = true;
     },
     openTangguhkan(id, judul, santri, sisaRp) {
         this.targetBill.id = id;
@@ -46,14 +91,19 @@
         this.targetBill.sisa_rp = sisaRp;
         this.modalMintaSurat = true;
     },
-    openReviewSurat(id, judul, santri, sisaRp, jenisSurat, fileSurat, instruksi) {
+    tipePersetujuanSurat: 'bebas_penuh',
+    nominalPotonganSurat: 0,
+    openReviewSurat(id, judul, santri, sisaRp, jenisSurat, fileSurat, instruksi, sisaNum = 0) {
         this.targetBill.id = id;
         this.targetBill.judul = judul;
         this.targetBill.santri = santri;
         this.targetBill.sisa_rp = sisaRp;
+        this.targetBill.sisa = sisaNum;
         this.targetBill.jenis_surat = jenisSurat;
         this.targetBill.file_surat = fileSurat;
         this.targetBill.instruksi = instruksi;
+        this.tipePersetujuanSurat = 'bebas_penuh';
+        this.nominalPotonganSurat = sisaNum;
         this.modalReviewSurat = true;
     }
 }">
@@ -82,9 +132,9 @@
                 </svg>
                 <span>Terbitkan Tagihan Bulanan</span>
             </button>
-            <button type="button" @click="modalTambahan = true" class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-gray-800 transition">
+            <button type="button" @click="openModalTambahan('bulanan', 'SOT')" class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-gray-800 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                <span>Buat Tagihan Tambahan</span>
+                <span>Buat Tagihan Santri</span>
             </button>
         </div>
     </div>
@@ -427,6 +477,14 @@
                                             $sisaRp = number_format($b->sisa_tagihan, 0, ',', '.');
                                             $tagihanRp = number_format($b->nominal_tagihan, 0, ',', '.');
                                             $bayarRp = number_format($b->nominal_bayar, 0, ',', '.');
+
+                                            $rekBriNo = \App\Models\Setting::get('rek_admin_bri_no', '010201022009537');
+                                            $rekBriAn = \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN');
+                                            $rekBcaNo = \App\Models\Setting::get('rek_admin_bca_no', '1221220167');
+                                            $rekBcaAn = \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN');
+                                            $rekKonfPhone = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
+                                            $rekKonfNama = \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A');
+
                                             $msgBill = "Assalamu'alaikum Wr. Wb.\n\n"
                                                 . "Yth. Orang Tua / Wali Santri dari *{$st->nama_lengkap}* (Kelas {$st->kelas})\n\n"
                                                 . "Kami dari Bagian Keuangan Pondok Pesantren Hidayatullah Tuksongo menginformasikan rincian tagihan santri:\n\n"
@@ -435,11 +493,19 @@
                                                 . "• Total Biaya: Rp {$tagihanRp}\n"
                                                 . "• Terbayar: Rp {$bayarRp}\n"
                                                 . "• *Sisa Tunggakan:* *Rp {$sisaRp}*\n\n"
-                                                . "Pembayaran dapat dilakukan langsung di Kasir Pondok (Tunai) atau melalui Transfer:\n"
-                                                . "• BSI: 714 556 7890 (a.n. Pondok Pesantren Hidayatullah Tuksongo)\n"
-                                                . "• BRI: 0153 0100 2345 531 (a.n. Ponpes Hidayatullah Temanggung)\n\n"
+                                                . "Pembayaran dapat dilakukan di Kasir Kantor Pesantren (Tunai) atau melalui Transfer ke Rekening Resmi Administrasi:\n"
+                                                . "• BRI: *{$rekBriNo}* (a.n. {$rekBriAn})\n"
+                                                . "• BCA: *{$rekBcaNo}* (a.n. {$rekBcaAn})\n\n"
+                                                . "KONFIRMASI BUKTI TRANSFER DENGAN MENYERTAKAN DATA SEBAGAI BERIKUT:\n"
+                                                . "• NAMA : {$st->nama_lengkap}\n"
+                                                . "• KELAS : {$st->kelas}\n"
+                                                . "• JENIS PEMBAYARAN : {$b->judul_tagihan} ({$periodeStr})\n"
+                                                . "• NOMINAL : Rp {$sisaRp}\n\n"
+                                                . "Kirim bukti transfer ke WA Keuangan: {$rekKonfPhone} ({$rekKonfNama})\n\n"
+                                                . "⚠️ *Wajib Melakukan Konfirmasi*\n"
+                                                . "Demi terciptanya komunikasi yang tertib dan menghindari miskomunikasi, setiap keperluan transfer harap selalu diawali dengan konfirmasi kepada pihak terkait.\n\n"
                                                 . "Syukron wa Jazakumullahu Khairan Katsiran.\n"
-                                                . "Bendahara Pesantren Hidayatullah";
+                                                . "Bendahara Pondok Pesantren Hidayatullah Tuksongo";
                                             $waUrl = $cleanWa ? ("https://wa.me/{$cleanWa}?text=" . rawurlencode($msgBill)) : null;
                                         @endphp
                                         @if($waUrl)
@@ -452,7 +518,7 @@
 
                                     <!-- Tombol Review Surat -->
                                     @if($b->status_dispensasi === 'surat_diunggah')
-                                        <button type="button" @click="openReviewSurat({{ $b->id }}, '{{ addslashes($b->judul_tagihan) }}', '{{ addslashes($b->student->nama_lengkap ?? '') }}', '{{ number_format($b->sisa_tagihan, 0, ',', '.') }}', '{{ addslashes($b->jenis_surat_diminta ?? 'Surat Dispensasi') }}', '{{ asset($b->file_surat_dispensasi) }}', '{{ addslashes($b->instruksi_surat ?? '') }}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition" title="Tinjau berkas surat yang diunggah santri">
+                                        <button type="button" @click="openReviewSurat({{ $b->id }}, '{{ addslashes($b->judul_tagihan) }}', '{{ addslashes($b->student->nama_lengkap ?? '') }}', '{{ number_format($b->sisa_tagihan, 0, ',', '.') }}', '{{ addslashes($b->jenis_surat_diminta ?? 'Surat Dispensasi') }}', '{{ asset($b->file_surat_dispensasi) }}', '{{ addslashes($b->instruksi_surat ?? '') }}', {{ (float)$b->sisa_tagihan }})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition" title="Tinjau berkas surat yang diunggah santri">
                                             <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                             Review
                                         </button>
@@ -517,7 +583,7 @@
         </div>
     </div>
 
-    <!-- MODAL 1: TERBITKAN TAGIHAN BULANAN (TailAdmin Modal Style) -->
+    <!-- MODAL 1: TERBITKAN TAGIHAN BULANAN MASSAL (TailAdmin Modal Style) -->
     <div x-show="modalBulanan" x-cloak class="ta-modal-backdrop">
         <div @click.away="modalBulanan = false" class="ta-modal max-w-lg">
             <div class="ta-modal-header">
@@ -534,42 +600,77 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Pilih Bulan *</label>
-                            <select name="bulan" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                            <select name="bulan" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
                                 @foreach(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $m)
-                                    <option value="{{ $m }}" {{ date('F') == $m || (date('m') == 5 && $m == 'Mei') ? 'selected' : '' }}>{{ $m }}</option>
+                                    <option value="{{ $m }}" {{ date('F') == $m || (date('m') == 5 && $m == 'Mei') || (date('m') == 9 && $m == 'September') ? 'selected' : '' }}>{{ $m }}</option>
                                 @endforeach
                             </select>
                         </div>
 
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Tahun *</label>
-                            <input type="text" name="tahun" value="{{ date('Y') }}" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                            <input type="text" name="tahun" value="{{ date('Y') }}" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
                         </div>
                     </div>
 
                     <div>
                         <label class="block font-medium text-gray-700 mb-1">Sasaran Jenjang Santri *</label>
-                        <select name="target_jenjang" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                        <select name="target_jenjang" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
                             <option value="all">Semua Santri Aktif (MTs &amp; MA)</option>
                             <option value="MTs">Khusus Santri MTs</option>
                             <option value="MA">Khusus Santri MA</option>
                         </select>
                     </div>
 
+                    <!-- Pilihan Pos Biaya Bulanan yang diterbitkan -->
+                    <div class="space-y-1.5 p-3 rounded-xl border border-gray-200 bg-gray-50/70">
+                        <label class="block font-bold text-gray-800 text-[11px] uppercase tracking-wider mb-2">Pilih Pos Biaya Bulanan yang Diterbitkan:</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
+                                <input type="checkbox" name="pos_bulanan[]" value="MAKAN" checked class="mt-0.5 text-emerald-600 rounded">
+                                <div class="text-xs">
+                                    <span class="font-semibold text-gray-800">Uang Makan</span>
+                                    <span class="block text-[10px] text-gray-500">Mukim: Rp 300rb</span>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
+                                <input type="checkbox" name="pos_bulanan[]" value="TAB" checked class="mt-0.5 text-emerald-600 rounded">
+                                <div class="text-xs">
+                                    <span class="font-semibold text-gray-800">Tabungan Wajib</span>
+                                    <span class="block text-[10px] text-gray-500">Rp 25.000</span>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-emerald-200 bg-emerald-50/30 cursor-pointer hover:border-emerald-500 transition">
+                                <input type="checkbox" name="pos_bulanan[]" value="SOT" checked class="mt-0.5 text-emerald-600 rounded">
+                                <div class="text-xs">
+                                    <span class="font-bold text-emerald-900">SOT (Iuran SOT)</span>
+                                    <span class="block text-[10px] text-emerald-700 font-semibold">MTs: 55rb | MA: 75rb</span>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
+                                <input type="checkbox" name="pos_bulanan[]" value="SYAHRIYAH" checked class="mt-0.5 text-emerald-600 rounded">
+                                <div class="text-xs">
+                                    <span class="font-semibold text-gray-800">Syahriyah SPP</span>
+                                    <span class="block text-[10px] text-gray-500">Sesuai Jenjang &amp; Asrama</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block font-medium text-gray-700 mb-1">Batas Tanggal Jatuh Tempo</label>
-                        <input type="date" name="jatuh_tempo" value="{{ date('Y-m-10') }}" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                        <input type="date" name="jatuh_tempo" value="{{ date('Y-m-10') }}" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
                         <p class="text-[11px] text-gray-400 mt-1">Default tanggal 10 pada bulan bersangkutan.</p>
                     </div>
 
                     <!-- Info Box Otomatisasi SKTM -->
-                    <div class="rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 text-blue-900 space-y-1 text-xs">
+                    <div class="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-blue-900 space-y-1 text-xs">
                         <div class="font-bold flex items-center gap-1.5 text-blue-800">
                             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Fitur Otomatisasi Terpadu:
                         </div>
                         <ul class="list-disc list-inside space-y-0.5 text-gray-600 text-[11px] pl-1">
-                            <li>Sistem memeriksa tarif bulanan standar sesuai jenjang santri.</li>
+                            <li>Tarif <strong>SOT</strong> otomatis dibedakan: <strong>MTs = Rp 55.000</strong>, <strong>MA = Rp 75.000</strong>.</li>
                             <li>Bagi santri yang memiliki <strong>SKTM</strong> atau <strong>Beasiswa</strong> aktif di menu Keringanan, potongan otomatis dikurangi dari tagihan.</li>
                             <li>Tagihan pada bulan dan santri yang sama tidak akan terduplikasi.</li>
                         </ul>
@@ -588,32 +689,79 @@
         </div>
     </div>
 
-    <!-- MODAL 2: BUAT TAGIHAN TAMBAHAN / INSIDENTAL (TailAdmin Modal Style) -->
+    <!-- MODAL 2: BUAT TAGIHAN SANTRI (BULANAN / INSIDENTAL / TAMBAHAN / SEKALI BAYAR) -->
     <div x-show="modalTambahan" x-cloak class="ta-modal-backdrop">
         <div @click.away="modalTambahan = false" class="ta-modal max-w-lg">
             <div class="ta-modal-header">
                 <div>
-                    <h3 class="text-base font-bold text-gray-900">Buat Tagihan Tambahan / Insidental</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Ziarah, Wisuda, Khataman, Ujian, Study Tour, Seragam, dll.</p>
+                    <h3 class="text-base font-bold text-gray-900">Buat Tagihan Santri</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Biaya bulanan (Uang Makan, Tabungan, SOT beda MTs/MA, Syahriyah), insidental, atau tahunan</p>
                 </div>
                 <button type="button" @click="modalTambahan = false" class="text-gray-400 hover:text-gray-600 transition text-lg">&times;</button>
             </div>
 
             <form method="POST" action="{{ route('admin.pembayaran.tagihan.tambahan') }}">
                 @csrf
-                <div class="ta-modal-body space-y-4 text-xs">
-                    <div>
-                        <label class="block font-medium text-gray-700 mb-1">Pos Biaya (Sesuai Buku Kas Excel) *</label>
-                        <select name="pos_biaya" x-model="selectedPosTambahan" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-800 focus:border-brand-500 outline-none">
-                            <optgroup label="Pos Biaya Standar Spreadsheet">
-                                @foreach($posBiayaList as $key => $label)
-                                    <option value="{{ $key }}">{{ $key }} ({{ $label }})</option>
-                                @endforeach
-                            </optgroup>
-                            <optgroup label="Pos Biaya Baru / Di Luar Standar">
-                                <option value="__CUSTOM__">+ Pos Biaya Baru / Kustom (Lainnya)...</option>
-                            </optgroup>
-                        </select>
+                <div class="ta-modal-body space-y-3.5 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Kategori Tagihan -->
+                        <div>
+                            <label class="block font-medium text-gray-700 mb-1">Kategori Tagihan *</label>
+                            <select name="kategori" x-model="selectedKategori" @change="onPosOrKategoriChange()" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-800 focus:border-brand-500 outline-none bg-white">
+                                <option value="bulanan">Biaya Bulanan (Rutin)</option>
+                                <option value="tambahan">Biaya Tambahan / Insidental</option>
+                                <option value="sekali_bayar">Sekali Bayar (Pangkal / Gedung)</option>
+                                <option value="tahunan">Biaya Tahunan / Registrasi</option>
+                            </select>
+                        </div>
+
+                        <!-- Pos Biaya -->
+                        <div>
+                            <label class="block font-medium text-gray-700 mb-1">Pos Biaya (Sesuai Buku Kas) *</label>
+                            <select name="pos_biaya" x-model="selectedPosTambahan" @change="onPosOrKategoriChange()" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-800 focus:border-brand-500 outline-none bg-white">
+                                <optgroup label="Biaya Bulanan (Rutin)">
+                                    <option value="MAKAN">MAKAN (Uang Makan 3x Sehari)</option>
+                                    <option value="TAB">TAB (Tabungan Wajib Santri)</option>
+                                    <option value="SOT">SOT (Iuran SOT - MA/MTs Beda)</option>
+                                    <option value="SYAHRIYAH">SYAHRIYAH (Syahriyah Pendidikan SPP)</option>
+                                </optgroup>
+                                <optgroup label="Pos Biaya Insidental &amp; Lainnya">
+                                    @foreach($posBiayaList as $key => $label)
+                                        @if(!in_array($key, ['MAKAN', 'TAB', 'SOT', 'SYAHRIYAH']))
+                                            <option value="{{ $key }}">{{ $key }} ({{ $label }})</option>
+                                        @endif
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Pos Biaya Baru / Di Luar Standar">
+                                    <option value="__CUSTOM__">+ Pos Biaya Baru / Kustom (Lainnya)...</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Periode Bulan & Tahun (Muncul otomatis jika Kategori Biaya Bulanan dipilih) -->
+                    <div x-show="selectedKategori === 'bulanan'" class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                Periode Tagihan Bulanan
+                            </span>
+                            <span class="text-[10px] text-blue-600 bg-white px-2 py-0.5 rounded-full border border-blue-200 font-medium">Bulan &amp; Tahun</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-medium text-gray-700 mb-1">Pilih Bulan *</label>
+                                <select name="bulan" x-model="selectedBulan" @change="autoFillJudul()" class="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-800 outline-none">
+                                    @foreach(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $m)
+                                        <option value="{{ $m }}">{{ $m }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-medium text-gray-700 mb-1">Tahun *</label>
+                                <input type="text" name="tahun" x-model="selectedTahun" @input="autoFillJudul()" class="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-800 outline-none">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Input Pos Biaya Kustom jika dipilih di luar pos -->
@@ -624,25 +772,83 @@
                         <input type="text" name="pos_biaya_kustom" placeholder="Nama pos biaya baru..." class="h-10 w-full uppercase rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-900 focus:border-brand-500 outline-none bg-white">
                     </div>
 
-                    <div>
-                        <label class="block font-medium text-gray-700 mb-1">Judul / Deskripsi Tagihan *</label>
-                        <input type="text" name="judul_tagihan" required placeholder="Judul tagihan..." class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                    <!-- Banner Informasi & Pilihan Otomatisasi untuk 4 Pos Bulanan -->
+                    <!-- 1. SOT: MA / MTs beda -->
+                    <div x-show="selectedPosTambahan === 'SOT'" x-cloak class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-emerald-900">
+                        <div class="flex items-center justify-between">
+                            <div class="font-bold text-xs flex items-center gap-1.5 text-emerald-800">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Tarif SOT (MA &amp; MTs Beda)
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-white border border-emerald-300 text-emerald-700">Otomatisasi Jenjang</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-700">
+                            Sesuai ketentuan pesantren: Santri <strong>MTs = Rp 55.000</strong>/bulan, sedangkan santri <strong>MA = Rp 75.000</strong>/bulan.
+                        </p>
+                        <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-emerald-300 cursor-pointer text-xs font-semibold text-emerald-900 hover:bg-emerald-50 transition">
+                            <input type="checkbox" name="tarif_otomatis_jenjang" value="1" x-model="useTarifOtomatis" class="w-4 h-4 text-emerald-600 rounded">
+                            <span>Terapkan tarif otomatis sesuai jenjang santri (MTs: Rp 55rb | MA: Rp 75rb)</span>
+                        </label>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-medium text-gray-700 mb-1">Nominal Biaya (Rp) *</label>
-                            <input type="number" name="nominal" min="1000" step="1000" required placeholder="0" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-bold text-gray-900 focus:border-brand-500 outline-none">
+                    <!-- 2. Syahriyah -->
+                    <div x-show="selectedPosTambahan === 'SYAHRIYAH'" x-cloak class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-emerald-900">
+                        <div class="flex items-center justify-between">
+                            <div class="font-bold text-xs flex items-center gap-1.5 text-emerald-800">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Tarif Syahriyah Pendidikan
+                            </div>
                         </div>
+                        <p class="text-[11px] text-emerald-700">
+                            MTs Mukim: Rp 85.000 (Laju: Rp 55.000) &bull; MA Mukim: Rp 105.000 (Laju: Rp 75.000).
+                        </p>
+                        <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-emerald-300 cursor-pointer text-xs font-semibold text-emerald-900 hover:bg-emerald-50 transition">
+                            <input type="checkbox" name="tarif_otomatis_jenjang" value="1" x-model="useTarifOtomatis" class="w-4 h-4 text-emerald-600 rounded">
+                            <span>Terapkan tarif otomatis (sesuai jenjang MTs/MA &amp; status Mukim/Laju)</span>
+                        </label>
+                    </div>
 
+                    <!-- 3. Uang Makan -->
+                    <div x-show="selectedPosTambahan === 'MAKAN'" x-cloak class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <div>
-                            <label class="block font-medium text-gray-700 mb-1">Kategori Tagihan *</label>
-                            <select name="kategori" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
-                                <option value="tambahan">Biaya Tambahan / Insidental</option>
-                                <option value="sekali_bayar">Sekali Bayar (Pangkal / Gedung)</option>
-                                <option value="tahunan">Biaya Tahunan / Registrasi</option>
-                            </select>
+                            <strong class="font-semibold">Info Uang Makan:</strong> Standar Rp 300.000/bulan untuk santri Mukim/Asrama (Santri Laju otomatis Rp 0/dilewati).
                         </div>
+                    </div>
+
+                    <!-- 4. Tabungan Wajib -->
+                    <div x-show="selectedPosTambahan === 'TAB'" x-cloak class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <strong class="font-semibold">Info Tabungan:</strong> Standar nominal Rp 25.000/bulan per santri.
+                        </div>
+                    </div>
+
+                    <!-- Judul / Deskripsi Tagihan -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-medium text-gray-700">Judul / Deskripsi Tagihan *</label>
+                            <button type="button" @click="autoFillJudul()" class="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                <span>Reset / Auto Judul</span>
+                            </button>
+                        </div>
+                        <input type="text" name="judul_tagihan" x-model="judulTagihan" required placeholder="Judul tagihan..." class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
+                    </div>
+
+                    <!-- Nominal Biaya -->
+                    <div>
+                        <label class="block font-medium text-gray-700 mb-1">
+                            Nominal Biaya (Rp) *
+                            <span x-show="useTarifOtomatis && (selectedPosTambahan === 'SOT' || selectedPosTambahan === 'SYAHRIYAH')" class="text-emerald-600 text-[11px] font-semibold">(Otomatis Standar Jenjang)</span>
+                        </label>
+                        <input type="number" name="nominal" x-model="inputNominal" :disabled="useTarifOtomatis && (selectedPosTambahan === 'SOT' || selectedPosTambahan === 'SYAHRIYAH')" :required="!useTarifOtomatis || (selectedPosTambahan !== 'SOT' && selectedPosTambahan !== 'SYAHRIYAH')" min="0" step="1000" placeholder="0" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-bold text-gray-900 focus:border-brand-500 outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500">
+                        <p x-show="useTarifOtomatis && selectedPosTambahan === 'SOT'" class="text-[11px] text-emerald-700 mt-1 font-semibold">
+                            ✓ Dihitung otomatis saat diterbitkan: MTs = Rp 55.000, MA = Rp 75.000.
+                        </p>
+                        <p x-show="useTarifOtomatis && selectedPosTambahan === 'SYAHRIYAH'" class="text-[11px] text-emerald-700 mt-1 font-semibold">
+                            ✓ Dihitung otomatis saat diterbitkan sesuai jenjang dan asrama santri.
+                        </p>
                     </div>
 
                     <!-- Sasaran Target Santri -->
@@ -702,11 +908,11 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Tanggal Jatuh Tempo</label>
-                            <input type="date" name="jatuh_tempo" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                            <input type="date" name="jatuh_tempo" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
                         </div>
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Keterangan / Catatan</label>
-                            <input type="text" name="keterangan" placeholder="Opsional" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none">
+                            <input type="text" name="keterangan" placeholder="Opsional" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
                         </div>
                     </div>
                 </div>
@@ -716,7 +922,7 @@
                         Batal
                     </button>
                     <button type="submit" class="ta-btn-primary text-xs bg-gray-900 hover:bg-gray-800">
-                        Buat Tagihan Tambahan
+                        <span x-text="selectedKategori === 'bulanan' ? 'Terbitkan Tagihan Bulanan' : 'Buat Tagihan'"></span>
                     </button>
                 </div>
             </form>
@@ -922,20 +1128,60 @@
                     </template>
                 </div>
 
-                <!-- FORM 1: SETUJUI & NOL-KAN TAGIHAN -->
-                <form method="POST" :action="'{{ url('/admin/pembayaran-tagihan') }}/' + targetBill.id + '/setujui-surat'" class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-lg space-y-2.5">
+                <!-- FORM 1: SETUJUI SURAT (BEBAS PENUH ATAU POTONGAN SEBAGIAN) -->
+                <form method="POST" :action="'{{ url('/admin/pembayaran-tagihan') }}/' + targetBill.id + '/setujui-surat'" class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-lg space-y-3">
                     @csrf
-                    <div class="font-bold text-emerald-900 text-xs">
-                        Setujui Berkas &amp; Nol-kan Tagihan (Lunas)
-                    </div>
-                    <p class="text-[11px] text-emerald-800">Tagihan akan dinyatakan lunas setelah berkas disetujui.</p>
-                    
-                    <div>
-                        <input type="text" name="catatan_persetujuan" placeholder="Catatan persetujuan (opsional)" class="h-9 w-full rounded-lg border border-emerald-300 px-3 text-xs bg-white text-gray-800">
+                    <div class="flex items-center justify-between">
+                        <div class="font-bold text-emerald-900 text-xs flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Setujui Berkas &amp; Terapkan Keringanan</span>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold text-rose-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                            Sisa Saat Ini: <span x-text="'Rp ' + targetBill.sisa_rp"></span>
+                        </span>
                     </div>
 
-                    <button type="submit" class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-theme-xs transition">
-                        Setujui &amp; Nol-kan Tagihan
+                    <!-- Pilihan Tipe Persetujuan -->
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition"
+                               :class="tipePersetujuanSurat === 'bebas_penuh' ? 'bg-white border-emerald-500 shadow-xs' : 'bg-white/50 border-gray-200 hover:border-emerald-300'">
+                            <input type="radio" name="tipe_persetujuan" value="bebas_penuh" x-model="tipePersetujuanSurat" class="mt-0.5 text-emerald-600">
+                            <div>
+                                <span class="font-bold text-gray-900 block">Bebas Penuh (100%)</span>
+                                <span class="text-[10px] text-gray-500">Nol-kan tagihan jadi Lunas Rp 0</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition"
+                               :class="tipePersetujuanSurat === 'potongan_sebagian' ? 'bg-white border-emerald-500 shadow-xs' : 'bg-white/50 border-gray-200 hover:border-emerald-300'">
+                            <input type="radio" name="tipe_persetujuan" value="potongan_sebagian" x-model="tipePersetujuanSurat" class="mt-0.5 text-emerald-600">
+                            <div>
+                                <span class="font-bold text-gray-900 block">Potongan Sebagian</span>
+                                <span class="text-[10px] text-gray-500">Tentukan nominal diskon keringanan</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Input Nominal Potongan jika potongan sebagian -->
+                    <div x-show="tipePersetujuanSurat === 'potongan_sebagian'" class="p-2.5 rounded-lg bg-white border border-emerald-300 space-y-1">
+                        <label class="block font-bold text-gray-800 text-[11px]">Besar Nominal Potongan Keringanan (Rp):</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 font-bold text-xs pointer-events-none">Rp</span>
+                            <input type="number" name="nominal_potongan" x-model="nominalPotonganSurat" :max="targetBill.sisa" min="1000" class="h-9 w-full rounded-lg border border-gray-300 pl-8 pr-3 text-xs font-mono font-bold text-gray-900 focus:border-emerald-500">
+                        </div>
+                        <p class="text-[10px] text-gray-500">
+                            Sisa tagihan setelah potongan: 
+                            <strong class="text-rose-600 font-mono" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, targetBill.sisa - nominalPotonganSurat))"></strong>
+                        </p>
+                    </div>
+
+                    <div>
+                        <input type="text" name="catatan_persetujuan" placeholder="Catatan persetujuan / referensi SK (opsional)" class="h-9 w-full rounded-lg border border-emerald-300 px-3 text-xs bg-white text-gray-800 focus:border-emerald-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-theme-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span x-text="tipePersetujuanSurat === 'bebas_penuh' ? 'Setujui &amp; Bebaskan Penuh (Lunas)' : 'Setujui &amp; Terapkan Potongan'"></span>
                     </button>
                 </form>
 

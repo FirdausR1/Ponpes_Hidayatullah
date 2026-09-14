@@ -158,6 +158,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
         // Pencatatan Kas Keluar & Beban Operasional Pesantren
         Route::get('/pengeluaran', [ExpenseController::class, 'index'])->name('pengeluaran.index');
+        Route::get('/pengeluaran/export', [ExpenseController::class, 'exportPengeluaranExcel'])->name('pengeluaran.export');
         Route::post('/pengeluaran', [ExpenseController::class, 'store'])->name('pengeluaran.store');
         Route::put('/pengeluaran/{id}', [ExpenseController::class, 'update'])->name('pengeluaran.update');
         Route::delete('/pengeluaran/{id}', [ExpenseController::class, 'destroy'])->name('pengeluaran.destroy');
@@ -245,6 +246,7 @@ Route::middleware('auth:santri')->prefix('santri')->name('santri.')->group(funct
     Route::get('/dashboard', [StudentAuthController::class, 'dashboard'])->name('dashboard');
     Route::get('/pembayaran', [StudentAuthController::class, 'pembayaran'])->name('pembayaran');
     Route::post('/pembayaran/upload', [StudentAuthController::class, 'uploadBuktiBayar'])->name('pembayaran.upload');
+    Route::post('/pembayaran/ajukan-keringanan', [StudentAuthController::class, 'ajukanKeringananMandiri'])->name('pembayaran.ajukanKeringanan');
     Route::post('/pembayaran/tagihan/{id}/upload-surat', [StudentAuthController::class, 'uploadSuratDispensasi'])->name('pembayaran.uploadSurat');
     Route::get('/pembayaran/kwitansi/{id}', [StudentAuthController::class, 'kwitansiSantri'])->name('pembayaran.kwitansi');
     Route::post('/ganti-password', [StudentAuthController::class, 'updatePassword'])->name('updatePassword');

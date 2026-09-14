@@ -53,7 +53,7 @@
     <!-- Print Header Only (Tampak saat cetak) -->
     <div class="hidden print-only mb-6 text-center border-b pb-4">
         <h2 class="text-xl font-bold uppercase tracking-wider">Pondok Pesantren Hidayatullah Tuksongo</h2>
-        <p class="text-xs text-gray-600">Jl. Raya Tuksongo, Kec. Borobudur, Kab. Magelang / Temanggung, Jawa Tengah</p>
+        <p class="text-xs text-gray-600">Dusun Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah</p>
         <h3 class="text-base font-bold text-gray-900 mt-2 underline">LAPORAN REKAPITULASI TUNGGAKAN &amp; KEKURANGAN KEUANGAN SANTRI</h3>
         <p class="text-xs text-gray-500">Dicetak pada: {{ date('d F Y, H:i') }} WIB oleh {{ auth()->user()->name ?? 'Bendahara' }}</p>
     </div>
@@ -71,9 +71,12 @@
             <div class="text-2xl font-bold font-mono text-rose-600">
                 Rp {{ number_format($totalTunggakan, 0, ',', '.') }}
             </div>
-            <div class="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
-                <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>
-                <span>Tagihan santri aktif belum lunas</span>
+            <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>Tingkat Akhir:</span>
+                </span>
+                <span class="font-mono font-bold text-purple-700">Rp {{ number_format($totalTunggakanTingkatAkhir ?? 0, 0, ',', '.') }}</span>
             </div>
         </div>
 
@@ -88,9 +91,12 @@
             <div class="text-2xl font-bold font-mono text-amber-600">
                 {{ number_format($totalSantriMenunggak, 0, ',', '.') }} <span class="text-sm font-normal text-gray-500 font-sans">Santri</span>
             </div>
-            <div class="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
-                <span class="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
-                <span>Memiliki sisa tagihan &gt; 0</span>
+            <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
+                    <span>Tingkat Akhir (9 &amp; 12):</span>
+                </span>
+                <span class="font-bold text-purple-700">{{ $totalSantriTingkatAkhir ?? 0 }} Santri</span>
             </div>
         </div>
 
@@ -99,7 +105,7 @@
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Item Tagihan</span>
                 <span class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </span>
             </div>
             <div class="text-2xl font-bold font-mono text-blue-600">
@@ -116,7 +122,7 @@
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ditangguhkan (Wisuda)</span>
                 <span class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </span>
             </div>
             <div class="text-2xl font-bold font-mono text-purple-600">
@@ -129,17 +135,54 @@
         </div>
     </div>
 
+    <!-- QUICK FILTER TABS: TINGKAT AKHIR (KELAS 9 MTs & KELAS 12 MA) -->
+    <div class="flex flex-wrap items-center gap-2 no-print">
+        <span class="text-xs font-bold text-gray-500 mr-1 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            <span>Pintasan Angkatan:</span>
+        </span>
+
+        <!-- Tab Semua Santri -->
+        <a href="{{ route('admin.pembayaran.rekapTunggakan', array_merge(request()->except(['tingkat_akhir', 'page']), [])) }}"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ empty($tingkatAkhirFilter) ? 'bg-gray-900 text-white shadow-xs' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50' }}">
+            <span>Semua Santri</span>
+        </a>
+
+        <!-- Tab Tingkat Akhir (9 & 12) -->
+        <a href="{{ route('admin.pembayaran.rekapTunggakan', array_merge(request()->except(['page']), ['tingkat_akhir' => 'all_final'])) }}"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $tingkatAkhirFilter === 'all_final' ? 'bg-purple-600 text-white shadow-xs ring-2 ring-purple-300' : 'bg-white border border-purple-200 text-purple-700 hover:bg-purple-50' }}">
+            <span>🎓 Siswa Tingkat Akhir (Kelas 9 MTs &amp; 12 MA)</span>
+            @if(($totalSantriTingkatAkhir ?? 0) > 0)
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $tingkatAkhirFilter === 'all_final' ? 'bg-white text-purple-700 font-bold' : 'bg-purple-100 text-purple-800 font-bold' }}">
+                    {{ $totalSantriTingkatAkhir }}
+                </span>
+            @endif
+        </a>
+
+        <!-- Tab Kelas 9 MTs -->
+        <a href="{{ route('admin.pembayaran.rekapTunggakan', array_merge(request()->except(['page']), ['tingkat_akhir' => '9_mts'])) }}"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $tingkatAkhirFilter === '9_mts' ? 'bg-sky-600 text-white shadow-xs ring-2 ring-sky-300' : 'bg-white border border-sky-200 text-sky-700 hover:bg-sky-50' }}">
+            <span>📘 Kelas 9 MTs (Tingkat Akhir)</span>
+        </a>
+
+        <!-- Tab Kelas 12 MA -->
+        <a href="{{ route('admin.pembayaran.rekapTunggakan', array_merge(request()->except(['page']), ['tingkat_akhir' => '12_ma'])) }}"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $tingkatAkhirFilter === '12_ma' ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-300' : 'bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}">
+            <span>📗 Kelas 12 MA (Tingkat Akhir)</span>
+        </a>
+    </div>
+
     <!-- FILTER & PENCARIAN BAR (TailAdmin Form Style) -->
     <div id="filter-card" class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs no-print">
         <form method="GET" action="{{ route('admin.pembayaran.rekapTunggakan') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
             <!-- Search Keyword -->
-            <div class="lg:col-span-4">
+            <div class="lg:col-span-3">
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Cari Santri / Tagihan</label>
                 <input type="text" name="search" value="{{ $search }}" placeholder="Ketik nama santri, NIS, atau judul pos..." class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none">
             </div>
 
             <!-- Filter Kelas -->
-            <div class="lg:col-span-3">
+            <div class="lg:col-span-2">
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Kelas</label>
                 <select name="kelas" class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs text-gray-800 focus:border-brand-500 cursor-pointer">
                     <option value="">Semua Kelas</option>
@@ -152,7 +195,7 @@
             </div>
 
             <!-- Filter Pos Biaya -->
-            <div class="lg:col-span-3">
+            <div class="lg:col-span-2">
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Pos Biaya</label>
                 <select name="pos_biaya" class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs text-gray-800 focus:border-brand-500 cursor-pointer">
                     <option value="">Semua Pos Biaya</option>
@@ -161,6 +204,17 @@
                             {{ $key }} — {{ $title }}
                         </option>
                     @endforeach
+                </select>
+            </div>
+
+            <!-- Filter Tingkat Akhir -->
+            <div class="lg:col-span-3">
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Tingkat / Angkatan</label>
+                <select name="tingkat_akhir" class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs text-gray-800 focus:border-brand-500 cursor-pointer">
+                    <option value="">Semua Angkatan Santri</option>
+                    <option value="all_final" {{ $tingkatAkhirFilter === 'all_final' ? 'selected' : '' }}>🎓 Khusus Tingkat Akhir (Kls 9 MTs &amp; 12 MA)</option>
+                    <option value="9_mts" {{ $tingkatAkhirFilter === '9_mts' ? 'selected' : '' }}>📘 Khusus Kelas 9 MTs</option>
+                    <option value="12_ma" {{ $tingkatAkhirFilter === '12_ma' ? 'selected' : '' }}>📗 Khusus Kelas 12 MA</option>
                 </select>
             </div>
 
@@ -288,7 +342,7 @@
                         <th class="px-4 py-3 w-10 text-center">No</th>
                         <th class="px-4 py-3">Data Santri</th>
                         <th class="px-4 py-3">Kontak Wali</th>
-                        <th class="px-4 py-3">Rincian Tagihan Belum Lunas</th>
+                        <th class="px-4 py-3">Bulan Tunggakan &amp; Rincian Tagihan</th>
                         <th class="px-4 py-3 text-right">Total Kekurangan</th>
                         <th class="px-4 py-3 text-center no-print">Aksi Bendahara</th>
                     </tr>
@@ -299,29 +353,69 @@
                         $st = $row['student'];
                         $bills = $row['bills'];
                         $totalSisa = $row['total_tunggakan'];
+                        $monthlyList = $row['monthly'];
+                        $nonMonthlyList = $row['non_monthly'];
+                        $bulanCount = $row['bulan_count'];
+                        $bulanListText = $row['bulan_list_text'];
+                        $isTingkatAkhir = $row['is_tingkat_akhir'];
+                        $labelTingkatAkhir = $row['label_tingkat_akhir'];
                         $waNum = $st ? ($st->no_whatsapp ?: ($st->no_hp ?: $st->no_hp_wali)) : null;
                         $cleanWa = $waNum ? preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waNum)) : '';
 
-                        // Format pesan WhatsApp penagihan yang santun & profesional
-                        $tagihanLines = [];
-                        foreach ($bills as $b) {
-                            $tagihanLines[] = "• {$b->judul_tagihan}: Rp " . number_format($b->sisa_tagihan, 0, ',', '.');
+                        // Format pesan WhatsApp penagihan yang santun & profesional, dikelompokkan per bulan
+                        $tagihanBlocks = [];
+                        if ($monthlyList->count() > 0) {
+                            $tagihanBlocks[] = "🗓️ *Bulan Yang Menunggak ({$bulanCount} Bulan):*";
+                            foreach ($monthlyList as $mIdx => $m) {
+                                $subtotalFmt = number_format($m['total'], 0, ',', '.');
+                                $tagihanBlocks[] = ($mIdx + 1) . ". *Bulan {$m['periode']}* (Subtotal: Rp {$subtotalFmt}):";
+                                foreach ($m['items'] as $item) {
+                                    $nomFmt = number_format($item->sisa_tagihan, 0, ',', '.');
+                                    $tagihanBlocks[] = "   • {$item->judul_tagihan}: Rp {$nomFmt}";
+                                }
+                            }
                         }
-                        $tagihanText = implode("\n", $tagihanLines);
+                        if ($nonMonthlyList->count() > 0) {
+                            $tagihanBlocks[] = "\n📌 *Tagihan Kegiatan / Non-Bulanan:*";
+                            foreach ($nonMonthlyList as $nm) {
+                                $nomFmt = number_format($nm['total'], 0, ',', '.');
+                                $tagihanBlocks[] = "   • {$nm['judul']}: Rp {$nomFmt}";
+                            }
+                        }
+
+                        $tagihanText = implode("\n", $tagihanBlocks);
                         $totalSisaFmt = number_format($totalSisa, 0, ',', '.');
+                        $tingkatInfo = $isTingkatAkhir ? " ({$labelTingkatAkhir})" : "";
+
+                        $rekBriNo = \App\Models\Setting::get('rek_admin_bri_no', '010201022009537');
+                        $rekBriAn = \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN');
+                        $rekBcaNo = \App\Models\Setting::get('rek_admin_bca_no', '1221220167');
+                        $rekBcaAn = \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN');
+                        $rekKonfPhone = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
+                        $rekKonfNama = \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A');
 
                         $waMessage = "Assalamu'alaikum Wr. Wb.\n\n"
-                            . "Yth. Bapak/Ibu Wali Santri dari ananda *{$st?->nama_lengkap}* (Kelas {$st?->kelas})\n\n"
+                            . "Yth. Bapak/Ibu Wali Santri dari ananda *{$st?->nama_lengkap}* (Kelas {$st?->kelas}{$tingkatInfo})\n\n"
                             . "Semoga senantiasa dalam limpahan rahmat dan keberkahan Allah SWT.\n\n"
-                            . "Melalui pesan ini, kami dari Bendahara Pondok Pesantren Hidayatullah menginformasikan rekapitulasi administrasi/tagihan yang belum terselesaikan dengan rincian sebagai berikut:\n\n"
+                            . "Melalui pesan ini, kami dari Bendahara Pondok Pesantren Hidayatullah Tuksongo menginformasikan rekapitulasi administrasi/tagihan yang belum terselesaikan:\n\n"
                             . "{$tagihanText}\n\n"
-                            . "*Total Kekurangan: Rp {$totalSisaFmt}*\n\n"
+                            . "━━━━━━━━━━━━━━━━━━━━\n"
+                            . "*TOTAL KEKURANGAN: Rp {$totalSisaFmt}*\n"
+                            . "━━━━━━━━━━━━━━━━━━━━\n\n"
                             . "Pembayaran dapat dilakukan melalui:\n"
                             . "1. Kasir Kantor Bendahara Pesantren (Tunai)\n"
-                            . "2. Transfer Bank ke Rekening Resmi:\n"
-                            . "   - BSI: 714 556 7890 (a.n. Pondok Pesantren Hidayatullah)\n"
-                            . "   - BRI: 0153 0100 2345 531 (a.n. Ponpes Hidayatullah)\n\n"
-                            . "Setelah melakukan pembayaran, mohon konfirmasi ke nomor ini atau upload bukti pembayaran di portal santri. Atas perhatian dan kerjasamanya kami haturkan jazakumullahu khairan katsiran.\n\n"
+                            . "2. Transfer ke Rekening Resmi Administrasi Pesantren:\n"
+                            . "   • BRI: *{$rekBriNo}* (a.n. {$rekBriAn})\n"
+                            . "   • BCA: *{$rekBcaNo}* (a.n. {$rekBcaAn})\n\n"
+                            . "KONFIRMASI BUKTI TRANSFER DENGAN MENYERTAKAN DATA SEBAGAI BERIKUT:\n"
+                            . "• NAMA : {$st?->nama_lengkap}\n"
+                            . "• KELAS : {$st?->kelas}\n"
+                            . "• JENIS PEMBAYARAN : Pembayaran Tagihan Administrasi Santri\n"
+                            . "• NOMINAL : Rp {$totalSisaFmt}\n\n"
+                            . "Kirim bukti transfer ke WA Keuangan: {$rekKonfPhone} ({$rekKonfNama})\n\n"
+                            . "⚠️ *Wajib Melakukan Konfirmasi*\n"
+                            . "Demi terciptanya komunikasi yang tertib dan menghindari miskomunikasi, setiap keperluan transfer harap selalu diawali dengan konfirmasi kepada pihak terkait.\n\n"
+                            . "Atas perhatian dan kerjasamanya kami haturkan jazakumullahu khairan katsiran.\n\n"
                             . "Wassalamu'alaikum Wr. Wb.\n"
                             . "Bendahara Pondok Pesantren Hidayatullah Tuksongo";
                         
@@ -347,10 +441,13 @@
                                     <a href="{{ route('admin.siswa.show', $st?->id ?? 0) }}" class="font-bold text-gray-900 hover:text-brand-500 transition block">
                                         {{ $st?->nama_lengkap ?? 'Santri Tidak Ditemukan' }}
                                     </a>
-                                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500 mt-0.5">
+                                    <div class="flex items-center flex-wrap gap-1.5 text-[11px] text-gray-500 mt-0.5">
                                         <span class="font-mono">NIS: {{ $st?->nis ?: '—' }}</span>
                                         <span>•</span>
                                         <span class="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 font-semibold border border-blue-100">Kelas {{ $st?->kelas }}</span>
+                                        @if($isTingkatAkhir)
+                                            <span class="px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 font-extrabold text-[10px] border border-purple-200">🎓 {{ $labelTingkatAkhir }}</span>
+                                        @endif
                                         @if($st?->kamar_asrama)
                                             <span>•</span>
                                             <span>Asrama: {{ $st->kamar_asrama }}</span>
@@ -370,16 +467,61 @@
                             </div>
                         </td>
 
-                        <!-- Rincian Tagihan Belum Lunas -->
-                        <td class="px-4 py-3.5 max-w-md">
-                            <div class="flex flex-wrap gap-1.5">
-                                @foreach($bills as $b)
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gray-50 border border-gray-200 text-[11px] font-medium text-gray-800">
-                                        <span class="font-mono text-[10px] text-gray-500 font-bold">{{ $b->pos_biaya }}</span>
-                                        <span>{{ $b->judul_tagihan }}</span>
-                                        <span class="font-mono font-bold text-rose-600 ml-0.5">Rp {{ number_format($b->sisa_tagihan, 0, ',', '.') }}</span>
-                                    </span>
-                                @endforeach
+                        <!-- Rincian Bulan Tunggakan & Tagihan -->
+                        <td class="px-4 py-3.5 max-w-lg">
+                            <div class="space-y-2">
+                                <!-- Header Ringkasan Bulan Tunggakan -->
+                                <div class="flex items-center flex-wrap gap-1.5">
+                                    @if($bulanCount > 0)
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                                            <svg class="w-3.5 h-3.5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            <span>{{ $bulanCount }} Bulan Menunggak:</span>
+                                            <span class="font-extrabold text-amber-950">{{ $bulanListText }}</span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-700">
+                                            Hanya Tagihan Non-Bulanan
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <!-- Rincian Per Bulan (Kotak per bulan dengan subtotal & pos) -->
+                                @if($monthlyList->count() > 0)
+                                    <div class="space-y-1.5">
+                                        @foreach($monthlyList as $m)
+                                            <div class="p-2 rounded-lg bg-gray-50/90 border border-gray-200 text-[11px] space-y-1">
+                                                <div class="flex items-center justify-between font-bold">
+                                                    <span class="text-gray-900 flex items-center gap-1.5">
+                                                        <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                                                        <span>Bulan {{ $m['periode'] }}</span>
+                                                    </span>
+                                                    <span class="font-mono font-bold text-rose-600">Rp {{ number_format($m['total'], 0, ',', '.') }}</span>
+                                                </div>
+                                                <div class="flex flex-wrap gap-1 pt-0.5">
+                                                    @foreach($m['items'] as $item)
+                                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white border border-gray-200 text-[10px] text-gray-700 shadow-2xs">
+                                                            <span class="font-mono font-bold text-gray-500">{{ $item->pos_biaya }}</span>
+                                                            <span>{{ $item->judul_tagihan }}</span>
+                                                            <span class="font-mono font-semibold text-rose-600">Rp {{ number_format($item->sisa_tagihan, 0, ',', '.') }}</span>
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <!-- Rincian Non-Bulanan -->
+                                @if($nonMonthlyList->count() > 0)
+                                    <div class="flex flex-wrap gap-1.5 pt-0.5">
+                                        @foreach($nonMonthlyList as $nm)
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 border border-sky-200 text-[10.5px] font-medium text-sky-900">
+                                                <span class="font-bold text-sky-700">📌 {{ $nm['judul'] }}:</span>
+                                                <span class="font-mono font-bold text-rose-600">Rp {{ number_format($nm['total'], 0, ',', '.') }}</span>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
                         </td>
 

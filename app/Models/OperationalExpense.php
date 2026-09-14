@@ -15,6 +15,8 @@ class OperationalExpense extends Model
     protected $fillable = [
         'no_referensi',
         'kategori',
+        'sumber_pos',
+        'jenjang',
         'judul_pengeluaran',
         'nominal',
         'tanggal_keluar',
@@ -28,6 +30,26 @@ class OperationalExpense extends Model
     protected $casts = [
         'tanggal_keluar' => 'date',
         'nominal' => 'decimal:2',
+    ];
+
+    const JENJANG_LIST = [
+        'Semua' => 'Semua / Bersama (Operasional Gabungan)',
+        'MTs' => 'MTs (Madrasah Tsanawiyah)',
+        'MA' => 'MA (Madrasah Aliyah)',
+    ];
+
+    const SUMBER_POS_LIST = [
+        'Uang Makan' => 'Uang Makan / Konsumsi Santri',
+        'Syahriyah' => 'Syahriyah / SPP Pondok',
+        'SOT' => 'SOT (Sumbangan Operasional Tahunan)',
+        'Tabungan' => 'Kas Tabungan Santri',
+        'Uang Gedung' => 'Uang Gedung / Pembangunan',
+        'Uang Pangkal' => 'Uang Pangkal / Pendaftaran',
+        'Kesehatan' => 'Pos Kesehatan / UKS',
+        'Kegiatan' => 'Pos Kegiatan Santri & PHBI',
+        'Listrik & Sarana' => 'Pos Listrik, Air & Sarana',
+        'Kantor & ATK' => 'Pos Operasional Kantor & ATK',
+        'Kas Umum' => 'Kas Umum Pesantren',
     ];
 
     const KATEGORI_LIST = [

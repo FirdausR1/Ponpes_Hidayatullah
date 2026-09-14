@@ -497,16 +497,34 @@
                 </h3>
                 <p>Seluruh transaksi pembayaran biaya pendaftaran dan daftar ulang hanya disalurkan melalui rekening resmi bendahara madrasah:</p>
                 
+                <!-- Rekening Pembayaran Resmi -->
                 <div class="bank-box">
-                    <strong>Bank Syariah Indonesia (BSI)</strong>
-                    <span class="account-num">714 888 2025</span>
-                    <span style="font-size: 12px; color:var(--slate-600);">a.n. <strong>Ponpes Hidayatullah Temanggung</strong></span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <strong>Bank Rakyat Indonesia (BRI)</strong>
+                        <span style="font-size: 10px; font-weight: 700; background: var(--green-100); color: var(--green-900); padding: 2px 8px; border-radius: 4px;">Administrasi / PSB</span>
+                    </div>
+                    <span class="account-num">{{ \App\Models\Setting::get('rek_admin_bri_no', '010201022009537') }}</span>
+                    <span style="font-size: 12px; color:var(--slate-600);">a.n. <strong>{{ \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN') }}</strong></span>
                 </div>
 
                 <div class="bank-box" style="margin-top: 8px;">
-                    <strong>Bank Rakyat Indonesia (BRI)</strong>
-                    <span class="account-num">0105 0100 2489 532</span>
-                    <span style="font-size: 12px; color:var(--slate-600);">a.n. <strong>Yayasan Hidayatullah Tuksongo</strong></span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <strong>Bank Central Asia (BCA)</strong>
+                        <span style="font-size: 10px; font-weight: 700; background: var(--green-100); color: var(--green-900); padding: 2px 8px; border-radius: 4px;">Administrasi / PSB</span>
+                    </div>
+                    <span class="account-num">{{ \App\Models\Setting::get('rek_admin_bca_no', '1221220167') }}</span>
+                    <span style="font-size: 12px; color:var(--slate-600);">a.n. <strong>{{ \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN') }}</strong></span>
+                </div>
+
+                @php
+                    $konfPhoneBiaya = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
+                    $cleanKonfPhoneBiaya = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $konfPhoneBiaya));
+                @endphp
+                <div style="margin-top: 10px;">
+                    <a href="https://wa.me/{{ $cleanKonfPhoneBiaya }}?text={{ urlencode('Assalamu\'alaikum, saya ingin konfirmasi mengenai biaya administrasi / pendaftaran PSB.') }}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--green-800); background: var(--green-50); border: 1px solid var(--green-200); padding: 8px 12px; border-radius: 8px; text-decoration: none;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        <span>Konfirmasi WA Keuangan: {{ $konfPhoneBiaya }} ({{ \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A') }})</span>
+                    </a>
                 </div>
                 <p style="font-size: 11.5px; color:#64748b; margin-top:8px;">* Harap simpan dan unggah struk bukti transfer saat mengisi formulir atau konfirmasi ke Panitia PSB.</p>
             </div>

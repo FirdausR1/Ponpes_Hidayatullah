@@ -10,6 +10,7 @@ use App\Models\StudentPayment;
 use App\Models\StudentBill;
 use App\Models\StudentDiscount;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class StudentAuthController extends Controller
 {
@@ -263,6 +264,59 @@ class StudentAuthController extends Controller
 
         return redirect()->route('santri.pembayaran')->with('success', 
             "Alhamdulillah, bukti transfer sebesar Rp " . number_format($totalNominal, 0, ',', '.') . " berhasil diunggah! Status: Menunggu Verifikasi Bendahara Pesantren."
+        );
+    }
+
+    /**
+     * Santri Mengajukan Keringanan Mandiri Kapan Saja (Inisiatif Santri / Wali Santri).
+     */
+    public function ajukanKeringananMandiri(Request $request)
+    {
+        $student = Auth::guard('santri')->user();
+        if (!$student) {
+            return redirect()->route('santri.login');
+        }
+
+        $validated = $request->validate([
+            'student_bill_id' => 'required|exists:student_bills,id',
+            'jenis_surat' => 'required|string|max:150',
+            'no_surat' => 'nullable|string|max:100',
+            'alasan' => 'required|string|max:500',
+            'file_surat' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
+        ], [
+            'student_bill_id.required' => 'Pilih pos tagihan yang ingin diajukan permohonan keringanan.',
+            'jenis_surat.required' => 'Pilih atau tentukan jenis dokumen pendukung.',
+            'alasan.required' => 'Tuliskan alasan permohonan keringanan Anda.',
+            'file_surat.required' => 'Pilih foto atau scan berkas dokumen pendukung (SKTM/Surat Keterangan).',
+            'file_surat.mimes' => 'Format file dokumen harus berupa PDF, JPG, JPEG, PNG, atau WEBP.',
+            'file_surat.max' => 'Ukuran file dokumen maksimal 5 MB.',
+        ]);
+
+        $bill = StudentBill::where('student_id', $student->id)->findOrFail($validated['student_bill_id']);
+
+        if ($bill->status === 'Lunas') {
+            return back()->with('error', 'Tagihan yang dipilih sudah berstatus lunas.');
+        }
+
+        $file = $request->file('file_surat');
+        $filename = time() . '_keringanan_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('uploads/surat_dispensasi'), $filename);
+
+        $instruksi = "Pengajuan Mandiri Santri: " . $validated['alasan'];
+        if (!empty($validated['no_surat'])) {
+            $instruksi .= " (No. Berkas: " . $validated['no_surat'] . ")";
+        }
+
+        $bill->file_surat_dispensasi = '/uploads/surat_dispensasi/' . $filename;
+        $bill->jenis_surat_diminta = $validated['jenis_surat'];
+        $bill->instruksi_surat = $instruksi;
+        $bill->status_dispensasi = 'surat_diunggah';
+        $bill->surat_uploaded_at = now();
+        $bill->alasan_penolakan_surat = null;
+        $bill->save();
+
+        return redirect()->route('santri.pembayaran')->with('success',
+            "Alhamdulillah! Permohonan keringanan untuk tagihan '{$bill->judul_tagihan}' berhasil dikirim. Bendahara pesantren akan segera meninjau dokumen yang Anda unggah."
         );
     }
 

@@ -174,6 +174,8 @@
                 <!-- Action CTAs -->
                 @php
                     $waText = "Assalamu'alaikum Warahmatullahi Wabarakatuh,\n\nSaya wali santri dari:\n- Nama Calon Santri: " . $registration->nama_lengkap . "\n- No. Registrasi: " . $registration->no_registrasi . "\n- Jenjang: " . $registration->jenjang . "\n\nIngin mengonfirmasi bahwa pendaftaran online kami telah terkirim dan saat ini berstatus 'Menunggu Verifikasi'. Mohon informasi tahap berikutnya. Terima kasih.";
+                    $hotlineSuccess = \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966'));
+                    $cleanHotlineSuccess = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $hotlineSuccess));
                 @endphp
                 <div class="no-print space-y-3 pt-2">
                     <a href="{{ route('psb.printCard', ['id' => $registration->id, 'mode' => 'cv']) }}" target="_blank" class="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition text-xs">
@@ -186,8 +188,8 @@
                             <svg class="icon-svg w-4 h-4 text-emerald-400" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             Pantau Status Verifikasi
                         </a>
-                        <a href="https://wa.me/6285290429617?text={{ urlencode($waText) }}" target="_blank" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition text-xs">
-                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        <a href="https://wa.me/{{ $cleanHotlineSuccess }}?text={{ urlencode($waText) }}" target="_blank" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition text-xs">
+                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                             Konfirmasi via WhatsApp Panitia
                         </a>
                     </div>
