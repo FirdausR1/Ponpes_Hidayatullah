@@ -32,15 +32,24 @@ class AdminCbtController extends Controller
 
         $questions = $query->orderBy('kategori')->orderBy('id')->paginate(15)->withQueryString();
 
-        $categories = Question::select('kategori')->distinct()->pluck('kategori');
+        $configuredCategories = $this->getCbtCategories();
+        $existingDbCategories = Question::select('kategori')->distinct()->pluck('kategori')->toArray();
+        $categories = array_values(array_unique(array_merge($configuredCategories, $existingDbCategories)));
+
+        $categoryCounts = Question::selectRaw('kategori, count(*) as total')
+            ->groupBy('kategori')
+            ->pluck('total', 'kategori')
+            ->toArray();
+
         $totalQuestions = Question::count();
         $totalMath = Question::where('is_math', true)->count();
         $totalArabic = Question::where('is_arabic', true)->count();
 
         return view('admin.cbt.soal.index', compact(
-            'questions', 'categories', 'kategori', 'search', 'totalQuestions', 'totalMath', 'totalArabic'
+            'questions', 'categories', 'kategori', 'search', 'totalQuestions', 'totalMath', 'totalArabic', 'categoryCounts'
         ));
     }
+
 
     /**
      * Form Tambah Soal Manual
@@ -938,26 +947,191 @@ class AdminCbtController extends Controller
     }
 
     // =========================================================
-    //  IMPORT SOAL VIA CSV
+    //  EXPORT & IMPORT SOAL VIA CSV
     // =========================================================
+
+    /**
+     * Download Template CSV Siap Pakai untuk Upload Soal Massal
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="template_soal_cbt_pesantren.csv"',
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $columns = ['kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
+
+        $sampleRows = [
+            [
+                'kategori'      => 'IPA (Fisika)',
+                'soal'          => 'Sebuah benda bermassa $m = 2\\text{ kg}$ bergerak dengan kecepatan konstan $v = 10\\text{ m/s}$. Berapakah energi kinetik ($E_k = \\frac{1}{2}mv^2$) benda tersebut?',
+                'opsi_a'        => '100 Joule',
+                'opsi_b'        => '50 Joule',
+                'opsi_c'        => '200 Joule',
+                'opsi_d'        => '20 Joule',
+                'opsi_e'        => '150 Joule',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Rumus: $E_k = \\frac{1}{2} \\times 2 \\times 10^2 = 100\\text{ Joule}$.',
+                'is_math'       => '1',
+                'is_arabic'     => '0',
+            ],
+            [
+                'kategori'      => 'IPA (Kimia)',
+                'soal'          => 'Gas yang dikeluarkan oleh manusia saat bernapas dan diserap oleh tanaman hijau untuk fotosintesis memiliki rumus kimia...',
+                'opsi_a'        => '$\\text{CO}_2$ (Karbondioksida)',
+                'opsi_b'        => '$\\text{O}_2$ (Oksigen)',
+                'opsi_c'        => '$\\text{H}_2\\text{O}$ (Air)',
+                'opsi_d'        => '$\\text{CO}$ (Karbonmonoksida)',
+                'opsi_e'        => '$\\text{N}_2$ (Nitrogen)',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'CO2 adalah senyawa karbondioksida.',
+                'is_math'       => '1',
+                'is_arabic'     => '0',
+            ],
+            [
+                'kategori'      => 'Matematika',
+                'soal'          => 'Hasil perhitungan pecahan berikut adalah: $$\\frac{3}{4} + \\frac{2}{5} - \\frac{1}{2} = \\dots$$',
+                'opsi_a'        => '$\\frac{13}{20}$',
+                'opsi_b'        => '$\\frac{7}{20}$',
+                'opsi_c'        => '$\\frac{11}{20}$',
+                'opsi_d'        => '$\\frac{9}{20}$',
+                'opsi_e'        => '$\\frac{17}{20}$',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Samakan penyebut ke 20: 15/20 + 8/20 - 10/20 = 13/20.',
+                'is_math'       => '1',
+                'is_arabic'     => '0',
+            ],
+            [
+                'kategori'      => 'Bahasa Arab',
+                'soal'          => 'مَا هُوَ مُفْرَدُ كَلِمَةِ «أَسَاتِذَةٌ» فِي اللُّغَةِ الْعَرَبِيَّةِ؟',
+                'opsi_a'        => 'أُسْتَاذٌ (Ustadz / Guru laki-laki)',
+                'opsi_b'        => 'تِلْمِيْذٌ (Murid laki-laki)',
+                'opsi_c'        => 'كِتَابٌ (Buku bacaan)',
+                'opsi_d'        => 'مَدْرَسَةٌ (Gedung sekolah)',
+                'opsi_e'        => 'مَجْلِسٌ (Tempat duduk)',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Bentuk mufrod (tunggal) dari asaatidzatun adalah ustaadzun.',
+                'is_math'       => '0',
+                'is_arabic'     => '1',
+            ],
+            [
+                'kategori'      => 'Bahasa Indonesia',
+                'soal'          => 'Manakah deretan kata baku berikut yang seluruhnya sesuai dengan PUEBI/KBBI?',
+                'opsi_a'        => 'Ijazah, nasihat, kualitas, praktik, apotek',
+                'opsi_b'        => 'Ijasah, nasehat, kwalitas, praktek, apotik',
+                'opsi_c'        => 'Ijazah, nasehat, kualitas, praktek, apotek',
+                'opsi_d'        => 'Ijasah, nasihat, kwalitas, praktik, apotik',
+                'opsi_e'        => 'Ijazah, nasihat, kwalitet, praktek, apotik',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Bentuk baku menurut KBBI: ijazah, nasihat, kualitas, praktik, apotek.',
+                'is_math'       => '0',
+                'is_arabic'     => '0',
+            ],
+            [
+                'kategori'      => 'Pendidikan Agama Islam',
+                'soal'          => 'Hukum tajwid nun mati atau tanwin bertemu dengan huruf Ba (ب) disertai ghunnah (mendengung) disebut...',
+                'opsi_a'        => 'Iqlab',
+                'opsi_b'        => 'Idzhar Halqi',
+                'opsi_c'        => 'Idgham Bighunnah',
+                'opsi_d'        => 'Ikhfa Haqiqi',
+                'opsi_e'        => 'Idgham Bilaghunnah',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Nun sukun/tanwin bertemu ba dibaca iqlab (suara nun diganti mim).',
+                'is_math'       => '0',
+                'is_arabic'     => '0',
+            ],
+        ];
+
+        $callback = function() use ($columns, $sampleRows) {
+            $file = fopen('php://output', 'w');
+            // Tulis BOM UTF-8 agar Excel langsung membaca huruf Arab & simbol matematika
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, $columns);
+            foreach ($sampleRows as $row) {
+                fputcsv($file, array_values($row));
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Seluruh / Sebagian Bank Soal ke File CSV
+     */
+    public function soalExport(Request $request)
+    {
+        $kategori = $request->query('kategori');
+        $query = Question::query();
+        if (!empty($kategori)) {
+            $query->where('kategori', $kategori);
+        }
+        $questions = $query->orderBy('kategori')->orderBy('id')->get();
+
+        $slug = !empty($kategori) ? \Illuminate\Support\Str::slug($kategori) . '_' : '';
+        $filename = 'bank_soal_cbt_' . $slug . date('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $columns = ['kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
+
+        $callback = function() use ($columns, $questions) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, $columns);
+            foreach ($questions as $q) {
+                fputcsv($file, [
+                    $q->kategori,
+                    $q->soal,
+                    $q->opsi_a,
+                    $q->opsi_b,
+                    $q->opsi_c,
+                    $q->opsi_d,
+                    $q->opsi_e,
+                    $q->kunci_jawaban,
+                    $q->bobot,
+                    $q->pembahasan,
+                    $q->is_math ? '1' : '0',
+                    $q->is_arabic ? '1' : '0',
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 
     /**
      * Proses upload dan impor soal dari file CSV.
      *
      * Format kolom CSV (header baris pertama):
-     * kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_active
-     *
-     * Contoh kunci_jawaban: A / B / C / D / E
+     * kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_math, is_arabic
      */
     public function soalImport(Request $request)
     {
         $request->validate([
             'kategori_import' => 'required|string|max:100',
-            'csv_file'        => 'required|file|mimes:csv,txt|max:2048',
+            'csv_file'        => 'required|file|mimes:csv,txt|max:4096',
         ]);
 
-        $kategori = trim($request->input('kategori_import'));
-        $file     = $request->file('csv_file');
+        $defaultKategori = trim($request->input('kategori_import'));
+        $file            = $request->file('csv_file');
 
         $handle = fopen($file->getRealPath(), 'r');
 
@@ -965,30 +1139,42 @@ class AdminCbtController extends Controller
             return back()->with('error', 'Gagal membuka file CSV.');
         }
 
+        // Cek dan buang UTF-8 BOM jika ada
+        $bom = fread($handle, 3);
+        if ($bom !== "\xEF\xBB\xBF") {
+            rewind($handle);
+        }
+
         $header  = null;
         $count   = 0;
         $errors  = [];
         $rowNum  = 0;
 
-        while (($row = fgetcsv($handle, 2000, ',')) !== false) {
+        while (($row = fgetcsv($handle, 4000, ',')) !== false) {
             $rowNum++;
 
-            // Baris pertama = header, skip
+            // Baris pertama = header, normalisasi lowercase
             if ($rowNum === 1) {
-                $header = array_map('trim', $row);
+                $header = array_map(fn($h) => strtolower(trim(str_replace(['"', "'"], '', $h))), $row);
                 continue;
             }
 
             if (count($row) < 4) continue; // baris kosong
 
-            // Buat associative array jika ada header, else pakai index
             $data = $header ? array_combine($header, array_pad($row, count($header), '')) : $row;
 
-            // Soal wajib ada
-            $soalText = trim($data['soal'] ?? $data[0] ?? '');
+            $soalText = trim($data['soal'] ?? $data[1] ?? $data[0] ?? '');
             if (empty($soalText)) continue;
 
-            // Override kategori dengan pilihan admin
+            // Kategori: jika file CSV memiliki kolom kategori dan diisi, gunakan kategori tersebut.
+            // Jika kosong atau pilihan dropdown bukan 'sesuai_csv', gunakan kategori dari dropdown.
+            $rowKategori = !empty($data['kategori']) ? trim($data['kategori']) : '';
+            if ($defaultKategori !== 'sesuai_csv' && !empty($defaultKategori) && empty($rowKategori)) {
+                $kategori = $defaultKategori;
+            } else {
+                $kategori = !empty($rowKategori) ? $rowKategori : ($defaultKategori === 'sesuai_csv' ? 'Umum' : $defaultKategori);
+            }
+
             $opsiA  = trim($data['opsi_a'] ?? $data[2] ?? '');
             $opsiB  = trim($data['opsi_b'] ?? $data[3] ?? '');
             $opsiC  = trim($data['opsi_c'] ?? $data[4] ?? '');
@@ -1013,10 +1199,10 @@ class AdminCbtController extends Controller
             [$isMath, $isArabic] = $this->detectTextFlags($allText, $kategori);
 
             // Izinkan override eksplisit dari kolom CSV jika ada
-            if (!empty($data['is_math'])) {
+            if (isset($data['is_math']) && $data['is_math'] !== '') {
                 $isMath = in_array(strtolower(trim($data['is_math'])), ['1', 'true', 'yes', 'ya']);
             }
-            if (!empty($data['is_arabic'])) {
+            if (isset($data['is_arabic']) && $data['is_arabic'] !== '') {
                 $isArabic = in_array(strtolower(trim($data['is_arabic'])), ['1', 'true', 'yes', 'ya']);
             }
 
@@ -1041,14 +1227,15 @@ class AdminCbtController extends Controller
 
         fclose($handle);
 
-        $msg = "{$count} soal berhasil diimpor ke kategori '{$kategori}'";
+        $msg = "{$count} butir soal berhasil diimpor ke Bank Soal!";
         if (!empty($errors)) {
-            $msg .= '. Beberapa baris dilewati: ' . implode(' | ', $errors);
+            $msg .= ' (Beberapa catatan: ' . implode(' | ', array_slice($errors, 0, 3)) . ')';
         }
 
-        return redirect()->route('admin.cbt.soal.index', ['kategori' => $kategori])
+        return redirect()->route('admin.cbt.soal.index')
             ->with('success', $msg);
     }
+
 
     // ─────────────────────────────────────────────────────────────────────────
     // AUTO-DETECT HELPER

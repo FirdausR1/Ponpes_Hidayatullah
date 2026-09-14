@@ -202,10 +202,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/cbt/soal', [AdminCbtController::class, 'soalIndex'])->name('cbt.soal.index');
         Route::get('/cbt/soal/create', [AdminCbtController::class, 'soalCreate'])->name('cbt.soal.create');
         Route::post('/cbt/soal', [AdminCbtController::class, 'soalStore'])->name('cbt.soal.store');
+        Route::get('/cbt/soal/download-template', [AdminCbtController::class, 'downloadTemplate'])->name('cbt.soal.downloadTemplate');
+        Route::get('/cbt/soal/export', [AdminCbtController::class, 'soalExport'])->name('cbt.soal.export');
         Route::get('/cbt/soal/{id}/edit', [AdminCbtController::class, 'soalEdit'])->name('cbt.soal.edit');
         Route::put('/cbt/soal/{id}', [AdminCbtController::class, 'soalUpdate'])->name('cbt.soal.update');
         Route::delete('/cbt/soal/{id}', [AdminCbtController::class, 'soalDestroy'])->name('cbt.soal.destroy');
         Route::post('/cbt/soal/load-template', [AdminCbtController::class, 'loadTemplate'])->name('cbt.soal.loadTemplate');
+
         Route::get('/cbt/pengaturan', [AdminCbtController::class, 'pengaturan'])->name('cbt.pengaturan');
         Route::post('/cbt/pengaturan', [AdminCbtController::class, 'pengaturanUpdate'])->name('cbt.pengaturan.update');
         Route::get('/cbt/hasil', [AdminCbtController::class, 'hasilIndex'])->name('cbt.hasil.index');

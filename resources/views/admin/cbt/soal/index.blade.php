@@ -31,18 +31,26 @@
             <p class="text-sm text-gray-500 mt-1">Kelola bank butir soal ujian seleksi masuk santri baru, format rumus Matematika (KaTeX), dan Bahasa Arab.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
-            <a href="{{ route('admin.cbt.cetakSoal', ['kategori' => $kategori]) }}" target="_blank" class="ta-btn-outline">
-                <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                Cetak Lembar Soal
+            <a href="{{ route('admin.cbt.soal.downloadTemplate') }}" class="ta-btn-outline border-emerald-300 text-emerald-700 hover:bg-emerald-50 bg-white" title="Unduh file template Excel/CSV untuk input soal massal">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download Template CSV
             </a>
-            <button type="button" onclick="document.getElementById('modalTemplate').classList.remove('hidden')" class="ta-btn-outline">
-                <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Muat Template
-            </button>
-            <button type="button" onclick="document.getElementById('modalImportCsv').classList.remove('hidden')" class="ta-btn-outline">
+            <a href="{{ route('admin.cbt.soal.export', ['kategori' => $kategori]) }}" class="ta-btn-outline" title="Export butir soal bank saat ini ke file CSV">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Export Soal CSV
+            </a>
+            <button type="button" onclick="document.getElementById('modalImportCsv').classList.remove('hidden')" class="ta-btn-outline" title="Upload dan impor file CSV berisi banyak soal">
                 <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                 Import CSV
             </button>
+            <button type="button" onclick="document.getElementById('modalTemplate').classList.remove('hidden')" class="ta-btn-outline text-gray-600" title="Isi database dengan paket contoh soal bawaan pesantren">
+                <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Muat Soal Bawaan
+            </button>
+            <a href="{{ route('admin.cbt.cetakSoal', ['kategori' => $kategori]) }}" target="_blank" class="ta-btn-outline">
+                <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Cetak Soal
+            </a>
             <a href="{{ route('admin.cbt.soal.create') }}" class="ta-btn-primary">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Tambah Soal Manual
@@ -62,8 +70,8 @@
 
         <div class="ta-card p-5">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rumus Matematika</span>
-                <span class="badge-gray">KaTeX</span>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rumus Matematika &amp; IPA</span>
+                <span class="badge-gray">KaTeX LaTeX</span>
             </div>
             <div class="text-2xl font-bold text-gray-800 mt-2">{{ $totalMath }} <span class="text-xs font-normal text-gray-400">soal</span></div>
         </div>
@@ -85,13 +93,22 @@
                 Semua ({{ $totalQuestions }})
             </a>
             @foreach($categories as $cat)
+                @php $cCount = $categoryCounts[$cat] ?? 0; @endphp
                 <a href="{{ route('admin.cbt.soal.index', ['kategori' => $cat]) }}"
-                   class="px-3 py-1.5 rounded-lg text-xs font-medium transition {{ $kategori === $cat ? 'bg-brand-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                    {{ $cat }}
+                   class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 {{ $kategori === $cat ? 'bg-brand-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                    <span>{{ $cat }}</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold {{ $kategori === $cat ? 'bg-white/20 text-white' : ($cCount > 0 ? 'bg-gray-200 text-gray-700' : 'bg-rose-100 text-rose-600') }}">
+                        {{ $cCount }}
+                    </span>
                 </a>
             @endforeach
+            <a href="{{ route('admin.cbt.pengaturan') }}" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-600 hover:bg-brand-50 border border-brand-200 transition flex items-center gap-1" title="Kelola Kategori Mata Pelajaran di Pengaturan">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>Kelola Kategori</span>
+            </a>
         </div>
         <form method="GET" action="{{ route('admin.cbt.soal.index') }}" class="flex items-center gap-2">
+
             @if(!empty($kategori))
                 <input type="hidden" name="kategori" value="{{ $kategori }}">
             @endif
@@ -222,11 +239,11 @@
 
 <!-- MODAL IMPORT SOAL CSV -->
 <div id="modalImportCsv" class="ta-modal-backdrop hidden">
-    <div class="ta-modal">
+    <div class="ta-modal max-w-lg">
         <div class="ta-modal-header">
             <div>
-                <h3 class="text-base font-bold text-gray-800">Import Soal dari CSV</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Unggah butir soal sekaligus via berkas CSV.</p>
+                <h3 class="text-base font-bold text-gray-800">Upload &amp; Import Soal Banyak (CSV)</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Unggah puluhan atau ratusan butir soal sekaligus dari file spreadsheet Excel/CSV.</p>
             </div>
             <button type="button" onclick="document.getElementById('modalImportCsv').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
@@ -234,17 +251,30 @@
         <form action="{{ route('admin.cbt.soal.import') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="ta-modal-body space-y-4">
+                {{-- Download Template Banner --}}
+                <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+                    <div>
+                        <span class="text-xs font-bold text-emerald-900 block">Belum Memiliki Format Template?</span>
+                        <p class="text-[11px] text-emerald-700 mt-0.5">Unduh template CSV resmi yang siap dibuka di Excel, lengkap dengan contoh soal IPA, Matematika KaTeX, Arab, dan PAI.</p>
+                    </div>
+                    <a href="{{ route('admin.cbt.soal.downloadTemplate') }}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shrink-0 shadow-xs flex items-center gap-1.5 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Download Template</span>
+                    </a>
+                </div>
+
                 {{-- Pilih Kategori --}}
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                         Kategori / Mata Pelajaran <span class="text-red-500">*</span>
                     </label>
-                    <select name="kategori_import" required class="ta-input">
-                        <option value="">-- Pilih Mata Pelajaran --</option>
+                    <select name="kategori_import" required class="ta-input text-xs">
+                        <option value="sesuai_csv">✨ Gunakan Kolom Kategori di File CSV (Mendukung Campuran/Multi-Pelajaran)</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat }}" {{ request('kategori') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                            <option value="{{ $cat }}" {{ request('kategori') === $cat ? 'selected' : '' }}>Paksa ke Mata Pelajaran: {{ $cat }}</option>
                         @endforeach
                     </select>
+                    <p class="text-[11px] text-gray-400 mt-1">Pilih "Gunakan Kolom Kategori di File CSV" jika berkas Anda memuat berbagai mata pelajaran.</p>
                 </div>
 
                 {{-- Upload File CSV --}}
@@ -253,16 +283,20 @@
                         File CSV Soal <span class="text-red-500">*</span>
                     </label>
                     <input type="file" name="csv_file" accept=".csv,.txt" required class="ta-input text-xs">
-                    <p class="text-[11px] text-gray-400 mt-1">Format: .csv (Maksimal 2 MB)</p>
+                    <p class="text-[11px] text-gray-400 mt-1">Format: .csv (Bisa disimpan dari Save As CSV di Excel, Maksimal 4 MB)</p>
                 </div>
 
-                {{-- Panduan Format --}}
-                <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs space-y-1 text-gray-600">
-                    <span class="font-semibold text-gray-700 block">Format Header CSV:</span>
-                    <code class="block font-mono text-[11px] bg-white border border-gray-200 rounded p-1.5 text-gray-800 overflow-x-auto">
-                        soal,opsi_a,opsi_b,opsi_c,opsi_d,opsi_e,kunci_jawaban,bobot,pembahasan
+                {{-- Panduan Format Kolom --}}
+                <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs space-y-1.5 text-gray-600">
+                    <span class="font-semibold text-gray-700 block">Urutan Kolom CSV (Otomatis Sesuai Template):</span>
+                    <code class="block font-mono text-[10.5px] bg-white border border-gray-200 rounded p-1.5 text-gray-800 overflow-x-auto leading-relaxed">
+                        kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_math, is_arabic
                     </code>
-                    <p class="text-[11px] text-gray-500 pt-1">Kunci jawaban diisi huruf A/B/C/D/E. Opsi E dan pembahasan boleh dikosongkan.</p>
+                    <ul class="text-[11px] text-gray-500 space-y-0.5 list-disc list-inside">
+                        <li>Kunci jawaban diisi huruf kapital: <strong>A / B / C / D / E</strong></li>
+                        <li>Rumus IPA &amp; Matematika diapit tanda dollar, misal: <code>$v = \frac{s}{t}$</code> atau <code>$\text{H}_2\text{O}$</code></li>
+                        <li>Teks Arab dapat diketik langsung dengan harakat maupun gundul</li>
+                    </ul>
                 </div>
             </div>
 
@@ -271,12 +305,13 @@
                     Batal
                 </button>
                 <button type="submit" class="ta-btn-sm-primary">
-                    Upload &amp; Import
+                    Upload &amp; Mulai Import
                 </button>
             </div>
         </form>
     </div>
 </div>
+
 
 <!-- MODAL MUAT TEMPLATE SOAL -->
 <div id="modalTemplate" class="ta-modal-backdrop hidden">

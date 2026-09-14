@@ -100,16 +100,62 @@
 
                 <!-- Tabs Kategori Rumus -->
                 <div class="flex flex-wrap gap-1 border-b border-purple-200/60 pb-1.5 text-xs font-semibold">
-                    <button type="button" onclick="switchMathTab('dasar')" id="tab-btn-dasar" class="math-tab-btn px-2.5 py-1 rounded-md bg-purple-600 text-white shadow-xs">Dasar & Pecahan</button>
-                    <button type="button" onclick="switchMathTab('aljabar')" id="tab-btn-aljabar" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Aljabar & Kurung</button>
-                    <button type="button" onclick="switchMathTab('trigono')" id="tab-btn-trigono" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Geometri & Sudut</button>
-                    <button type="button" onclick="switchMathTab('kalkulus')" id="tab-btn-kalkulus" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Matriks & Kalkulus</button>
-                    <button type="button" onclick="switchMathTab('yunani')" id="tab-btn-yunani" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Simbol & Yunani</button>
+                    <button type="button" onclick="switchMathTab('dasar')" id="tab-btn-dasar" class="math-tab-btn px-2.5 py-1 rounded-md bg-purple-600 text-white shadow-xs">Dasar &amp; Pecahan</button>
+                    <button type="button" onclick="switchMathTab('ipa')" id="tab-btn-ipa" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200 font-bold text-emerald-700">🔬 IPA (Fisika &amp; Kimia)</button>
+                    <button type="button" onclick="switchMathTab('aljabar')" id="tab-btn-aljabar" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Aljabar &amp; Kurung</button>
+                    <button type="button" onclick="switchMathTab('trigono')" id="tab-btn-trigono" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Geometri &amp; Sudut</button>
+                    <button type="button" onclick="switchMathTab('kalkulus')" id="tab-btn-kalkulus" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Matriks &amp; Kalkulus</button>
+                    <button type="button" onclick="switchMathTab('yunani')" id="tab-btn-yunani" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Simbol &amp; Yunani</button>
                     <button type="button" onclick="switchMathTab('custom')" id="tab-btn-custom" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200 font-bold">+ Rumus Kustom</button>
+                </div>
+
+                <!-- Tab IPA & Sains (Fisika & Kimia) -->
+                <div id="math-tab-ipa" class="math-tab-content hidden flex flex-wrap gap-1.5 text-xs">
+                    <div class="w-full text-[11px] font-bold text-emerald-900 mb-0.5 flex items-center gap-1.5">
+                        <span>⚡ Rumus Fisika &amp; Mekanika:</span>
+                    </div>
+                    <button type="button" onclick="insertSnippet('$v = \\frac{s}{t}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kecepatan $v = \frac{s}{t}$</button>
+                    <button type="button" onclick="insertSnippet('$a = \\frac{\\Delta v}{\\Delta t}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Percepatan $a = \frac{\Delta v}{\Delta t}$</button>
+                    <button type="button" onclick="insertSnippet('$F = m \\times a$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Gaya $F = m \times a$</button>
+                    <button type="button" onclick="insertSnippet('$W = F \\times s$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Usaha $W = F \times s$</button>
+                    <button type="button" onclick="insertSnippet('$$E_k = \\frac{1}{2} m v^2$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Energi Kinetik $E_k = \frac{1}{2}mv^2$</button>
+                    <button type="button" onclick="insertSnippet('$E_p = m \\cdot g \\cdot h$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Energi Potensial $E_p = mgh$</button>
+                    <button type="button" onclick="insertSnippet('$$\\rho = \\frac{m}{V}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Massa Jenis $\rho = \frac{m}{V}$</button>
+                    <button type="button" onclick="insertSnippet('$$P = \\frac{F}{A}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Tekanan $P = \frac{F}{A}$</button>
+                    <button type="button" onclick="insertSnippet('$V = I \\times R$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Hukum Ohm $V = I \times R$</button>
+                    <button type="button" onclick="insertSnippet('$P = V \\times I$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Daya Listrik $P = V \times I$</button>
+                    <button type="button" onclick="insertSnippet('$Q = m \\cdot c \\cdot \\Delta T$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kalor $Q = mc\Delta T$</button>
+                    <button type="button" onclick="insertSnippet('$^\\circ\\text{C}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Suhu $^\circ\text{C}$</button>
+
+                    <div class="w-full text-[11px] font-bold text-emerald-900 mt-1 mb-0.5 flex items-center gap-1.5 border-t border-purple-200/50 pt-1">
+                        <span>🧪 Rumus Kimia, Senyawa &amp; Reaksi:</span>
+                    </div>
+                    <button type="button" onclick="insertSnippet('$\\text{H}_2\\text{O}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Air $\text{H}_2\text{O}$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{CO}_2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Karbondioksida $\text{CO}_2$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{O}_2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Oksigen $\text{O}_2$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{NaCl}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Garam $\text{NaCl}$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{HCl}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Asam Klorida $\text{HCl}$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{H}_2\\text{SO}_4$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Asam Sulfat $\text{H}_2\text{SO}_4$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{C}_6\\text{H}_{12}\\text{O}_6$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Glukosa $\text{C}_6\text{H}_{12}\text{O}_6$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{Na}^+$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Ion $\text{Na}^+$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{SO}_4^{2-}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Ion $\text{SO}_4^{2-}$</button>
+                    <button type="button" onclick="insertSnippet('$\\rightarrow$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Panah $\rightarrow$</button>
+
+                    <div class="w-full text-[11px] font-bold text-emerald-900 mt-1 mb-0.5 flex items-center gap-1.5 border-t border-purple-200/50 pt-1">
+                        <span>📏 Satuan Sains / IPA:</span>
+                    </div>
+                    <button type="button" onclick="insertSnippet('$\\text{m/s}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{m/s}$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{m/s}^2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{m/s}^2$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{kg/m}^3$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{kg/m}^3$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{Joule}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{Joule}$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{Newton}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{Newton}$</button>
+                    <button type="button" onclick="insertSnippet('$\\text{Watt}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{Watt}$</button>
+                    <button type="button" onclick="insertSnippet('$\\Omega$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\Omega$ (Ohm)</button>
                 </div>
 
                 <!-- Tab 1: Dasar & Pecahan -->
                 <div id="math-tab-dasar" class="math-tab-content flex flex-wrap gap-1.5 text-xs">
+
                     <button type="button" onclick="insertSnippet('$$\\frac{a}{b}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Pecahan $\frac{a}{b}$</button>
                     <button type="button" onclick="insertSnippet('$$\\sqrt{x}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Akar $\sqrt{x}$</button>
                     <button type="button" onclick="insertSnippet('$$\\sqrt[n]{x}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Akar-n $\sqrt[n]{x}$</button>
