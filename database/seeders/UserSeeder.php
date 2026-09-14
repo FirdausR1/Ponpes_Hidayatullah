@@ -18,8 +18,10 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Administrator Pesantren',
                 'password' => Hash::make('admin123'),
+                'role' => 'superadmin',
                 'email_verified_at' => now(),
             ]
         );
+
     }
 }
