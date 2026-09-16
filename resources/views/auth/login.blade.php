@@ -171,7 +171,7 @@
                 @endif
 
                 <!-- Form Login -->
-                <form action="{{ route('login') }}" method="POST" class="space-y-4 sm:space-y-5">
+                <form action="{{ route('login.submit') }}" method="POST" class="space-y-4 sm:space-y-5">
                     @csrf
 
                     <!-- Input Email -->

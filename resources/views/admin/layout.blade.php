@@ -221,7 +221,7 @@
 
             @if(auth()->user() && auth()->user()->canManagePayments())
             {{-- ===== KEUANGAN & PEMBAYARAN (Dropdown) ===== --}}
-            <div class="mb-2" x-data="{ open: {{ request()->routeIs('admin.pembayaran.*', 'admin.pengeluaran.*', 'admin.arusKas.*') ? 'true' : 'false' }} }">
+            <div class="mb-2" x-data="{ open: {{ request()->routeIs('admin.pembayaran.*', 'admin.pengeluaran.*', 'admin.arusKas.*', 'admin.laporanYayasan.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors duration-150 group">
                     <span class="mi-icon-inactive group-hover:text-gray-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
                     <span class="flex-1 text-left">Keuangan</span>
@@ -232,6 +232,10 @@
                         <li><a href="{{ route('admin.pembayaran.index') }}" class="menu-item {{ request()->routeIs('admin.pembayaran.index') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.pembayaran.index') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
                             Kasir Pembayaran
+                        </a></li>
+                        <li><a href="{{ route('admin.pembayaran.tarif.index') }}" class="menu-item {{ request()->routeIs('admin.pembayaran.tarif.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ request()->routeIs('admin.pembayaran.tarif.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+                            Tarif &amp; Biaya Pendidikan
                         </a></li>
                         <li><a href="{{ route('admin.pembayaran.rekapTunggakan') }}" class="menu-item {{ request()->routeIs('admin.pembayaran.rekapTunggakan*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.pembayaran.rekapTunggakan*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></span>
@@ -260,6 +264,10 @@
                         <li><a href="{{ route('admin.pembayaran.rekapKwitansi') }}" class="menu-item {{ request()->routeIs('admin.pembayaran.rekapKwitansi*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.pembayaran.rekapKwitansi*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
                             Rekap Kwitansi
+                        </a></li>
+                        <li><a href="{{ route('admin.laporanYayasan.index') }}" class="menu-item {{ request()->routeIs('admin.laporanYayasan.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ request()->routeIs('admin.laporanYayasan.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/><path d="M5 21h14"/></svg></span>
+                            Laporan Pimpinan Pondok Pesantren
                         </a></li>
                     </ul>
                 </div>

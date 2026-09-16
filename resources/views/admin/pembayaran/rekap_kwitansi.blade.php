@@ -241,9 +241,17 @@ if (request('ids')) {
                             <span class="text-[10px] text-slate-500">{{ optional($p->tanggal_bayar)->format('d/m/Y') }}</span>
                         </td>
                         <td class="py-2 px-3">
-                            <div class="font-bold text-slate-900">{{ $p->student->nama_lengkap ?? '—' }}</div>
+                            <div class="font-bold text-slate-900">
+                                {{ $p->student ? ($p->student->nama_lengkap ?? '—') : ($p->psbRegistration ? ($p->psbRegistration->nama_lengkap ?? 'Calon Santri') : ($p->penerima_nama ?: '—')) }}
+                            </div>
                             <div class="text-[10px] text-slate-500">
-                                NIS: {{ $p->student->nis ?? '—' }} &bull; Kelas: <span class="font-semibold text-slate-700">{{ $p->student->kelas ?? '—' }}</span>
+                                @if($p->student)
+                                    NIS: {{ $p->student->nis ?? '—' }} &bull; Kelas: <span class="font-semibold text-slate-700">{{ $p->student->kelas ?? '—' }}</span>
+                                @elseif($p->psbRegistration)
+                                    Reg: {{ $p->psbRegistration->no_registrasi ?? '—' }} &bull; Jenjang: <span class="font-semibold text-slate-700">{{ $p->psbRegistration->jenjang ?? '—' }}</span>
+                                @else
+                                    Kategori: Umum / Pembayaran Santri
+                                @endif
                             </div>
                         </td>
                         <td class="py-2 px-3">

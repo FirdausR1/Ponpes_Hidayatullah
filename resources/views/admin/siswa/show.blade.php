@@ -287,8 +287,8 @@
                 @endif
                 <div class="text-center sm:text-left flex-1">
                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
-                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-emerald-100">
-                            {{ $student->jenjang }}
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold shadow-xs {{ $student->hunian === 'Mukim' ? 'bg-emerald-300 text-emerald-950' : 'bg-blue-300 text-blue-950' }}">
+                            {{ $student->kategori_label }}
                         </span>
                         <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-amber-950">
                             Kelas {{ $student->kelas }}
@@ -309,6 +309,38 @@
                         Pondok Pesantren Hidayatullah Tuksongo &bull; Pringsurat Temanggung
                     </p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Banner Info Keuangan & Kategori Tagihan Bulanan Resmi Sesuai Brosur -->
+        <div class="m-6 sm:m-8 p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 no-print shadow-xs">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-900">Kategori Tagihan &amp; Hunian:</h4>
+                        <span class="px-2.5 py-0.5 rounded-md text-xs font-extrabold {{ $student->hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950' : 'bg-blue-200 text-blue-950' }}">
+                            {{ $student->kategori_label }}
+                        </span>
+                    </div>
+                    <div class="text-xs text-emerald-950 mt-1 flex flex-wrap items-center gap-2">
+                        <span>Standar Iuran: <strong>Rp {{ number_format($student->tarif_bulanan['total_bulanan'], 0, ',', '.') }} / bulan</strong></span>
+                        <span>&bull;</span>
+                        <span>Uang Makan 3x: <strong>Rp {{ number_format($student->tarif_bulanan['uang_makan'], 0, ',', '.') }}</strong> {{ $student->hunian === 'Laju' ? '(Non-Asrama / Rp 0)' : '' }}</span>
+                        <span>&bull;</span>
+                        <span>Syahriah: <strong>Rp {{ number_format($student->tarif_bulanan['syahriah'], 0, ',', '.') }}</strong></span>
+                        <span>&bull;</span>
+                        <span>Tabungan: <strong>Rp {{ number_format($student->tarif_bulanan['tabungan_wajib'], 0, ',', '.') }}</strong></span>
+                    </div>
+                </div>
+            </div>
+            <div class="shrink-0 flex items-center gap-2">
+                <a href="{{ route('admin.pembayaran.index', ['tab' => 'kasir', 'q' => $student->nis]) }}" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>Buka Kasir Santri</span>
+                </a>
             </div>
         </div>
 
@@ -372,8 +404,13 @@
                             <td class="py-1.5 font-mono text-gray-800">{{ $student->nisn ?: '—' }}</td>
                         </tr>
                         <tr class="border-b border-gray-50">
-                            <td class="py-1.5 text-gray-500">Jenjang</td>
-                            <td class="py-1.5 font-semibold text-gray-800">{{ $student->jenjang }}</td>
+                            <td class="py-1.5 text-gray-500">Jenjang &amp; Kategori</td>
+                            <td class="py-1.5 font-semibold text-gray-800 flex items-center gap-1.5">
+                                <span>{{ $student->jenjang }}</span>
+                                <span class="px-2 py-0.5 rounded text-[10.5px] font-extrabold shadow-2xs {{ $student->hunian === 'Mukim' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800' }}">
+                                    {{ $student->kategori_label }}
+                                </span>
+                            </td>
                         </tr>
                         <tr class="border-b border-gray-50">
                             <td class="py-1.5 text-gray-500">Kelas Aktif</td>
@@ -521,10 +558,108 @@
                 </div>
             </div>
 
-            <!-- 6. Riwayat Pembayaran Santri -->
+            <!-- 6. Tagihan & Tunggakan Aktif Santri -->
+            <div class="pt-4 border-t border-gray-100 page-break-avoid no-print">
+                <div class="flex items-center justify-between pb-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 print-section-title" style="margin:0;padding:0;border:none;">6. Tagihan &amp; Tunggakan Santri</h4>
+                    <a href="{{ route('admin.pembayaran.tagihan.index', ['q' => $student->nis]) }}" class="text-xs font-semibold text-rose-600 hover:underline">
+                        Kelola di Buku Tagihan &rarr;
+                    </a>
+                </div>
+
+                @php
+                    $activeBills = $student->bills->where('status', '!=', 'Lunas')->where('penangguhan_wisuda', false);
+                    $totalSisa = $activeBills->sum('sisa_tagihan');
+                    $totalBills = $student->bills->count();
+                @endphp
+
+                @if($totalBills > 0)
+                    <!-- Summary Pills -->
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            {{ $totalBills }} Total Tagihan
+                        </span>
+                        @if($activeBills->count() > 0)
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                            {{ $activeBills->count() }} Belum Lunas
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-600 text-white">
+                            Sisa: Rp {{ number_format($totalSisa, 0, ',', '.') }}
+                        </span>
+                        @else
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                            ✓ Semua Tagihan Lunas
+                        </span>
+                        @endif
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase border-b border-gray-200">
+                                <tr>
+                                    <th class="py-2.5 px-4">Judul Tagihan</th>
+                                    <th class="py-2.5 px-4">Pos / Kategori</th>
+                                    <th class="py-2.5 px-4">Nominal</th>
+                                    <th class="py-2.5 px-4">Sisa</th>
+                                    <th class="py-2.5 px-4">Jatuh Tempo</th>
+                                    <th class="py-2.5 px-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach($student->bills->take(10) as $bill)
+                                <tr class="{{ $bill->status !== 'Lunas' && !$bill->penangguhan_wisuda ? 'bg-rose-50/30' : '' }}">
+                                    <td class="py-2.5 px-4 font-semibold text-gray-900">
+                                        {{ Str::limit($bill->judul_tagihan, 45) }}
+                                    </td>
+                                    <td class="py-2.5 px-4">
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-700">
+                                            {{ $bill->pos_biaya }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2.5 px-4 font-mono text-gray-700">Rp {{ number_format($bill->nominal_tagihan, 0, ',', '.') }}</td>
+                                    <td class="py-2.5 px-4 font-mono font-bold {{ $bill->sisa_tagihan > 0 ? 'text-rose-700' : 'text-emerald-700' }}">
+                                        Rp {{ number_format($bill->sisa_tagihan, 0, ',', '.') }}
+                                    </td>
+                                    <td class="py-2.5 px-4 text-gray-500">
+                                        {{ $bill->jatuh_tempo ? $bill->jatuh_tempo->format('d/m/Y') : '—' }}
+                                    </td>
+                                    <td class="py-2.5 px-4">
+                                        @if($bill->penangguhan_wisuda)
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Ditangguhkan</span>
+                                        @elseif($bill->status === 'Lunas')
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Lunas</span>
+                                        @elseif($bill->status === 'Cicilan')
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Cicilan</span>
+                                        @else
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">Belum Bayar</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($student->bills->count() > 10)
+                    <p class="text-[11px] text-gray-400 mt-2 text-center">
+                        Menampilkan 10 dari {{ $student->bills->count() }} tagihan. 
+                        <a href="{{ route('admin.pembayaran.tagihan.index', ['q' => $student->nis]) }}" class="text-emerald-600 font-semibold hover:underline">Lihat semua &rarr;</a>
+                    </p>
+                    @endif
+                @else
+                <div class="rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-400 text-xs">
+                    Belum ada tagihan yang diterbitkan untuk santri ini.
+                    <a href="{{ route('admin.pembayaran.tagihan.index') }}" class="text-emerald-600 font-semibold hover:underline ml-1">Terbitkan Tagihan &rarr;</a>
+                </div>
+                @endif
+            </div>
+
+            <!-- 7. Riwayat Pembayaran Santri -->
+
             <div class="pt-4 border-t border-gray-100 page-break-avoid">
                 <div class="flex items-center justify-between pb-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 print-section-title" style="margin:0;padding:0;border:none;">6. Riwayat Pembayaran SPP &amp; Iuran</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 print-section-title" style="margin:0;padding:0;border:none;">7. Riwayat Pembayaran SPP &amp; Iuran</h4>
                     <a href="{{ route('admin.pembayaran.index', ['tab' => 'santri', 'q_santri' => $student->nis]) }}" class="text-xs font-semibold text-emerald-600 hover:underline no-print">
                         Lihat di Manajemen Pembayaran &rarr;
                     </a>

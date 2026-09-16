@@ -53,6 +53,7 @@ Route::post('/ujian/pelanggaran', [ExamController::class, 'logViolation'])->name
 Route::post('/ujian/selesai', [ExamController::class, 'submit'])->name('ujian.submit');
 Route::post('/ujian/ulang', [ExamController::class, 'retake'])->name('ujian.retake');
 Route::get('/ujian/hasil', [ExamController::class, 'result'])->name('ujian.result');
+Route::get('/ujian/cek-peserta', [ExamController::class, 'checkCandidate'])->name('ujian.checkCandidate');
 
 // Autentikasi Admin TailAdmin
 Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
@@ -106,23 +107,24 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/siswa-asrama/assign', [StudentController::class, 'asramaAssignStudent'])->name('siswa.asrama.assign');
     Route::post('/siswa-asrama/remove/{studentId}', [StudentController::class, 'asramaRemoveStudent'])->name('siswa.asrama.remove');
 
-    Route::get('/siswa/{id}', [StudentController::class, 'show'])->name('siswa.show');
-    Route::get('/siswa/{id}/edit', [StudentController::class, 'edit'])->name('siswa.edit');
-    Route::put('/siswa/{id}', [StudentController::class, 'update'])->name('siswa.update');
-    Route::delete('/siswa/{id}', [StudentController::class, 'destroy'])->name('siswa.destroy');
-    Route::post('/siswa/import-psb/{psbId}', [StudentController::class, 'importFromPsb'])->name('siswa.importPsb');
-
     // Mutasi Santri
     Route::get('/siswa/mutasi', [StudentController::class, 'mutasiIndex'])->name('siswa.mutasi.index');
     Route::post('/siswa/mutasi', [StudentController::class, 'mutasiStore'])->name('siswa.mutasi.store');
-    Route::delete('/siswa/mutasi/{id}', [StudentController::class, 'mutasiDestroy'])->name('siswa.mutasi.destroy');
+    Route::delete('/siswa/mutasi/{id}', [StudentController::class, 'mutasiDestroy'])->whereNumber('id')->name('siswa.mutasi.destroy');
     Route::get('/siswa/mutasi-search', [StudentController::class, 'mutasiSearch'])->name('siswa.mutasi.search');
+
+    Route::get('/siswa/{id}', [StudentController::class, 'show'])->whereNumber('id')->name('siswa.show');
+    Route::get('/siswa/{id}/edit', [StudentController::class, 'edit'])->whereNumber('id')->name('siswa.edit');
+    Route::put('/siswa/{id}', [StudentController::class, 'update'])->whereNumber('id')->name('siswa.update');
+    Route::delete('/siswa/{id}', [StudentController::class, 'destroy'])->whereNumber('id')->name('siswa.destroy');
+    Route::post('/siswa/import-psb/{psbId}', [StudentController::class, 'importFromPsb'])->whereNumber('psbId')->name('siswa.importPsb');
 
 
     // Manajemen Pembayaran & Keuangan (Hanya Superadmin & Bendahara)
     Route::middleware('role:superadmin,bendahara')->group(function () {
         Route::get('/pembayaran', [PaymentController::class, 'index'])->name('pembayaran.index');
         Route::post('/pembayaran/psb/{id}/verify', [PaymentController::class, 'psbVerify'])->name('pembayaran.psbVerify');
+        Route::post('/pembayaran/psb/bulk-verify', [PaymentController::class, 'psbBulkVerify'])->name('pembayaran.psbBulkVerify');
         Route::get('/pembayaran/psb/{id}/kwitansi', [PaymentController::class, 'kwitansiPsb'])->name('pembayaran.psb.kwitansi');
         Route::post('/pembayaran/santri', [PaymentController::class, 'storeStudentPayment'])->name('pembayaran.store');
         Route::post('/pembayaran/konfirmasi/{id}', [PaymentController::class, 'konfirmasiStudentPayment'])->name('pembayaran.konfirmasi');
@@ -137,6 +139,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
         // Kelola Tagihan & Penerbitan Tagihan (Bulanan & Tambahan Insidental)
         Route::get('/pembayaran-tagihan', [PaymentController::class, 'tagihanIndex'])->name('pembayaran.tagihan.index');
+        Route::get('/pembayaran-tagihan/template-excel', [StudentController::class, 'downloadTemplate'])->name('pembayaran.downloadTemplate');
+        Route::post('/pembayaran-tagihan/import-excel', [StudentController::class, 'importExcel'])->name('pembayaran.importExcel');
         Route::post('/pembayaran-tagihan/bulanan', [PaymentController::class, 'terbitkanTagihanBulanan'])->name('pembayaran.tagihan.bulanan');
         Route::post('/pembayaran-tagihan/tambahan', [PaymentController::class, 'terbitkanTagihanTambahan'])->name('pembayaran.tagihan.tambahan');
         Route::delete('/pembayaran-tagihan/{id}', [PaymentController::class, 'destroyBill'])->name('pembayaran.tagihan.destroy');
@@ -173,6 +177,17 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         // Laporan Arus Kas Terpadu (Cashflow Statement)
         Route::get('/arus-kas', [ExpenseController::class, 'cashflow'])->name('arusKas.index');
         Route::get('/arus-kas/export', [ExpenseController::class, 'exportCashflowExcel'])->name('arusKas.export');
+        Route::post('/arus-kas/transfer', [ExpenseController::class, 'cashTransferStore'])->name('arusKas.transferStore');
+        Route::delete('/arus-kas/transfer/{id}', [ExpenseController::class, 'cashTransferDestroy'])->name('arusKas.transferDestroy');
+        Route::post('/arus-kas/saldo-awal', [ExpenseController::class, 'saldoAwalStore'])->name('arusKas.saldoAwalStore');
+
+        // Laporan Keuangan Bulanan Resmi untuk Ketua Yayasan
+        Route::get('/laporan-yayasan', [ExpenseController::class, 'laporanYayasanIndex'])->name('laporanYayasan.index');
+        Route::get('/laporan-yayasan/cetak', [ExpenseController::class, 'laporanYayasanCetak'])->name('laporanYayasan.cetak');
+
+        // Master Tarif & Biaya Pendidikan (Daftar Ulang/Awal Masuk & SPP Bulanan)
+        Route::get('/pembayaran-tarif', [PaymentController::class, 'tarifIndex'])->name('pembayaran.tarif.index');
+        Route::post('/pembayaran-tarif', [PaymentController::class, 'tarifUpdate'])->name('pembayaran.tarif.update');
     });
 
     // Manajemen PSB (Hanya Superadmin & Admin Biasa)
@@ -184,6 +199,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/psb/{id}/foto-status', [AdminController::class, 'psbUpdateFotoStatus'])->name('psb.updateFotoStatus');
         Route::post('/psb/{id}/upload-foto', [AdminController::class, 'psbUploadFoto'])->name('psb.uploadFoto');
         Route::post('/psb/auto-verify', [AdminController::class, 'psbAutoVerifyAll'])->name('psb.autoVerify');
+        Route::post('/psb/bulk-verify', [PaymentController::class, 'psbBulkVerify'])->name('psb.bulkVerify');
         Route::post('/psb/auto-seleksi', [AdminController::class, 'psbAutoSeleksi'])->name('psb.autoSeleksi');
         Route::delete('/psb/{id}', [AdminController::class, 'psbDestroy'])->name('psb.destroy');
     });
@@ -207,12 +223,17 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/cbt/soal/{id}/edit', [AdminCbtController::class, 'soalEdit'])->name('cbt.soal.edit');
         Route::put('/cbt/soal/{id}', [AdminCbtController::class, 'soalUpdate'])->name('cbt.soal.update');
         Route::delete('/cbt/soal/{id}', [AdminCbtController::class, 'soalDestroy'])->name('cbt.soal.destroy');
+        Route::post('/cbt/soal/bulk-delete', [AdminCbtController::class, 'soalBulkDestroy'])->name('cbt.soal.bulkDestroy');
         Route::post('/cbt/soal/load-template', [AdminCbtController::class, 'loadTemplate'])->name('cbt.soal.loadTemplate');
 
         Route::get('/cbt/pengaturan', [AdminCbtController::class, 'pengaturan'])->name('cbt.pengaturan');
         Route::post('/cbt/pengaturan', [AdminCbtController::class, 'pengaturanUpdate'])->name('cbt.pengaturan.update');
         Route::get('/cbt/hasil', [AdminCbtController::class, 'hasilIndex'])->name('cbt.hasil.index');
+        Route::post('/cbt/hasil/toggle-publish', [AdminCbtController::class, 'togglePublishScores'])->name('cbt.hasil.togglePublish');
+        Route::get('/cbt/hasil/export-nilai', [AdminCbtController::class, 'exportNilai'])->name('cbt.hasil.exportNilai');
+        Route::get('/cbt/hasil/export-lulus', [AdminCbtController::class, 'exportLulus'])->name('cbt.hasil.exportLulus');
         Route::post('/cbt/hasil/{id}', [AdminCbtController::class, 'hasilUpdate'])->name('cbt.hasil.update');
+        Route::post('/cbt/hasil/{id}/reset', [AdminCbtController::class, 'resetUjian'])->name('cbt.hasil.reset');
         Route::post('/cbt/hasil-bulk-dongkrak', [AdminCbtController::class, 'bulkDongkrak'])->name('cbt.hasil.bulkDongkrak');
         Route::get('/cbt/dongkrak', [AdminCbtController::class, 'dongkrakIndex'])->name('cbt.dongkrak.index');
         Route::get('/cbt/cetak-soal', [AdminCbtController::class, 'cetakSoal'])->name('cbt.cetakSoal');

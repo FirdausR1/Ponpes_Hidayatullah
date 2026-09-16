@@ -213,6 +213,31 @@ $totalJumlahKwitansi = $payments->count();
 
             $sisaTunggakan = $tunggakanMap[$payment->student_id] ?? null;
             $saldoTabungan = $payment->student ? (float)$payment->student->saldo_tabungan : 0;
+
+            $stu = $payment->student;
+            $psb = $payment->psbRegistration;
+
+            $namaSantri = $stu ? ($stu->nama_lengkap ?? 'Santri') : ($psb ? ($psb->nama_lengkap ?? 'Calon Santri') : ($payment->penerima_nama ?: 'Santri'));
+            $kelasTeks = $stu 
+                ? (($stu->kelas ?? '—') . ' (' . ($stu->jenjang ?? 'MTs/MA') . ') • NIS: ' . ($stu->nis ?? '—'))
+                : ($psb 
+                    ? ('Calon Santri (' . ($psb->jenjang ?? 'MTs/MA') . ') • Reg: ' . ($psb->no_registrasi ?? '—')) 
+                    : '—');
+            $namaPenyetor = $stu 
+                ? ($stu->nama_wali ?: $stu->nama_lengkap) 
+                : ($psb 
+                    ? ($psb->nama_wali ?: ($psb->wali_nama ?: ($psb->ayah_nama ?: $psb->nama_lengkap))) 
+                    : ($payment->penerima_nama ?: 'Wali Santri'));
+            $alamatPenyetor = $stu 
+                ? ($stu->alamat ?: 'Pringsurat, Kab. Temanggung') 
+                : ($psb 
+                    ? ($psb->alamat_lengkap ?: ($psb->ayah_alamat ?: 'Pringsurat, Kab. Temanggung')) 
+                    : 'Pringsurat, Kab. Temanggung');
+            $noHpPenyetor = $stu 
+                ? ($stu->no_whatsapp ?: ($stu->no_hp ?: '—')) 
+                : ($psb 
+                    ? ($psb->no_whatsapp ?: ($psb->ayah_telepon ?: '—')) 
+                    : '—');
             @endphp
 
             <!-- LEMBAR SLIP KWITANSI -->
@@ -232,7 +257,7 @@ $totalJumlahKwitansi = $payments->count();
 
                     <div class="text-right flex flex-col items-end">
                         <div class="flex items-center gap-2 mb-0.5">
-                            <button type="button" onclick="downloadSingleMassSlip('receipt-slip-{{ $payment->id }}', '{{ $payment->no_transaksi }}', '{{ $payment->student->nama_lengkap ?? 'Santri' }}')" class="no-print inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition cursor-pointer" title="Download kwitansi ini sebagai file gambar PNG">
+                            <button type="button" onclick="downloadSingleMassSlip('receipt-slip-{{ $payment->id }}', '{{ $payment->no_transaksi }}', '{{ addslashes($namaSantri) }}')" class="no-print inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition cursor-pointer" title="Download kwitansi ini sebagai file gambar PNG">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                 <span>Unduh Gambar</span>
                             </button>
@@ -262,7 +287,7 @@ $totalJumlahKwitansi = $payments->count();
                             <span class="w-28 text-slate-700 font-semibold shrink-0">Nama Santri</span>
                             <span class="text-slate-400 shrink-0">:</span>
                             <span class="flex-1 font-bold text-slate-900 border-b border-dotted border-slate-400 pb-0.5 uppercase">
-                                {{ $payment->student->nama_lengkap ?? '—' }}
+                                {{ $namaSantri }}
                             </span>
                         </div>
 
@@ -271,7 +296,7 @@ $totalJumlahKwitansi = $payments->count();
                             <span class="w-28 text-slate-700 font-semibold shrink-0">Kelas</span>
                             <span class="text-slate-400 shrink-0">:</span>
                             <span class="flex-1 font-semibold text-slate-800 border-b border-dotted border-slate-400 pb-0.5">
-                                {{ $payment->student->kelas ?? '—' }} ({{ $payment->student->jenjang ?? 'MTs/MA' }}) &bull; NIS: {{ $payment->student->nis ?? '—' }}
+                                {{ $kelasTeks }}
                             </span>
                         </div>
 
@@ -295,7 +320,7 @@ $totalJumlahKwitansi = $payments->count();
                             <span class="w-28 text-slate-700 font-semibold shrink-0">{{ $isPenarikanTabungan ? 'Penerima Dana' : 'Nama Penyetor' }}</span>
                             <span class="text-slate-400 shrink-0">:</span>
                             <span class="flex-1 font-medium text-slate-900 border-b border-dotted border-slate-400 pb-0.5">
-                                {{ $payment->student->nama_wali ?: $payment->student->nama_lengkap }}
+                                {{ $namaPenyetor }}
                             </span>
                         </div>
 
@@ -304,7 +329,7 @@ $totalJumlahKwitansi = $payments->count();
                             <span class="w-28 text-slate-700 font-semibold shrink-0">Alamat</span>
                             <span class="text-slate-400 shrink-0">:</span>
                             <span class="flex-1 text-slate-700 border-b border-dotted border-slate-400 pb-0.5 truncate">
-                                {{ $payment->student->alamat ?: 'Pringsurat, Kab. Temanggung' }}
+                                {{ $alamatPenyetor }}
                             </span>
                         </div>
 
@@ -313,7 +338,7 @@ $totalJumlahKwitansi = $payments->count();
                             <span class="w-28 text-slate-700 font-semibold shrink-0">No. HP</span>
                             <span class="text-slate-400 shrink-0">:</span>
                             <span class="flex-1 font-mono text-slate-800 border-b border-dotted border-slate-400 pb-0.5">
-                                {{ $payment->student->no_whatsapp ?: ($payment->student->no_hp ?: '—') }}
+                                {{ $noHpPenyetor }}
                             </span>
                         </div>
 
@@ -362,7 +387,7 @@ $totalJumlahKwitansi = $payments->count();
                                     <span class="text-[10px] text-slate-300 italic">(Tanda Tangan)</span>
                                 </div>
                                 <div class="border-t border-dotted border-slate-600 pt-0.5 w-32 font-semibold text-slate-800 text-[10px] truncate">
-                                    {{ $payment->student->nama_wali ?: $payment->student->nama_lengkap }}
+                                    {{ $namaPenyetor }}
                                 </div>
                                 <span class="text-[9px] text-slate-500">Wali / Santri</span>
                             </div>

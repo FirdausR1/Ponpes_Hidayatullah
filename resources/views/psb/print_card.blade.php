@@ -130,23 +130,12 @@
         @if(($mode ?? 'cv') == 'cv' || ($mode ?? 'cv') == 'all')
         <div class="sheet">
             
-            <!-- KOP SURAT RESMI PESANTREN -->
-            <div class="flex items-center gap-4">
-                <div class="w-20 h-20 shrink-0 flex items-center justify-center">
-                    <img src="/logo.png" alt="Logo Pesantren" class="max-w-full max-h-full object-contain">
+            <!-- KOP SURAT RESMI PESANTREN (PONDOK TUKSONGO) -->
+            <div class="flex items-center justify-between gap-3 mb-1">
+                <div class="flex-1 flex items-center justify-center">
+                    <img src="/images/kop_psb.png" alt="Kop Surat Resmi Pondok Pesantren Hidayatullah Tuksongo" class="w-full max-h-24 sm:max-h-28 object-contain">
                 </div>
-                <div class="flex-1 text-center">
-                    <h4 class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">Yayasan Pondok Pesantren Hidayatullah Temanggung</h4>
-                    <h2 class="text-xl font-serif font-bold text-[#0d3b1e] tracking-wide uppercase">Pondok Pesantren Hidayatullah Tuksongo</h2>
-                    <p class="text-[11px] font-semibold text-slate-800 mt-0.5">
-                        Madrasah Tsanawiyah (MTs) &bull; Madrasah Aliyah (MA) Tahfidz & Sains Al-Qur'an
-                    </p>
-                    <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
-                        Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
-                        Hotline PSB / WhatsApp: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }} &bull; Website: ponpeshidayatullahtuksongo.com
-                    </p>
-                </div>
-                <div class="w-20 shrink-0 text-right">
+                <div class="w-20 shrink-0 text-right hidden sm:block">
                     <!-- Barcode / Reg Stamp -->
                     <div class="border border-slate-300 rounded p-1 text-center bg-slate-50">
                         <span class="text-[8px] font-mono text-slate-400 block">FORMULIR</span>
@@ -545,29 +534,19 @@
         <!-- ========================================== -->
         @if(($mode ?? 'cv') == 'ujian' || ($mode ?? 'cv') == 'all')
         @php
+            $publishScores = \App\Models\Setting::get('cbt_publish_scores', '0') === '1';
             $cbtKkm = (int) \App\Models\Setting::get('cbt_passing_grade', 70);
             $mapelList = $reg->nilai_per_mapel_array ?? [];
             $kelulusanStatus = $reg->status_kelulusan;
             $evaluasi = $reg->evaluasiSyaratPenerimaan();
         @endphp
         <div class="sheet">
-            <!-- KOP SURAT RESMI PESANTREN -->
-            <div class="flex items-center gap-4">
-                <div class="w-20 h-20 shrink-0 flex items-center justify-center">
-                    <img src="/logo.png" alt="Logo Pesantren" class="max-w-full max-h-full object-contain">
+            <!-- KOP SURAT RESMI PESANTREN (PONDOK TUKSONGO) -->
+            <div class="flex items-center justify-between gap-3 mb-1">
+                <div class="flex-1 flex items-center justify-center">
+                    <img src="/images/kop_psb.png" alt="Kop Surat Resmi Pondok Pesantren Hidayatullah Tuksongo" class="w-full max-h-24 sm:max-h-28 object-contain">
                 </div>
-                <div class="flex-1 text-center">
-                    <h4 class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">Yayasan Pondok Pesantren Hidayatullah Temanggung</h4>
-                    <h2 class="text-xl font-serif font-bold text-[#0d3b1e] tracking-wide uppercase">Pondok Pesantren Hidayatullah Tuksongo</h2>
-                    <p class="text-[11px] font-semibold text-slate-800 mt-0.5">
-                        Madrasah Tsanawiyah (MTs) &bull; Madrasah Aliyah (MA) Tahfidz & Sains Al-Qur'an
-                    </p>
-                    <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
-                        Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
-                        Hotline PSB / WhatsApp: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }} &bull; Website: ponpeshidayatullahtuksongo.com
-                    </p>
-                </div>
-                <div class="w-20 shrink-0 text-right">
+                <div class="w-20 shrink-0 text-right hidden sm:block">
                     <!-- Barcode / Reg Stamp -->
                     <div class="border border-slate-300 rounded p-1 text-center bg-slate-50">
                         <span class="text-[8px] font-mono text-slate-400 block">BERKAS CBT</span>
@@ -653,13 +632,28 @@
                             {{ $reg->bukti_transfer ? '✓ Terverifikasi Lunas (Rp 200.000)' : '✕ Belum Terunggah' }}
                         </td>
                         <td class="py-1 px-2.5 font-semibold text-slate-500 bg-slate-50/80">Hasil Akhir CBT</td>
-                        <td class="py-1 px-2.5 font-bold {{ ($reg->nilai_ujian ?? 0) >= $cbtKkm ? 'text-emerald-700' : 'text-rose-700' }}">
-                            Nilai: {{ $reg->nilai_ujian ?? 0 }} (KKM: {{ $cbtKkm }}) &bull; {{ $kelulusanStatus }}
+                        <td class="py-1 px-2.5 font-bold {{ $publishScores ? (($reg->nilai_ujian ?? 0) >= $cbtKkm ? 'text-emerald-700' : 'text-rose-700') : 'text-amber-700' }}">
+                            @if($publishScores)
+                                Nilai: {{ $reg->nilai_ujian ?? 0 }} (KKM: {{ $cbtKkm }}) &bull; {{ $kelulusanStatus }}
+                            @else
+                                🔒 Nilai Dirahasiakan (Menunggu Panitia)
+                            @endif
                         </td>
                     </tr>
                 </tbody>
             </table>
 
+            @if(!$publishScores)
+                <div class="p-6 my-4 rounded-xl border border-amber-300 bg-amber-50/70 text-center space-y-2">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 text-amber-800 mb-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <h4 class="text-sm font-bold text-amber-900">Lembar Nilai Ujian Masih Dirahasiakan</h4>
+                    <p class="text-xs text-amber-800 max-w-lg mx-auto leading-relaxed">
+                        Lembar jawaban santri telah terekam aman. Nilai dan status kelulusan saat ini belum dibuka oleh Panitia Seleksi dan akan diumumkan secara serentak.
+                    </p>
+                </div>
+            @else
             <!-- SCORE HIGHLIGHT OVERVIEW -->
             <div class="grid grid-cols-4 gap-2.5 mb-3 text-center">
                 <div class="p-2 border border-slate-200 rounded bg-slate-50">
@@ -740,6 +734,7 @@
                     </tbody>
                 </table>
             </div>
+            @endif
 
             <!-- CATATAN DEWAN PENGUJI & KEPUTUSAN -->
             <div class="mb-4 p-2.5 bg-slate-50 border border-slate-200 rounded text-[10.5px] leading-relaxed">

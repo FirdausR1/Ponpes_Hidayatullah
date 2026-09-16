@@ -126,6 +126,42 @@
         </div>
     @endif
 
+    <!-- BANNER SALDO KAS TUNAI VS REKENING BANK REAL-TIME -->
+    <div class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/60 via-white to-blue-50/60 p-4 sm:p-5 shadow-theme-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg shrink-0">
+                    💼
+                </span>
+                <div>
+                    <h3 class="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-wider">
+                        Ketersediaan Saldo Kas Operasional (Real-Time)
+                    </h3>
+                    <p class="text-[11px] text-gray-500">Saldo fisik di kasir/brankas dan rekening bank resmi saat ini (termasuk mutasi kas internal).</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-[11px] font-semibold text-emerald-800">Kas Tunai:</span>
+                    <span class="text-xs font-bold font-mono text-emerald-700">Rp {{ number_format($saldoKasTunai, 0, ',', '.') }}</span>
+                </div>
+                <div class="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <span class="text-[11px] font-semibold text-blue-800">Kas Bank:</span>
+                    <span class="text-xs font-bold font-mono text-blue-700">Rp {{ number_format($saldoKasBank, 0, ',', '.') }}</span>
+                </div>
+                <div class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white flex items-center gap-2 shadow-sm">
+                    <span class="text-[11px] font-semibold text-indigo-100">Total Likuid:</span>
+                    <span class="text-xs font-bold font-mono text-white">Rp {{ number_format($totalSaldoKas, 0, ',', '.') }}</span>
+                </div>
+                <a href="{{ route('admin.arusKas.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold shadow-theme-xs transition" title="Buka Arus Kas & Pindah Dana">
+                    <span>Mutasi Kas ➔</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- 4 KARTU STATISTIK KAS KELUAR -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Pengeluaran Bulan Ini (Total & Breakdown Jenjang) -->

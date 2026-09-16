@@ -169,6 +169,53 @@
             }
         }
 
+        @media (max-width: 600px) {
+            .exam-header {
+                padding: 8px 12px;
+            }
+            .brand-info img.calligraphy {
+                display: none;
+            }
+            .brand-info img.crest {
+                width: 28px;
+                height: 28px;
+            }
+            .timer-box {
+                font-size: 13px;
+                padding: 4px 8px;
+            }
+            .anti-cheat-badge {
+                padding: 3px 6px;
+                font-size: 10px;
+            }
+            .exam-container {
+                margin: 10px auto;
+                padding: 0 10px;
+                gap: 14px;
+            }
+            .question-card {
+                padding: 16px 12px;
+                border-radius: 12px;
+            }
+            .q-num {
+                font-size: 17px;
+            }
+            .q-text {
+                font-size: 14px;
+                line-height: 1.6;
+            }
+            .option-item {
+                padding: 10px 12px;
+            }
+            .option-label {
+                font-size: 13px;
+            }
+            .subject-banner {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+
         /* Question Area */
         .question-card {
             background: #ffffff;
@@ -572,7 +619,7 @@
                                     </div>
 
                                     <div class="q-text render-math {{ $q->is_arabic ? 'arabic-text' : '' }}">
-                                        {!! nl2br(e($q->soal)) !!}
+                                        {!! nl2br(e(\App\Models\Question::cleanFormattingText($q->soal))) !!}
                                     </div>
 
                                     @if(!empty($q->gambar))
@@ -619,7 +666,7 @@
                             </div>
 
                             <div class="q-text render-math {{ $q->is_arabic ? 'arabic-text' : '' }}">
-                                {!! nl2br(e($q->soal)) !!}
+                                {!! nl2br(e(\App\Models\Question::cleanFormattingText($q->soal))) !!}
                             </div>
 
                             @if(!empty($q->gambar))

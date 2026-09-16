@@ -156,8 +156,8 @@ class PaymentController extends Controller
         }
         $psbPayments = $psbQuery->paginate(15, ['*'], 'page_psb')->withQueryString();
 
-        // 3. Data Pembayaran SPP / Iuran Santri Aktif
-        $santriQuery = StudentPayment::with(['student', 'items'])->latest();
+        // 3. Data Pembayaran SPP / Iuran Santri Aktif & PSB
+        $santriQuery = StudentPayment::with(['student', 'items', 'psbRegistration'])->latest();
         if ($request->filled('q_santri')) {
             $q = $request->q_santri;
             $santriQuery->where(function($w) use ($q) {
@@ -191,9 +191,13 @@ class PaymentController extends Controller
         // Santri aktif untuk kasir
         $activeStudents = Student::where('status', 'Aktif')
             ->orderBy('nama_lengkap')
-            ->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang', 'kamar_asrama', 'foto'])
+            ->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang', 'kamar_asrama', 'foto', 'dormitory_id'])
             ->map(function ($s) {
                 $s->saldo_tabungan = $s->saldo_tabungan; // Append property dynamically
+                $s->hunian = $s->hunian;
+                $s->jenjang_short = $s->jenjang_short;
+                $s->kategori_label = $s->kategori_label;
+                $s->tarif_bulanan = $s->tarif_bulanan;
                 return $s;
             });
 
@@ -372,21 +376,43 @@ class PaymentController extends Controller
     }
 
     /**
-     * AJAX: Ambil data calon santri baru PSB untuk Kasir POS.
+     * AJAX: Ambil data calon santri baru PSB untuk Kasir POS (Sesuai Struktur Tarif Resmi).
      */
     public function getPsbBillsAjax($psbId)
     {
         $psb = PsbRegistration::findOrFail($psbId);
-        $standardNominal = 3225000;
-        $terbayar = floatval($psb->nominal_pembayaran ?? 0);
-        $sisa = max(0, $standardNominal - $terbayar);
+        $tarif = PsbRegistration::getTarifBreakdown($psb->jenjang);
+
+        $biayaPendaftaran = $tarif['biaya_pendaftaran'];
+        $pendaftaranLunas = ($psb->status_pembayaran === 'Lunas');
+
+        // Total biaya masuk dan sisa tagihan daftar ulang
+        $totalMasuk = $tarif['total_biaya_masuk'];
+        $standardDaftarUlang = $tarif['sisa_daftar_ulang'];
+
+        // Cek pembayaran daftar ulang yang sudah tercatat di StudentPayment (di luar pendaftaran 200rb)
+        $payments = StudentPayment::where('psb_registration_id', $psb->id)
+            ->where('status', 'Lunas')
+            ->get();
+        
+        $terbayarDaftarUlang = (float) $payments->where('jenis_pembayaran', '!=', 'BIAYA PENDAFTARAN PSB')->sum('nominal');
+        $sisaDaftarUlang = max(0, $standardDaftarUlang - $terbayarDaftarUlang);
 
         return response()->json([
             'psb' => $psb,
-            'standard_nominal' => $standardNominal,
-            'terbayar' => $terbayar,
-            'sisa' => $sisa,
-            'status_pembayaran' => $psb->status_pembayaran ?: ($terbayar > 0 ? 'Cicilan' : 'Belum Bayar'),
+            'tarif' => $tarif,
+            'jenjang_label' => $tarif['kategori_label'],
+            'hunian' => $tarif['hunian'],
+            'jenjang_short' => $tarif['jenjang_short'],
+            'total_biaya_masuk' => $totalMasuk,
+            'biaya_pendaftaran' => $biayaPendaftaran,
+            'pendaftaran_lunas' => $pendaftaranLunas,
+            'standard_nominal' => $standardDaftarUlang,
+            'terbayar' => $terbayarDaftarUlang,
+            'sisa' => $sisaDaftarUlang,
+            'status_pembayaran' => $sisaDaftarUlang <= 0 ? 'Lunas' : ($terbayarDaftarUlang > 0 ? 'Cicilan' : 'Belum Bayar'),
+            'items_daftar_ulang' => $tarif['items_daftar_ulang'],
+            'items_bulanan' => $tarif['items_bulanan'],
         ]);
     }
 
@@ -424,22 +450,27 @@ class PaymentController extends Controller
         // ==========================================
         if ($request->filled('psb_id') || $request->input('payment_type') === 'psb') {
             $reg = PsbRegistration::findOrFail($request->psb_id);
-            $nominalBayar = floatval($request->input('psb_nominal', $request->input('single_nominal', 3225000)));
+            $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
+            $standardPsb = $tarif['sisa_daftar_ulang'];
+            $nominalBayar = floatval($request->input('psb_nominal', $request->input('single_nominal', $standardPsb)));
 
             if ($nominalBayar <= 0) {
                 return redirect()->back()->with('error', 'Masukkan nominal pembayaran PSB yang valid!');
             }
 
-            $standardPsb = 3225000;
-            $currentNominal = floatval($reg->nominal_pembayaran ?? 0) + $nominalBayar;
-            $statusBayar = $currentNominal >= $standardPsb ? 'Lunas' : 'Cicilan';
+            // Hitung total terbayar daftar ulang
+            $prevDaftarUlang = StudentPayment::where('psb_registration_id', $reg->id)
+                ->where('status', 'Lunas')
+                ->where('jenis_pembayaran', '!=', 'BIAYA PENDAFTARAN PSB')
+                ->sum('nominal');
+
+            $totalTerbayarDaftarUlang = $prevDaftarUlang + $nominalBayar;
+            $statusBayar = $totalTerbayarDaftarUlang >= $standardPsb ? 'Lunas' : 'Cicilan';
 
             $reg->update([
-                'status_pembayaran' => $statusBayar,
-                'nominal_pembayaran' => $currentNominal,
                 'tanggal_bayar' => $validated['tanggal_bayar'],
                 'metode_pembayaran' => $validated['metode_pembayaran'],
-                'catatan_pembayaran' => $validated['catatan'] ?: 'Pembayaran Administrasi & Daftar Ulang PSB',
+                'catatan_pembayaran' => $validated['catatan'] ?: "Pembayaran Daftar Ulang PSB ({$tarif['kategori_label']})",
                 'bukti_transfer' => $buktiPath ?: $reg->bukti_transfer,
             ]);
 
@@ -456,7 +487,7 @@ class PaymentController extends Controller
                 'psb_registration_id' => $reg->id,
                 'user_id' => auth()->id(),
                 'no_transaksi' => $noTransaksi,
-                'jenis_pembayaran' => 'PENDAFTARAN & DAFTAR ULANG PSB',
+                'jenis_pembayaran' => 'DAFTAR ULANG PSB (' . strtoupper($tarif['hunian']) . ')',
                 'bulan' => null,
                 'tahun' => date('Y'),
                 'nominal' => $nominalBayar,
@@ -464,20 +495,40 @@ class PaymentController extends Controller
                 'metode_pembayaran' => $validated['metode_pembayaran'],
                 'status' => 'Lunas',
                 'bukti_bayar' => $buktiPath,
-                'catatan' => ($validated['catatan'] ?? null) ?: "Pembayaran Masuk PSB: {$reg->no_registrasi}",
+                'catatan' => ($validated['catatan'] ?? null) ?: "Pembayaran Daftar Ulang: {$reg->no_registrasi} - {$reg->nama_lengkap} ({$tarif['kategori_label']})",
                 'penerima_nama' => auth()->user()->name ?? 'Bendahara Pesantren',
             ]);
 
-            StudentPaymentItem::create([
+            $item = StudentPaymentItem::create([
                 'payment_id' => $payment->id,
-                'pos_biaya' => 'PENDAFTARAN',
+                'pos_biaya' => 'DAFTAR ULANG',
                 'nominal' => $nominalBayar,
-                'keterangan' => "PSB: {$reg->no_registrasi} - {$reg->nama_lengkap}",
+                'keterangan' => "PSB: {$reg->no_registrasi} - {$reg->nama_lengkap} ({$tarif['kategori_label']})",
             ]);
+
+            // Jika santri sudah aktif, sinkronkan ke StudentBill miliknya
+            if ($student) {
+                $bill = StudentBill::where('student_id', $student->id)
+                    ->where(function ($q) {
+                        $q->where('pos_biaya', 'DAFTAR ULANG')
+                          ->orWhere('pos_biaya', 'like', '%DAFTAR ULANG%')
+                          ->orWhere('kategori', 'daftar_ulang');
+                    })
+                    ->first();
+
+                if ($bill) {
+                    $bill->nominal_bayar += $nominalBayar;
+                    $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $bill->nominal_bayar);
+                    $bill->status = $bill->sisa_tagihan <= 0 ? 'Lunas' : 'Cicilan';
+                    $bill->save();
+
+                    $item->update(['student_bill_id' => $bill->id]);
+                }
+            }
 
             $fmtNominal = 'Rp ' . number_format($nominalBayar, 0, ',', '.');
             return redirect()->route('admin.pembayaran.index', ['tab' => 'kasir'])
-                ->with('success', "Pembayaran PSB sebesar {$fmtNominal} untuk {$reg->nama_lengkap} ({$reg->no_registrasi}) berhasil dicatat. No. Kwitansi: {$noTransaksi}")
+                ->with('success', "Pembayaran Daftar Ulang ({$tarif['kategori_label']}) sebesar {$fmtNominal} untuk {$reg->nama_lengkap} ({$reg->no_registrasi}) berhasil dicatat. No. Kwitansi: {$noTransaksi}")
                 ->with('last_payment_id', $payment->id)
                 ->with('last_psb_id', $reg->id);
         }
@@ -797,21 +848,37 @@ class PaymentController extends Controller
             return redirect()->back()->with('error', 'Tidak ada santri aktif yang ditemukan untuk jenjang tersebut.');
         }
 
-        // Ambil tarif bulanan default
-        // MTs Mukim: Makan 300.000, Syahriyah 85.000, Tabungan 25.000, SOT 55.000
-        // MTs Laju: Makan 0, Syahriyah 55.000, Tabungan 25.000, SOT 55.000
-        // MA Mukim: Makan 300.000, Syahriyah 105.000, Tabungan 25.000, SOT 75.000
-        // MA Laju: Makan 0, Syahriyah 75.000, Tabungan 25.000, SOT 75.000
+        // Ambil tarif bulanan dinamis dari Pengaturan Master Tarif
+        $rawBiayaBulanan = Setting::get('biaya_bulanan_json');
+        $biayaBulananList = json_decode($rawBiayaBulanan ?? '[]', true) ?: [];
         $createdCount = 0;
 
         foreach ($students as $st) {
             $isMukim = !empty($st->kamar_asrama) && !str_contains(strtolower($st->kamar_asrama), 'laju');
             $isMA = strtoupper($st->jenjang ?? '') === 'MA' || str_contains(strtoupper($st->jenjang ?? ''), 'MA');
+            $fieldKey = ($isMA ? 'ma_' : 'mts_') . ($isMukim ? 'mukim' : 'laju');
 
             $tarifMakan = $isMukim ? 300000 : 0;
             $tarifSyahriyah = $isMA ? ($isMukim ? 105000 : 75000) : ($isMukim ? 85000 : 55000);
             $tarifTabungan = 25000;
             $tarifSot = $isMA ? 75000 : 55000;
+
+            if (!empty($biayaBulananList)) {
+                foreach ($biayaBulananList as $bRow) {
+                    if (!empty($bRow['is_total'])) continue;
+                    $komp = strtolower($bRow['komponen'] ?? '');
+                    $valNom = (float) preg_replace('/[^0-9]/', '', $bRow[$fieldKey] ?? '0');
+                    if (str_contains($komp, 'makan')) {
+                        $tarifMakan = $valNom;
+                    } elseif (str_contains($komp, 'syahriyah') || str_contains($komp, 'spp') || str_contains($komp, 'pendidikan')) {
+                        $tarifSyahriyah = $valNom;
+                    } elseif (str_contains($komp, 'tabungan')) {
+                        $tarifTabungan = $valNom;
+                    } elseif (str_contains($komp, 'sot')) {
+                        $tarifSot = $valNom;
+                    }
+                }
+            }
 
             // Cek apakah ada potongan / beasiswa / SKTM aktif untuk santri ini
             $discounts = StudentDiscount::where('student_id', $st->id)
@@ -1766,7 +1833,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Verifikasi Pembayaran Calon Santri PSB (Mendukung Cash/Tunai & Upload Bukti oleh Admin).
+     * Verifikasi Pembayaran Calon Santri PSB (Mendukung Cash/Tunai, Transfer & Sinkronisasi ke Transaksi Kasir).
      */
     public function psbVerify(Request $request, $id)
     {
@@ -1778,6 +1845,8 @@ class PaymentController extends Controller
         if ($request->filled('nominal_pembayaran')) {
             $cleanNominal = preg_replace('/[^0-9]/', '', $request->nominal_pembayaran);
             $data['nominal_pembayaran'] = (float) $cleanNominal;
+        } else {
+            $data['nominal_pembayaran'] = floatval($reg->nominal_pembayaran) > 0 ? floatval($reg->nominal_pembayaran) : 200000;
         }
 
         if ($request->filled('metode_pembayaran')) {
@@ -1804,12 +1873,163 @@ class PaymentController extends Controller
 
         $reg->update($data);
 
-        $metode = $data['metode_pembayaran'] ?? $reg->metode_pembayaran ?? 'Tunai';
+        $metode = $data['metode_pembayaran'] ?? $reg->metode_pembayaran ?? 'Transfer Bank';
+        $tglBayar = $data['tanggal_bayar'] ?? ($reg->tanggal_bayar ?: date('Y-m-d'));
+        $nominalBayar = $data['nominal_pembayaran'];
+
+        // Sinkronisasi ke tabel transaksi pembayaran (StudentPayment) sehingga masuk ke buku kas / keuangan
+        if ($status === 'Lunas') {
+            $student = Student::where('psb_registration_id', $reg->id)->first();
+            $existingPayment = StudentPayment::where('psb_registration_id', $reg->id)
+                ->where(function($q) {
+                    $q->where('jenis_pembayaran', 'like', '%PENDAFTARAN%')
+                      ->orWhere('jenis_pembayaran', 'like', '%PSB%');
+                })->first();
+
+            if ($existingPayment) {
+                $existingPayment->update([
+                    'nominal' => $nominalBayar,
+                    'tanggal_bayar' => $tglBayar,
+                    'metode_pembayaran' => $metode,
+                    'status' => 'Lunas',
+                    'catatan' => $data['catatan_pembayaran'] ?? "Biaya Pendaftaran PSB: {$reg->no_registrasi} - {$reg->nama_lengkap}",
+                    'penerima_nama' => auth()->user()->name ?? 'Panitia PSB & Bendahara',
+                ]);
+            } else {
+                $todayPrefix = 'BYR-' . date('Ymd');
+                $lastCount = StudentPayment::where('no_transaksi', 'like', "{$todayPrefix}%")->count() + 1;
+                $noTransaksi = $todayPrefix . '-' . str_pad($lastCount, 4, '0', STR_PAD_LEFT);
+
+                StudentPayment::create([
+                    'student_id' => $student?->id,
+                    'psb_registration_id' => $reg->id,
+                    'user_id' => auth()->id(),
+                    'no_transaksi' => $noTransaksi,
+                    'jenis_pembayaran' => 'BIAYA PENDAFTARAN PSB',
+                    'bulan' => null,
+                    'tahun' => date('Y'),
+                    'nominal' => $nominalBayar,
+                    'tanggal_bayar' => $tglBayar,
+                    'metode_pembayaran' => $metode,
+                    'status' => 'Lunas',
+                    'bukti_bayar' => $data['bukti_transfer'] ?? $reg->bukti_transfer,
+                    'catatan' => $data['catatan_pembayaran'] ?? "Biaya Pendaftaran PSB: {$reg->no_registrasi} - {$reg->nama_lengkap}",
+                    'penerima_nama' => auth()->user()->name ?? 'Panitia PSB & Bendahara',
+                ]);
+            }
+        } else {
+            StudentPayment::where('psb_registration_id', $reg->id)
+                ->where('jenis_pembayaran', 'like', '%PENDAFTARAN%')
+                ->update(['status' => 'Batal']);
+        }
+
+        $fmtNominal = 'Rp ' . number_format($nominalBayar, 0, ',', '.');
         $msg = $status === 'Lunas' 
-            ? "Pembayaran PSB ({$metode}) untuk {$reg->nama_lengkap} ({$reg->no_registrasi}) berhasil diverifikasi."
+            ? "Pembayaran Pendaftaran PSB ({$fmtNominal} - {$metode}) untuk {$reg->nama_lengkap} ({$reg->no_registrasi}) berhasil diverifikasi & dicatat ke kasir."
             : "Status pembayaran {$reg->nama_lengkap} diubah menjadi Belum Lunas.";
 
         return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * Verifikasi Masal (Bulk Verify) Pembayaran Calon Santri PSB.
+     * Mendukung verifikasi santri terpilih (checkbox) maupun verifikasi seluruh pendaftar yang mengunggah bukti transfer.
+     */
+    public function psbBulkVerify(Request $request)
+    {
+        $mode = $request->input('mode', 'selected');
+        $ids = $request->input('ids', []);
+        $metode = $request->input('metode_pembayaran', 'Transfer Bank');
+        $tglBayar = $request->input('tanggal_bayar', date('Y-m-d'));
+        $nominalBayar = 200000;
+
+        if ($request->filled('nominal_pembayaran')) {
+            $cleanNominal = preg_replace('/[^0-9]/', '', $request->nominal_pembayaran);
+            if (!empty($cleanNominal)) {
+                $nominalBayar = (float) $cleanNominal;
+            }
+        }
+
+        $query = PsbRegistration::query();
+
+        if ($mode === 'all_with_proof') {
+            $query->whereNotNull('bukti_transfer')
+                  ->where('bukti_transfer', '!=', '')
+                  ->where(function($q) {
+                      $q->where('status_pembayaran', '!=', 'Lunas')
+                        ->orWhereNull('status_pembayaran');
+                  });
+        } else {
+            if (empty($ids) || !is_array($ids)) {
+                return redirect()->back()->with('error', 'Pilih minimal satu calon santri dengan mencentang kotak untuk diverifikasi masal.');
+            }
+            $query->whereIn('id', $ids);
+        }
+
+        $registrations = $query->get();
+
+        if ($registrations->isEmpty()) {
+            return redirect()->back()->with('info', 'Tidak ada calon santri yang perlu diverifikasi pada pilihan ini.');
+        }
+
+        $count = 0;
+        $totalNominal = 0;
+        $todayPrefix = 'BYR-' . date('Ymd');
+        $lastCount = StudentPayment::where('no_transaksi', 'like', "{$todayPrefix}%")->count();
+
+        foreach ($registrations as $reg) {
+            $reg->update([
+                'status_pembayaran' => 'Lunas',
+                'nominal_pembayaran' => $nominalBayar,
+                'metode_pembayaran' => $metode,
+                'tanggal_bayar' => $tglBayar,
+                'catatan_pembayaran' => $reg->catatan_pembayaran ?: "Verifikasi Masal Pembayaran PSB 200rb",
+            ]);
+
+            $student = Student::where('psb_registration_id', $reg->id)->first();
+            $existingPayment = StudentPayment::where('psb_registration_id', $reg->id)
+                ->where(function($q) {
+                    $q->where('jenis_pembayaran', 'like', '%PENDAFTARAN%')
+                      ->orWhere('jenis_pembayaran', 'like', '%PSB%');
+                })->first();
+
+            if ($existingPayment) {
+                $existingPayment->update([
+                    'nominal' => $nominalBayar,
+                    'tanggal_bayar' => $tglBayar,
+                    'metode_pembayaran' => $metode,
+                    'status' => 'Lunas',
+                    'catatan' => "Biaya Pendaftaran PSB: {$reg->no_registrasi} - {$reg->nama_lengkap}",
+                    'penerima_nama' => auth()->user()->name ?? 'Panitia PSB & Bendahara',
+                ]);
+            } else {
+                $lastCount++;
+                $noTransaksi = $todayPrefix . '-' . str_pad($lastCount, 4, '0', STR_PAD_LEFT);
+
+                StudentPayment::create([
+                    'student_id' => $student?->id,
+                    'psb_registration_id' => $reg->id,
+                    'user_id' => auth()->id(),
+                    'no_transaksi' => $noTransaksi,
+                    'jenis_pembayaran' => 'BIAYA PENDAFTARAN PSB',
+                    'bulan' => null,
+                    'tahun' => date('Y'),
+                    'nominal' => $nominalBayar,
+                    'tanggal_bayar' => $tglBayar,
+                    'metode_pembayaran' => $metode,
+                    'status' => 'Lunas',
+                    'bukti_bayar' => $reg->bukti_transfer,
+                    'catatan' => "Biaya Pendaftaran PSB: {$reg->no_registrasi} - {$reg->nama_lengkap}",
+                    'penerima_nama' => auth()->user()->name ?? 'Panitia PSB & Bendahara',
+                ]);
+            }
+
+            $count++;
+            $totalNominal += $nominalBayar;
+        }
+
+        $fmtTotal = 'Rp ' . number_format($totalNominal, 0, ',', '.');
+        return redirect()->back()->with('success', "✓ Berhasil memverifikasi masal {$count} calon santri (Total {$fmtTotal} - {$metode})! Seluruh data otomatis lunas dan tercatat di kasir.");
     }
 
     /**
@@ -1818,20 +2038,28 @@ class PaymentController extends Controller
     public function kwitansiPsb($id)
     {
         $reg = PsbRegistration::findOrFail($id);
+        $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
 
-        $nominalBayar = floatval($reg->nominal_pembayaran ?: 3225000);
-        $jenjangStr = strtoupper($reg->jenjang ?? '');
-        $standardNominal = ($jenjangStr === 'MA') ? 3315000 : 3225000;
+        $nominalBayar = floatval($reg->nominal_pembayaran ?: 200000);
+        $standardNominal = $tarif['total_biaya_masuk'];
 
         $items = collect();
         $sisaTunggakanSantri = 0;
         $catatanKwitansi = $reg->catatan_pembayaran;
 
-        // Cek apakah status pembayaran Cicilan atau Lunas dengan Potongan
-        if ($reg->status_pembayaran === 'Cicilan' && $nominalBayar < $standardNominal) {
+        // Cek apakah pembayaran khusus Pendaftaran (200rb) atau Daftar Ulang
+        if ($nominalBayar <= $tarif['biaya_pendaftaran']) {
+            $items->push((object)[
+                'pos_biaya' => 'BIAYA PENDAFTARAN PSB (' . strtoupper($tarif['jenjang_short']) . ' ' . strtoupper($tarif['hunian']) . ')',
+                'nominal' => $nominalBayar,
+            ]);
+            if (empty($catatanKwitansi)) {
+                $catatanKwitansi = "Biaya Formulir & Pendaftaran PSB TA 2026/2027 ({$tarif['kategori_label']})";
+            }
+        } elseif ($reg->status_pembayaran === 'Cicilan' && $nominalBayar < $standardNominal) {
             $sisaTunggakanSantri = max(0, $standardNominal - $nominalBayar);
             $items->push((object)[
-                'pos_biaya' => 'PENDAFTARAN & DAFTAR ULANG PSB (ANGSURAN / CICILAN)',
+                'pos_biaya' => 'DAFTAR ULANG PSB (' . strtoupper($tarif['kategori_label']) . ') - ANGSURAN',
                 'nominal' => $nominalBayar,
             ]);
             if (empty($catatanKwitansi)) {
@@ -1855,7 +2083,7 @@ class PaymentController extends Controller
             $labelPotongan = !empty($alasanPotongan) ? ' (' . implode(', ', $alasanPotongan) . ')' : '';
 
             $items->push((object)[
-                'pos_biaya' => 'DAFTAR ULANG PSB (TARIF STANDAR)',
+                'pos_biaya' => 'DAFTAR ULANG PSB (' . strtoupper($tarif['kategori_label']) . ')',
                 'nominal' => $standardNominal,
             ]);
             $items->push((object)[
@@ -1868,7 +2096,7 @@ class PaymentController extends Controller
             }
         } else {
             $items->push((object)[
-                'pos_biaya' => 'PENDAFTARAN & DAFTAR ULANG PSB',
+                'pos_biaya' => 'PENDAFTARAN & DAFTAR ULANG PSB (' . strtoupper($tarif['kategori_label']) . ')',
                 'nominal' => $nominalBayar,
             ]);
             if (empty($catatanKwitansi)) {
@@ -1990,7 +2218,7 @@ class PaymentController extends Controller
      */
     public function kwitansi($id)
     {
-        $payment = StudentPayment::with(['student.classroom', 'items.bill', 'user'])->findOrFail($id);
+        $payment = StudentPayment::with(['student.classroom', 'psbRegistration', 'items.bill', 'user'])->findOrFail($id);
 
         // Hitung total sisa tunggakan santri setelah pembayaran ini
         $sisaTunggakanSantri = StudentBill::where('student_id', $payment->student_id)
@@ -2008,7 +2236,7 @@ class PaymentController extends Controller
      */
     private function buildPaymentFilterQuery(Request $request)
     {
-        $query = StudentPayment::with(['student.classroom', 'items.bill', 'user'])->latest('tanggal_bayar')->latest('id');
+        $query = StudentPayment::with(['student.classroom', 'psbRegistration', 'items.bill', 'user'])->latest('tanggal_bayar')->latest('id');
 
         // Filter jika user mencentang kwitansi tertentu dari tabel riwayat (checkbox IDs)
         if ($request->filled('ids')) {
@@ -2800,4 +3028,95 @@ class PaymentController extends Controller
 
         return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
     }
+
+    /**
+     * Halaman Master Tarif & Biaya Pendidikan (Daftar Ulang & SPP Bulanan)
+     * Dapat diakses dan diatur langsung oleh Bendahara & Superadmin.
+     */
+    public function tarifIndex()
+    {
+        $defaultBiayaAwal = [
+            ['komponen' => 'Santri Baru KTS', 'mts_mukim' => 'Rp 60.000', 'mts_laju' => 'Rp 60.000', 'ma_mukim' => 'Rp 60.000', 'ma_laju' => 'Rp 60.000', 'is_total' => false],
+            ['komponen' => 'Pangkal Masuk', 'mts_mukim' => 'Rp 1.200.000', 'mts_laju' => 'Rp 1.500.000', 'ma_mukim' => 'Rp 1.400.000', 'ma_laju' => 'Rp 1.800.000', 'is_total' => false],
+            ['komponen' => 'Kertas @ 1 TH', 'mts_mukim' => 'Rp 200.000', 'mts_laju' => 'Rp 200.000', 'ma_mukim' => 'Rp 200.000', 'ma_laju' => 'Rp 200.000', 'is_total' => false],
+            ['komponen' => 'Syahriah Juli', 'mts_mukim' => 'Rp 410.000', 'mts_laju' => 'Rp 80.000', 'ma_mukim' => 'Rp 430.000', 'ma_laju' => 'Rp 100.000', 'is_total' => false],
+            ['komponen' => 'Kesehatan @ 1 TH', 'mts_mukim' => 'Rp 200.000', 'mts_laju' => 'Rp 200.000', 'ma_mukim' => 'Rp 200.000', 'ma_laju' => 'Rp 200.000', 'is_total' => false],
+            ['komponen' => 'Kegiatan @ 1 TH', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => 'Rp 300.000', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => 'Rp 300.000', 'is_total' => false],
+            ['komponen' => 'Pembelian Almari', 'mts_mukim' => 'Rp 350.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 350.000', 'ma_laju' => '—', 'is_total' => false],
+            ['komponen' => 'Uang Gedung', 'mts_mukim' => 'Rp 500.000', 'mts_laju' => 'Rp 500.000', 'ma_mukim' => 'Rp 500.000', 'ma_laju' => 'Rp 500.000', 'is_total' => false],
+            ['komponen' => 'Biaya Pendaftaran PSB', 'mts_mukim' => 'Rp 200.000', 'mts_laju' => 'Rp 200.000', 'ma_mukim' => 'Rp 200.000', 'ma_laju' => 'Rp 200.000', 'is_total' => false],
+            ['komponen' => 'TOTAL BIAYA AWAL MASUK', 'mts_mukim' => 'Rp 3.420.000', 'mts_laju' => 'Rp 3.040.000', 'ma_mukim' => 'Rp 3.640.000', 'ma_laju' => 'Rp 3.360.000', 'is_total' => true],
+        ];
+
+        $defaultBiayaBulanan = [
+            ['komponen' => 'Uang Makan 3x Sehari', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => '—', 'is_total' => false],
+            ['komponen' => 'Syahriyah Pendidikan', 'mts_mukim' => 'Rp 85.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 105.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
+            ['komponen' => 'Tabungan Wajib Santri', 'mts_mukim' => 'Rp 25.000', 'mts_laju' => 'Rp 25.000', 'ma_mukim' => 'Rp 25.000', 'ma_laju' => 'Rp 25.000', 'is_total' => false],
+            ['komponen' => 'TOTAL IURAN BULANAN', 'mts_mukim' => 'Rp 410.000 / bln', 'mts_laju' => 'Rp 80.000 / bln', 'ma_mukim' => 'Rp 430.000 / bln', 'ma_laju' => 'Rp 100.000 / bln', 'is_total' => true],
+        ];
+
+        $biayaAwal = json_decode(Setting::get('biaya_awal_json', 'null'), true) ?: $defaultBiayaAwal;
+        $biayaBulanan = json_decode(Setting::get('biaya_bulanan_json', 'null'), true) ?: $defaultBiayaBulanan;
+
+        return view('admin.pembayaran.tarif', compact('biayaAwal', 'biayaBulanan'));
+    }
+
+    /**
+     * Simpan perubahan master tarif biaya pendidikan yang diatur oleh Bendahara.
+     */
+    public function tarifUpdate(Request $request)
+    {
+        // 1. Simpan Tabel Biaya Awal Masuk (Daftar Ulang)
+        if ($request->has('biaya_awal_komponen')) {
+            $biayaAwalList = [];
+            $kArr = (array) $request->biaya_awal_komponen;
+            $mmArr = (array) $request->biaya_awal_mts_mukim;
+            $mlArr = (array) $request->biaya_awal_mts_laju;
+            $amArr = (array) $request->biaya_awal_ma_mukim;
+            $alArr = (array) $request->biaya_awal_ma_laju;
+            $totArr = (array) $request->biaya_awal_is_total;
+
+            for ($i = 0; $i < count($kArr); $i++) {
+                if (!empty(trim($kArr[$i]))) {
+                    $biayaAwalList[] = [
+                        'komponen' => trim($kArr[$i]),
+                        'mts_mukim' => trim($mmArr[$i] ?? '—'),
+                        'mts_laju' => trim($mlArr[$i] ?? '—'),
+                        'ma_mukim' => trim($amArr[$i] ?? '—'),
+                        'ma_laju' => trim($alArr[$i] ?? '—'),
+                        'is_total' => !empty($totArr[$i]),
+                    ];
+                }
+            }
+            Setting::set('biaya_awal_json', json_encode($biayaAwalList, JSON_PRETTY_PRINT), 'biaya');
+        }
+
+        // 2. Simpan Tabel Biaya Bulanan (SPP & Makan)
+        if ($request->has('biaya_bulanan_komponen')) {
+            $biayaBulananList = [];
+            $kArr = (array) $request->biaya_bulanan_komponen;
+            $mmArr = (array) $request->biaya_bulanan_mts_mukim;
+            $mlArr = (array) $request->biaya_bulanan_mts_laju;
+            $amArr = (array) $request->biaya_bulanan_ma_mukim;
+            $alArr = (array) $request->biaya_bulanan_ma_laju;
+            $totArr = (array) $request->biaya_bulanan_is_total;
+
+            for ($i = 0; $i < count($kArr); $i++) {
+                if (!empty(trim($kArr[$i]))) {
+                    $biayaBulananList[] = [
+                        'komponen' => trim($kArr[$i]),
+                        'mts_mukim' => trim($mmArr[$i] ?? '—'),
+                        'mts_laju' => trim($mlArr[$i] ?? '—'),
+                        'ma_mukim' => trim($amArr[$i] ?? '—'),
+                        'ma_laju' => trim($alArr[$i] ?? '—'),
+                        'is_total' => !empty($totArr[$i]),
+                    ];
+                }
+            }
+            Setting::set('biaya_bulanan_json', json_encode($biayaBulananList, JSON_PRETTY_PRINT), 'biaya');
+        }
+
+        return redirect()->route('admin.pembayaran.tarif.index')->with('success', 'Master Tarif & Biaya Pendidikan berhasil diperbarui! Perubahan nominal langsung aktif di landing page /biaya, pendaftaran PSB online, perhitungan kasir, dan penagihan santri.');
+    }
 }
+

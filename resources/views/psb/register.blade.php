@@ -178,10 +178,10 @@
                             </label>
                             <p class="text-xs text-slate-500 mb-2">Tersedia pilihan mukim di asrama pesantren atau laju bagi santri sekitar kampus.</p>
                             <select id="jenjangSelect" name="jenjang" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-pondok-500 outline-none transition">
-                                <option value="MTs Mukim" {{ old('jenjang') == 'MTs Mukim' ? 'selected' : '' }}>MTs (SMP Islam) — Mukim (Tinggal di Asrama Pesantren)</option>
-                                <option value="MTs Laju" {{ old('jenjang') == 'MTs Laju' ? 'selected' : '' }}>MTs (SMP Islam) — Laju (Pulang-Pergi / Non-Asrama)</option>
-                                <option value="MA Mukim" {{ old('jenjang') == 'MA Mukim' ? 'selected' : '' }}>MA (SMA Islam) — Mukim (Tinggal di Asrama Pesantren)</option>
-                                <option value="MA Laju" {{ old('jenjang') == 'MA Laju' ? 'selected' : '' }}>MA (SMA Islam) — Laju (Pulang-Pergi / Non-Asrama)</option>
+                                <option value="MTs Mukim" {{ old('jenjang') == 'MTs Mukim' ? 'selected' : '' }}>MTs — Mukim (Tinggal di Asrama Pesantren)</option>
+                                <option value="MTs Laju" {{ old('jenjang') == 'MTs Laju' ? 'selected' : '' }}>MTs — Laju (Pulang-Pergi / Non-Asrama)</option>
+                                <option value="MA Mukim" {{ old('jenjang') == 'MA Mukim' ? 'selected' : '' }}>MA — Mukim (Tinggal di Asrama Pesantren)</option>
+                                <option value="MA Laju" {{ old('jenjang') == 'MA Laju' ? 'selected' : '' }}>MA — Laju (Pulang-Pergi / Non-Asrama)</option>
                             </select>
                         </div>
                     </div>
@@ -632,11 +632,53 @@
                         </div>
                     </div>
 
-                    <!-- DOKUMEN 3: KONDISIONAL BERKAS JALUR PRESTASI / TAHFIDZ -->
+                    <!-- DOKUMEN 3: UNGGAH SCAN / FOTO AKTA KELAHIRAN -->
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label for="file_akta_kelahiran" class="block text-sm font-bold text-slate-800">
+                                3. Unggah Scan / Foto Akta Kelahiran Calon Santri <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Wajib Upload</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            Upload foto asli atau fotokopi Akta Kelahiran calon santri yang jelas dan terbaca. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
+                        </p>
+                        <input type="file" id="file_akta_kelahiran" name="file_akta_kelahiran" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                    </div>
+
+                    <!-- DOKUMEN 4: UNGGAH SCAN / FOTO KARTU KELUARGA (KK) -->
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label for="file_kk" class="block text-sm font-bold text-slate-800">
+                                4. Unggah Scan / Foto Kartu Keluarga (KK) <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Wajib Upload</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            Upload scan atau foto Kartu Keluarga (KK) terbaru yang memuat data calon santri. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
+                        </p>
+                        <input type="file" id="file_kk" name="file_kk" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                    </div>
+
+                    <!-- DOKUMEN 5: UNGGAH SCAN / FOTO KTP ORANG TUA / WALI -->
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label for="file_ktp_ortu" class="block text-sm font-bold text-slate-800">
+                                5. Unggah Scan / Foto KTP Orang Tua (Ayah / Ibu / Wali) <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Wajib Upload</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            Upload scan atau foto e-KTP Ayah, Ibu, atau Wali yang masih berlaku. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
+                        </p>
+                        <input type="file" id="file_ktp_ortu" name="file_ktp_ortu" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                    </div>
+
+                    <!-- DOKUMEN 6: KONDISIONAL BERKAS JALUR PRESTASI / TAHFIDZ -->
                     <div id="berkasKhususCard" class="hidden p-5 bg-amber-50/70 rounded-2xl border-2 border-amber-300 space-y-3">
                         <div class="flex items-center gap-2 text-amber-900 font-bold text-sm">
                             <svg class="icon-svg w-4 h-4 text-amber-600" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                            <span id="berkasKhususTitle">3. UNGGAH BUKTI JALUR PRESTASI / TAHFIDZ</span>
+                            <span id="berkasKhususTitle">6. UNGGAH BUKTI JALUR PRESTASI / TAHFIDZ</span>
                         </div>
                         <p id="berkasKhususDesc" class="text-xs text-amber-800 leading-relaxed">
                             Silakan upload sertifikat piagam kejuaraan (minimal juara 1, 2, atau 3 tingkat kecamatan) atau Syahadah Tahfidzul Qur'an.
@@ -650,11 +692,11 @@
                         </div>
                     </div>
 
-                    <!-- DOKUMEN 4: BUKTI BANTUAN SOSIAL (JIKA MEMILIKI) -->
+                    <!-- DOKUMEN 7: BUKTI BANTUAN SOSIAL (JIKA MEMILIKI) -->
                     <div id="berkasBansosCard" class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                         <div class="flex items-center justify-between">
                             <label for="bukti_bantuan_sosial" class="block text-sm font-bold text-slate-800">
-                                4. Unggah Bukti Bantuan Sosial (KIP / PKH / KKS / KIS)
+                                7. Unggah Bukti Bantuan Sosial (KIP / PKH / KKS / KIS)
                             </label>
                             <span class="text-[11px] font-semibold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">Jika Memiliki</span>
                         </div>
@@ -749,12 +791,12 @@
 
             if (jalur === 'Prestasi') {
                 card.classList.remove('hidden');
-                title.textContent = '3. UNGGAH BUKTI PRESTASI KEJUARAAN';
+                title.textContent = '6. UNGGAH BUKTI PRESTASI KEJUARAAN';
                 desc.textContent = 'Silakan upload bukti sertifikat prestasi minimal tingkat kecamatan (Juara 1, 2, atau 3).';
                 fileInput.required = true;
             } else if (jalur === 'Tahfidz') {
                 card.classList.remove('hidden');
-                title.textContent = '3. UNGGAH SYAHADAH HAFALAN TAHFIDZ';
+                title.textContent = '6. UNGGAH SYAHADAH HAFALAN TAHFIDZ';
                 desc.textContent = 'Silakan upload Syahadah / Piagam hafalan Al-Qur\'an dari madrasah atau halaqah tahfidz sebelumnya.';
                 fileInput.required = true;
             } else {

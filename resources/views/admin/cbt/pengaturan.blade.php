@@ -370,12 +370,12 @@
                     </div>
 
                     <div class="space-y-2 pt-1">
-                        <label class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+                        <label class="flex items-center gap-3 p-3 bg-emerald-50/50 border border-emerald-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition">
                             <input type="checkbox" name="cbt_shuffle_questions" value="1" {{ $settings['cbt_shuffle_questions'] === '1' ? 'checked' : '' }}
                                    class="w-4 h-4 rounded text-brand-500 focus:ring-brand-400">
                             <div>
-                                <span class="block text-xs font-semibold text-gray-800">Acak Urutan Soal (Shuffle Questions)</span>
-                                <span class="block text-[11px] text-gray-500">Santri menerima nomor soal dengan urutan berlainan</span>
+                                <span class="block text-xs font-bold text-gray-800">Acak Urutan Soal (Shuffle Questions per Peserta)</span>
+                                <span class="block text-[11px] text-gray-600">Setiap santri menerima urutan nomor butir soal berbeda-beda (soal teracak secara individual)</span>
                             </div>
                         </label>
 
@@ -474,6 +474,117 @@
                         </label>
                         <textarea name="cbt_instructions" rows="3"
                                   class="ta-input leading-relaxed">{{ $settings['cbt_instructions'] }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 8: PUBLIKASI NILAI & KESEMPATAN UJIAN ULANG -->
+        <div class="ta-card">
+            <div class="ta-card-header">
+                <div>
+                    <h2 class="text-base font-bold text-gray-800">Kebijakan Hasil Nilai &amp; Ujian Ulang</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Atur apakah nilai langsung diperlihatkan ke santri atau dirahasiakan terlebih dahulu.</p>
+                </div>
+            </div>
+
+            <div class="ta-card-body space-y-6">
+                <!-- Opsi Rahasiakan / Tampilkan Nilai -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                        Tampilan Nilai ke Santri Setelah Ujian Selesai <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition {{ ($settings['cbt_publish_scores'] ?? '1') === '1' ? 'border-brand-500 bg-brand-50/20 ring-1 ring-brand-500' : 'border-gray-200 bg-white hover:bg-gray-50' }}">
+                            <input type="radio" name="cbt_publish_scores" value="1" {{ ($settings['cbt_publish_scores'] ?? '1') === '1' ? 'checked' : '' }}
+                                   class="mt-1 w-4 h-4 text-brand-500 focus:ring-brand-400">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-gray-800">Tampilkan Nilai Langsung (Transparan)</span>
+                                    <span class="badge-success text-[10px]">Terbuka</span>
+                                </div>
+                                <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                                    Santri langsung melihat perolehan skor angka, rincian benar/salah per mata pelajaran, dan status kelulusan sesaat setelah menekan tombol "Selesai Ujian".
+                                </p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition {{ ($settings['cbt_publish_scores'] ?? '1') === '0' ? 'border-amber-500 bg-amber-50/20 ring-1 ring-amber-500' : 'border-gray-200 bg-white hover:bg-gray-50' }}">
+                            <input type="radio" name="cbt_publish_scores" value="0" {{ ($settings['cbt_publish_scores'] ?? '1') === '0' ? 'checked' : '' }}
+                                   class="mt-1 w-4 h-4 text-amber-600 focus:ring-amber-500">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-gray-800">Rahasiakan Nilai Sementara (Direkomendasikan)</span>
+                                    <span class="badge-warning text-[10px]">Tertutup</span>
+                                </div>
+                                <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                                    Nilai dan status kelulusan <strong>disembunyikan dari santri</strong>. Santri hanya menerima bukti tanda terima bahwa jawaban telah terekam aman. Pengumuman resmi akan diumumkan serentak panitia.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Opsi Metode Penentuan Nilai Ujian Ulang -->
+                <div class="pt-4 border-t border-gray-100">
+                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                        Metode Penentuan Nilai Akhir Ujian Ulang (Remedial / Retake) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label class="flex items-start gap-2.5 p-3.5 rounded-xl border cursor-pointer transition {{ ($settings['cbt_retake_score_rule'] ?? 'tertinggi') === 'tertinggi' ? 'border-brand-500 bg-brand-50/20 ring-1 ring-brand-500' : 'border-gray-200 bg-white hover:bg-gray-50' }}">
+                            <input type="radio" name="cbt_retake_score_rule" value="tertinggi" {{ ($settings['cbt_retake_score_rule'] ?? 'tertinggi') === 'tertinggi' ? 'checked' : '' }}
+                                   class="mt-0.5 w-4 h-4 text-brand-500 focus:ring-brand-400">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-gray-800">🏆 Nilai Tertinggi / Terbaik</span>
+                                </div>
+                                <span class="badge-success text-[9px] mt-0.5 inline-block">Direkomendasikan</span>
+                                <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                                    Sistem otomatis mengambil skor paling tinggi di antara seluruh pengerjaan. Jika nilai ulangan lebih rendah, nilai lama yang lebih baik tidak hilang.
+                                </p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-3.5 rounded-xl border cursor-pointer transition {{ ($settings['cbt_retake_score_rule'] ?? 'tertinggi') === 'terakhir' ? 'border-brand-500 bg-brand-50/20 ring-1 ring-brand-500' : 'border-gray-200 bg-white hover:bg-gray-50' }}">
+                            <input type="radio" name="cbt_retake_score_rule" value="terakhir" {{ ($settings['cbt_retake_score_rule'] ?? 'tertinggi') === 'terakhir' ? 'checked' : '' }}
+                                   class="mt-0.5 w-4 h-4 text-brand-500 focus:ring-brand-400">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-gray-800">⏱️ Nilai Pengerjaan Terakhir</span>
+                                </div>
+                                <span class="badge-gray text-[9px] mt-0.5 inline-block">Terbaru</span>
+                                <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                                    Nilai akhir santri selalu menggunakan murni hasil dari ujian yang paling baru diselesaikan (menggantikan nilai sebelumnya).
+                                </p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-3.5 rounded-xl border cursor-pointer transition {{ ($settings['cbt_retake_score_rule'] ?? 'tertinggi') === 'rata_rata' ? 'border-brand-500 bg-brand-50/20 ring-1 ring-brand-500' : 'border-gray-200 bg-white hover:bg-gray-50' }}">
+                            <input type="radio" name="cbt_retake_score_rule" value="rata_rata" {{ ($settings['cbt_retake_score_rule'] ?? 'tertinggi') === 'rata_rata' ? 'checked' : '' }}
+                                   class="mt-0.5 w-4 h-4 text-brand-500 focus:ring-brand-400">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-gray-800">⚖️ Nilai Rata-Rata</span>
+                                </div>
+                                <span class="badge-gray text-[9px] mt-0.5 inline-block">Kombinasi</span>
+                                <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                                    Nilai akhir dihitung dari nilai rata-rata perolehan pada ujian pertama dan ujian ulangan.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Opsi Kuota Ujian Santri -->
+                <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-bold text-gray-800 block">Batas Maksimal Kesempatan Mengerjakan Ujian Mandiri</span>
+                        <span class="text-[11px] text-gray-500 block mt-0.5">Jumlah kesempatan santri mengerjakan ujian. Default 1 kali (Admin tetap dapat mereset ujian santri yang terkena pelanggaran dari menu Rekap Hasil).</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" name="cbt_max_attempts" value="{{ $settings['cbt_max_attempts'] ?? 1 }}" min="1" max="10"
+                               class="ta-input w-24 text-center font-bold text-sm">
+                        <span class="text-xs text-gray-500">Kali Kesempatan</span>
                     </div>
                 </div>
             </div>

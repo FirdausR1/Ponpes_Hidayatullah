@@ -22,16 +22,16 @@
 @endsection
 
 @section('content')
-<div class="space-y-6 max-w-4xl mx-auto">
+<div class="space-y-6">
 
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Tambah Soal Baru</h1>
-            <p class="text-sm text-gray-500 mt-1">Tulis butir soal seleksi lengkap dengan rumus matematika KaTeX, gambar ilustrasi, dan teks Arab.</p>
+            <h1 class="text-xl font-bold text-gray-900">Tambah Soal Baru</h1>
+            <p class="text-sm text-gray-500 mt-1">Tulis butir soal lengkap dengan rumus KaTeX, gambar ilustrasi, dan teks Arab.</p>
         </div>
-        <a href="{{ route('admin.cbt.soal.index') }}" class="ta-btn-outline">
-            Kembali ke Bank Soal
+        <a href="{{ route('admin.cbt.soal.index') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 transition">
+            &larr; Kembali
         </a>
     </div>
 
@@ -40,8 +40,19 @@
         @csrf
 
         <div class="ta-card p-6 space-y-5">
-            <!-- Row: Kategori & Bobot -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Row: Jenjang, Kategori & Bobot -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Jenjang Sasaran <span class="text-rose-500">*</span>
+                    </label>
+                    <select name="jenjang" required class="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none font-medium text-gray-800">
+                        <option value="Semua" {{ old('jenjang', 'Semua') === 'Semua' ? 'selected' : '' }}>Semua (MTs &amp; MA)</option>
+                        <option value="MTs" {{ old('jenjang') === 'MTs' ? 'selected' : '' }}>Khusus MTs</option>
+                        <option value="MA" {{ old('jenjang') === 'MA' ? 'selected' : '' }}>Khusus MA</option>
+                    </select>
+                </div>
+
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Kategori Soal <span class="text-rose-500">*</span>
@@ -68,174 +79,190 @@
                 </div>
             </div>
 
-            <!-- Format Badges & Helper Toggles -->
-            <div class="flex flex-wrap items-center gap-6 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+            <!-- Pengaturan Soal -->
+            <div class="flex flex-wrap items-center gap-5 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs">
                 <label class="flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" name="is_math" id="isMathToggle" value="1" {{ old('is_math', '1') ? 'checked' : '' }} onchange="updatePreviews()" class="rounded text-brand-600 focus:ring-brand-500 w-4 h-4">
-                    <span class="font-semibold text-slate-700">Soal Mengandung Rumus Matematika (KaTeX)</span>
+                    <span class="font-medium text-gray-700">Ada rumus matematika</span>
                 </label>
-
                 <label class="flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" name="is_arabic" id="isArabicToggle" value="1" {{ old('is_arabic') ? 'checked' : '' }} onchange="toggleArabicMode(this.checked)" class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4">
-                    <span class="font-semibold text-emerald-800">Soal Mengandung Bahasa Arab (Font Amiri / RTL)</span>
+                    <span class="font-medium text-gray-700">Ada teks Bahasa Arab</span>
                 </label>
-
                 <label class="flex items-center gap-2 cursor-pointer select-none ml-auto">
                     <input type="checkbox" name="is_active" value="1" checked class="rounded text-brand-600 focus:ring-brand-500 w-4 h-4">
-                    <span class="font-semibold text-slate-700">Aktifkan Soal</span>
+                    <span class="font-medium text-gray-700">Aktifkan soal</span>
                 </label>
             </div>
 
-            <!-- TOOLBAR RUMUS MATEMATIKA LENGKAP & FLEKSIBEL -->
-            <div id="mathToolbar" class="rounded-xl border border-purple-200 bg-purple-50/40 p-3.5 space-y-3">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-100 pb-2.5">
-                    <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded bg-purple-600 text-white font-bold text-xs">LaTeX KaTeX</span>
-                        <span class="text-xs font-bold text-purple-950">Toolbar Sisip Rumus Lengkap:</span>
-                    </div>
-                    <div class="text-[11px] text-purple-700">
-                        Klik tombol untuk menyisipkan kode rumus ke kursor aktif
-                    </div>
+            <!-- TOOLBAR RUMUS VISUAL (MUDAH) -->
+            <div id="mathToolbar" class="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white">
+                    <span class="text-xs font-bold text-gray-700">Sisipkan Simbol / Rumus</span>
+                    <span class="text-[11px] text-gray-400">Klik tombol di bawah → simbol langsung masuk ke teks soal</span>
                 </div>
 
-                <!-- Tabs Kategori Rumus -->
-                <div class="flex flex-wrap gap-1 border-b border-purple-200/60 pb-1.5 text-xs font-semibold">
-                    <button type="button" onclick="switchMathTab('dasar')" id="tab-btn-dasar" class="math-tab-btn px-2.5 py-1 rounded-md bg-purple-600 text-white shadow-xs">Dasar &amp; Pecahan</button>
-                    <button type="button" onclick="switchMathTab('ipa')" id="tab-btn-ipa" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200 font-bold text-emerald-700">🔬 IPA (Fisika &amp; Kimia)</button>
-                    <button type="button" onclick="switchMathTab('aljabar')" id="tab-btn-aljabar" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Aljabar &amp; Kurung</button>
-                    <button type="button" onclick="switchMathTab('trigono')" id="tab-btn-trigono" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Geometri &amp; Sudut</button>
-                    <button type="button" onclick="switchMathTab('kalkulus')" id="tab-btn-kalkulus" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Matriks &amp; Kalkulus</button>
-                    <button type="button" onclick="switchMathTab('yunani')" id="tab-btn-yunani" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200">Simbol &amp; Yunani</button>
-                    <button type="button" onclick="switchMathTab('custom')" id="tab-btn-custom" class="math-tab-btn px-2.5 py-1 rounded-md bg-white text-purple-800 hover:bg-purple-100 border border-purple-200 font-bold">+ Rumus Kustom</button>
-                </div>
+                <!-- Grid Tombol Visual -->
+                <div class="p-3 space-y-2">
 
-                <!-- Tab IPA & Sains (Fisika & Kimia) -->
-                <div id="math-tab-ipa" class="math-tab-content hidden flex flex-wrap gap-1.5 text-xs">
-                    <div class="w-full text-[11px] font-bold text-emerald-900 mb-0.5 flex items-center gap-1.5">
-                        <span>⚡ Rumus Fisika &amp; Mekanika:</span>
-                    </div>
-                    <button type="button" onclick="insertSnippet('$v = \\frac{s}{t}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kecepatan $v = \frac{s}{t}$</button>
-                    <button type="button" onclick="insertSnippet('$a = \\frac{\\Delta v}{\\Delta t}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Percepatan $a = \frac{\Delta v}{\Delta t}$</button>
-                    <button type="button" onclick="insertSnippet('$F = m \\times a$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Gaya $F = m \times a$</button>
-                    <button type="button" onclick="insertSnippet('$W = F \\times s$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Usaha $W = F \times s$</button>
-                    <button type="button" onclick="insertSnippet('$$E_k = \\frac{1}{2} m v^2$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Energi Kinetik $E_k = \frac{1}{2}mv^2$</button>
-                    <button type="button" onclick="insertSnippet('$E_p = m \\cdot g \\cdot h$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Energi Potensial $E_p = mgh$</button>
-                    <button type="button" onclick="insertSnippet('$$\\rho = \\frac{m}{V}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Massa Jenis $\rho = \frac{m}{V}$</button>
-                    <button type="button" onclick="insertSnippet('$$P = \\frac{F}{A}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Tekanan $P = \frac{F}{A}$</button>
-                    <button type="button" onclick="insertSnippet('$V = I \\times R$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Hukum Ohm $V = I \times R$</button>
-                    <button type="button" onclick="insertSnippet('$P = V \\times I$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Daya Listrik $P = V \times I$</button>
-                    <button type="button" onclick="insertSnippet('$Q = m \\cdot c \\cdot \\Delta T$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kalor $Q = mc\Delta T$</button>
-                    <button type="button" onclick="insertSnippet('$^\\circ\\text{C}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Suhu $^\circ\text{C}$</button>
+                    <!-- Baris 1: Operasi Dasar -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase self-center mr-1 w-full">Dasar</span>
 
-                    <div class="w-full text-[11px] font-bold text-emerald-900 mt-1 mb-0.5 flex items-center gap-1.5 border-t border-purple-200/50 pt-1">
-                        <span>🧪 Rumus Kimia, Senyawa &amp; Reaksi:</span>
-                    </div>
-                    <button type="button" onclick="insertSnippet('$\\text{H}_2\\text{O}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Air $\text{H}_2\text{O}$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{CO}_2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Karbondioksida $\text{CO}_2$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{O}_2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Oksigen $\text{O}_2$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{NaCl}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Garam $\text{NaCl}$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{HCl}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Asam Klorida $\text{HCl}$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{H}_2\\text{SO}_4$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Asam Sulfat $\text{H}_2\text{SO}_4$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{C}_6\\text{H}_{12}\\text{O}_6$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Glukosa $\text{C}_6\text{H}_{12}\text{O}_6$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{Na}^+$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Ion $\text{Na}^+$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{SO}_4^{2-}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Ion $\text{SO}_4^{2-}$</button>
-                    <button type="button" onclick="insertSnippet('$\\rightarrow$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Panah $\rightarrow$</button>
-
-                    <div class="w-full text-[11px] font-bold text-emerald-900 mt-1 mb-0.5 flex items-center gap-1.5 border-t border-purple-200/50 pt-1">
-                        <span>📏 Satuan Sains / IPA:</span>
-                    </div>
-                    <button type="button" onclick="insertSnippet('$\\text{m/s}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{m/s}$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{m/s}^2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{m/s}^2$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{kg/m}^3$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{kg/m}^3$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{Joule}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{Joule}$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{Newton}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{Newton}$</button>
-                    <button type="button" onclick="insertSnippet('$\\text{Watt}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\text{Watt}$</button>
-                    <button type="button" onclick="insertSnippet('$\\Omega$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">$\Omega$ (Ohm)</button>
-                </div>
-
-                <!-- Tab 1: Dasar & Pecahan -->
-                <div id="math-tab-dasar" class="math-tab-content flex flex-wrap gap-1.5 text-xs">
-
-                    <button type="button" onclick="insertSnippet('$$\\frac{a}{b}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Pecahan $\frac{a}{b}$</button>
-                    <button type="button" onclick="insertSnippet('$$\\sqrt{x}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Akar $\sqrt{x}$</button>
-                    <button type="button" onclick="insertSnippet('$$\\sqrt[n]{x}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Akar-n $\sqrt[n]{x}$</button>
-                    <button type="button" onclick="insertSnippet('$x^2$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Pangkat $x^2$</button>
-                    <button type="button" onclick="insertSnippet('$x_1$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Indeks $x_1$</button>
-                    <button type="button" onclick="insertSnippet('$\\times$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kali $\times$</button>
-                    <button type="button" onclick="insertSnippet('$\\div$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Bagi $\div$</button>
-                    <button type="button" onclick="insertSnippet('$\\pm$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Plus-Minus $\pm$</button>
-                    <button type="button" onclick="insertSnippet('$\\neq$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Tidak Sama $\neq$</button>
-                    <button type="button" onclick="insertSnippet('$\\le$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kurang Sama $\le$</button>
-                    <button type="button" onclick="insertSnippet('$\\ge$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Lebih Sama $\ge$</button>
-                    <button type="button" onclick="insertSnippet('$\\%$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Persen $\%$</button>
-                </div>
-
-                <!-- Tab 2: Aljabar & Kurung -->
-                <div id="math-tab-aljabar" class="math-tab-content hidden flex flex-wrap gap-1.5 text-xs">
-                    <button type="button" onclick="insertSnippet('$$\\left( \\frac{a}{b} \\right)$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kurung Besar $\left(\frac{a}{b}\right)$</button>
-                    <button type="button" onclick="insertSnippet('$$|x|$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Nilai Mutlak $|x|$</button>
-                    <button type="button" onclick="insertSnippet('$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Rumus ABC Kuadrat</button>
-                    <button type="button" onclick="insertSnippet('$f(x) = ax^2 + bx + c$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Persamaan Kuadrat $f(x)$</button>
-                    <button type="button" onclick="insertSnippet('$A \\cap B$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Irisan $A \cap B$</button>
-                    <button type="button" onclick="insertSnippet('$A \\cup B$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Gabungan $A \cup B$</button>
-                    <button type="button" onclick="insertSnippet('$x \\in S$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Elemen $x \in S$</button>
-                    <button type="button" onclick="insertSnippet('$\\infty$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Tak Hingga $\infty$</button>
-                </div>
-
-                <!-- Tab 3: Geometri & Sudut -->
-                <div id="math-tab-trigono" class="math-tab-content hidden flex flex-wrap gap-1.5 text-xs">
-                    <button type="button" onclick="insertSnippet('$90^\\circ$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Derajat $90^\circ$</button>
-                    <button type="button" onclick="insertSnippet('$\\sin(\\theta)$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Sinus $\sin(\theta)$</button>
-                    <button type="button" onclick="insertSnippet('$\\cos(\\theta)$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Kosinus $\cos(\theta)$</button>
-                    <button type="button" onclick="insertSnippet('$\\tan(\\theta)$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Tangen $\tan(\theta)$</button>
-                    <button type="button" onclick="insertSnippet('$\\Delta ABC$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Segitiga $\Delta ABC$</button>
-                    <button type="button" onclick="insertSnippet('$\\angle ABC$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Sudut $\angle ABC$</button>
-                    <button type="button" onclick="insertSnippet('$\\pi$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Pi $\pi$</button>
-                    <button type="button" onclick="insertSnippet('$\\theta$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Theta $\theta$</button>
-                </div>
-
-                <!-- Tab 4: Matriks & Kalkulus -->
-                <div id="math-tab-kalkulus" class="math-tab-content hidden flex flex-wrap gap-1.5 text-xs">
-                    <button type="button" onclick="insertSnippet('$$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Matriks 2x2</button>
-                    <button type="button" onclick="insertSnippet('$$\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Determinan $|M|$</button>
-                    <button type="button" onclick="insertSnippet('$$\\int_{a}^{b} f(x)\\,dx$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Integral $\int_a^b$</button>
-                    <button type="button" onclick="insertSnippet('$$\\sum_{i=1}^{n} x_i$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Sigma $\sum$</button>
-                    <button type="button" onclick="insertSnippet('$$\\lim_{x \\to 0} f(x)$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Limit $\lim$</button>
-                    <button type="button" onclick="insertSnippet('$$\\frac{df}{dx}$$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Turunan $\frac{df}{dx}$</button>
-                    <button type="button" onclick="insertSnippet('$\\log_a(b)$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Logaritma $\log$</button>
-                    <button type="button" onclick="insertSnippet('$\\vec{v}$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Vektor $\vec{v}$</button>
-                </div>
-
-                <!-- Tab 5: Simbol & Huruf Yunani -->
-                <div id="math-tab-yunani" class="math-tab-content hidden flex flex-wrap gap-1.5 text-xs">
-                    <button type="button" onclick="insertSnippet('$\\alpha$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Alpha $\alpha$</button>
-                    <button type="button" onclick="insertSnippet('$\\beta$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Beta $\beta$</button>
-                    <button type="button" onclick="insertSnippet('$\\gamma$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Gamma $\gamma$</button>
-                    <button type="button" onclick="insertSnippet('$\\lambda$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Lambda $\lambda$</button>
-                    <button type="button" onclick="insertSnippet('$\\mu$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Mu $\mu$</button>
-                    <button type="button" onclick="insertSnippet('$\\sigma$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Sigma $\sigma$</button>
-                    <button type="button" onclick="insertSnippet('$\\Omega$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Ohm $\Omega$</button>
-                    <button type="button" onclick="insertSnippet('$\\rightarrow$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Panah $\rightarrow$</button>
-                    <button type="button" onclick="insertSnippet('$\\rightleftharpoons$')" class="px-2.5 py-1 bg-white hover:bg-purple-100 border border-purple-200 rounded font-mono text-purple-900 shadow-2xs">Reaksi $\rightleftharpoons$</button>
-                </div>
-
-                <!-- Tab 6: Custom Formula / Panduan Bebas -->
-                <div id="math-tab-custom" class="math-tab-content hidden space-y-2 text-xs">
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="customKatexInput" placeholder="Ketik rumus LaTeX bebas di sini, contoh: \sqrt{x^2 + y^2}"
-                               class="flex-1 px-3 py-1.5 text-xs font-mono bg-white border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none">
-                        <button type="button" onclick="insertCustomFormula(false)" class="px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg font-bold shadow-2xs">
-                            Sisip Inline ($...$)
+                        <button type="button" onclick="insertSnippet('$\\frac{a}{b}$')" title="Pecahan a/b"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\frac{a}{b}\)</span>
                         </button>
-                        <button type="button" onclick="insertCustomFormula(true)" class="px-3 py-1.5 bg-purple-900 hover:bg-black text-white rounded-lg font-bold shadow-2xs">
-                            Sisip Blok Baris ($$...$$)
+                        <button type="button" onclick="insertSnippet('$\\sqrt{x}$')" title="Akar kuadrat"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\sqrt{x}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\sqrt[n]{x}$')" title="Akar ke-n"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\sqrt[n]{x}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$x^{2}$')" title="Pangkat / eksponen"
+                                class="math-vis-btn">
+                            <span class="math-render">\(x^{2}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$x_{1}$')" title="Indeks bawah"
+                                class="math-vis-btn">
+                            <span class="math-render">\(x_{1}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\times$')" title="Tanda kali"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\times\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\div$')" title="Tanda bagi"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\div\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\pm$')" title="Plus minus"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\pm\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\neq$')" title="Tidak sama dengan"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\neq\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\leq$')" title="Kurang dari atau sama dengan"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\leq\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\geq$')" title="Lebih dari atau sama dengan"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\geq\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\%$')" title="Persen"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\%\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\pi$')" title="Pi (3.14...)"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\pi\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\infty$')" title="Tak hingga"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\infty\)</span>
                         </button>
                     </div>
-                    <p class="text-[11px] text-purple-800 leading-normal">
-                        💡 <strong>Cara Menulis Rumus Bebas:</strong> Anda bisa langsung mengetik rumus matematika apa saja menggunakan standar LaTeX di dalam textarea soal. Gunakan <code>$kode$</code> untuk sebaris kalimat atau <code>$$kode$$</code> untuk rumus di tengah baris sendiri. Sistem otomatis me-render KaTeX!
-                    </p>
+
+                    <!-- Baris 2: Rumus Siap Pakai -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase self-center mr-1 w-full">Rumus Siap Pakai</span>
+
+                        <button type="button" onclick="insertSnippet('$$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$')" title="Rumus ABC (persamaan kuadrat)"
+                                class="math-vis-btn px-3">
+                            <span class="math-render text-[11px]">\(x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$$\\rho = \\frac{m}{V}$$')" title="Massa jenis"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(\rho=\frac{m}{V}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$$v = \\frac{s}{t}$$')" title="Kecepatan"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(v=\frac{s}{t}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$$F = m \\cdot a$$')" title="Gaya (Hukum Newton)"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(F=m\cdot a\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$$E_k = \\frac{1}{2}mv^2$$')" title="Energi kinetik"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(E_k=\frac{1}{2}mv^2\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$$P = \\frac{F}{A}$$')" title="Tekanan"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(P=\frac{F}{A}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$V = I \\times R$')" title="Hukum Ohm"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(V=I\times R\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$90^{\\circ}$')" title="Derajat (sudut)"
+                                class="math-vis-btn">
+                            <span class="math-render">\(90^{\circ}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\sin\\theta$')" title="Sinus"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\sin\theta\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\cos\\theta$')" title="Kosinus"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\cos\theta\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\text{H}_2\\text{O}$')" title="Air (kimia)"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(\text{H}_2\text{O}\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\text{CO}_2$')" title="Karbon dioksida"
+                                class="math-vis-btn px-3">
+                            <span class="math-render">\(\text{CO}_2\)</span>
+                        </button>
+                        <button type="button" onclick="insertSnippet('$\\rightarrow$')" title="Panah reaksi kimia"
+                                class="math-vis-btn">
+                            <span class="math-render">\(\rightarrow\)</span>
+                        </button>
+                    </div>
+
+                    <!-- Input Rumus Bebas -->
+                    <div class="flex items-center gap-2 pt-1 border-t border-gray-200">
+                        <span class="text-[11px] text-gray-500 font-medium shrink-0">Rumus lain:</span>
+                        <input type="text" id="customKatexInput"
+                               placeholder='Ketik kode LaTeX, contoh: \log_a(b) lalu klik Sisip'
+                               class="flex-1 px-3 py-1.5 text-xs font-mono bg-white border border-gray-200 rounded-lg focus:border-brand-500 outline-none">
+                        <button type="button" onclick="insertCustomFormula(false)"
+                                class="px-3 py-1.5 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-xs font-semibold transition shrink-0">
+                            Sisip
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <style>
+                .math-vis-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 42px;
+                    min-height: 36px;
+                    padding: 4px 8px;
+                    background: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    transition: background 0.15s, border-color 0.15s;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+                }
+                .math-vis-btn:hover {
+                    background: #f3f4f6;
+                    border-color: #9ca3af;
+                }
+                .math-vis-btn .math-render {
+                    pointer-events: none;
+                }
+            </style>
 
             <!-- Teks Pertanyaan / Soal -->
             <div>
@@ -279,32 +306,33 @@
             </div>
 
             <!-- OPSI JAWABAN (A, B, C, D, E) -->
-            <div class="pt-4 border-t border-slate-200 space-y-4">
+            <div class="pt-4 border-t border-gray-200 space-y-3">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Pilihan Ganda & Kunci Jawaban</h3>
-                    <span class="text-[11px] text-slate-400">Klik huruf lingkaran atau radio untuk memilih kunci yang benar</span>
+                    <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Pilihan Ganda &amp; Kunci Jawaban</h3>
+                    <span class="text-[11px] text-gray-400">Klik radio untuk memilih jawaban yang benar</span>
                 </div>
 
-                <div class="space-y-3">
+                <div class="space-y-2">
                     @foreach(['A', 'B', 'C', 'D', 'E'] as $opt)
-                        <div class="flex items-start gap-3 p-3 rounded-lg border {{ old('kunci_jawaban', 'A') === $opt ? 'bg-emerald-50/50 border-emerald-300' : 'bg-white border-slate-200' }}" id="opt-container-{{ $opt }}">
-                            <div class="flex items-center gap-2 pt-2 shrink-0">
-                                <input type="radio" name="kunci_jawaban" value="{{ $opt }}" id="kunci_{{ $opt }}" {{ old('kunci_jawaban', 'A') === $opt ? 'checked' : '' }}
-                                       onchange="handleKunciChange('{{ $opt }}')"
-                                       class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                <label for="kunci_{{ $opt }}" class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold cursor-pointer">
-                                    {{ $opt }}
-                                </label>
-                            </div>
-                            <div class="flex-1">
-                                <input type="text" name="opsi_{{ strtolower($opt) }}" id="opsi_{{ strtolower($opt) }}" value="{{ old('opsi_' . strtolower($opt)) }}" {{ in_array($opt, ['A','B','C','D']) ? 'required' : '' }} oninput="updatePreviews()"
-                                       placeholder="Isi teks pilihan {{ $opt }} {{ $opt === 'E' ? '(Opsional)' : '' }}"
-                                       class="formula-target w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
-                            </div>
+                        <div class="flex items-center gap-3 p-3 rounded-lg border transition {{ old('kunci_jawaban', 'A') === $opt ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200 hover:border-gray-300' }}" id="opt-container-{{ $opt }}">
+                            <input type="radio" name="kunci_jawaban" value="{{ $opt }}" id="kunci_{{ $opt }}"
+                                   {{ old('kunci_jawaban', 'A') === $opt ? 'checked' : '' }}
+                                   onchange="handleKunciChange('{{ $opt }}')"
+                                   class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0">
+                            <label for="kunci_{{ $opt }}"
+                                   class="w-6 h-6 rounded-full border-2 {{ old('kunci_jawaban', 'A') === $opt ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white text-gray-600' }} flex items-center justify-center text-xs font-bold cursor-pointer shrink-0">
+                                {{ $opt }}
+                            </label>
+                            <input type="text" name="opsi_{{ strtolower($opt) }}" id="opsi_{{ strtolower($opt) }}"
+                                   value="{{ old('opsi_' . strtolower($opt)) }}"
+                                   {{ in_array($opt, ['A','B','C','D']) ? 'required' : '' }}
+                                   oninput="updatePreviews()"
+                                   placeholder="Isi teks pilihan {{ $opt }}{{ $opt === 'E' ? ' (opsional)' : '' }}"
+                                   class="formula-target flex-1 px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
                         </div>
                     @endforeach
                 </div>
-                <p class="text-xs text-slate-500 italic">* Pilih tombol radio lingkaran di sebelah kiri huruf untuk menentukan <strong>Kunci Jawaban yang Benar</strong>.</p>
+                <p class="text-xs text-gray-400 italic">* Klik radio di kiri untuk menentukan kunci jawaban yang benar. Opsi E bersifat opsional.</p>
             </div>
 
             <!-- Pembahasan / Catatan -->

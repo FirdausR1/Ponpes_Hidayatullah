@@ -284,6 +284,83 @@
             background: var(--primary-dark);
         }
 
+        /* Responsive Screen Styling */
+        @media screen and (max-width: 600px) {
+            body {
+                padding: clamp(10px, 2.5vw, 16px) clamp(8px, 2vw, 12px);
+                min-height: 100dvh;
+            }
+            .result-card {
+                border-radius: 16px;
+                margin: auto;
+            }
+            .card-header {
+                padding: 20px 16px;
+            }
+            .logo-wrap {
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .logo-wrap img.logo-crest {
+                width: 40px;
+                height: 40px;
+            }
+            .logo-wrap img.logo-calligraphy {
+                height: 28px;
+                max-width: 70%;
+            }
+            .card-header h1 {
+                font-size: 20px;
+                line-height: 1.25;
+            }
+            .card-body {
+                padding: 18px 14px;
+            }
+            .score-grid {
+                gap: 8px;
+                margin-bottom: 18px;
+            }
+            .score-item {
+                padding: 10px 6px;
+                border-radius: 10px;
+            }
+            .score-item .lbl {
+                font-size: 9.5px;
+            }
+            .score-item .num {
+                font-size: 22px;
+            }
+            .status-banner {
+                padding: 12px 14px;
+                border-radius: 12px;
+                margin-bottom: 18px;
+            }
+            .status-banner .title {
+                font-size: 17px;
+            }
+            .status-banner .desc {
+                font-size: 11.5px;
+            }
+            .action-btns {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .btn-print, .btn-home {
+                width: 100%;
+                padding: 12px;
+            }
+            .details-table td {
+                padding: 8px 2px;
+                font-size: 12px;
+            }
+        }
+
+        @media screen and (max-width: 360px) {
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Print Specific Styling */
         .print-signature {
             display: none;
@@ -410,6 +487,7 @@
         <!-- Body -->
         <div class="card-body">
             @php
+                $isPublished = $publishScores ?? false;
                 $statusKelulusan = $reg->status_kelulusan;
                 $bannerClass = match($statusKelulusan) {
                     'Lulus' => 'lulus',
@@ -419,115 +497,148 @@
                 };
             @endphp
 
-            <!-- Status Kelulusan Banner -->
-            <div class="status-banner {{ $bannerClass }}">
-                <div class="title">
-                    @if($statusKelulusan === 'Lulus')
-                        ALHAMDULILLAH, DINYATAKAN LULUS SELEKSI
-                    @elseif($statusKelulusan === 'Lulus Bersyarat')
-                        DINYATAKAN LULUS BERSYARAT
-                    @elseif($statusKelulusan === 'Cadangan')
-                        STATUS: SANTRI CADANGAN
-                    @else
-                        MOHON MAAF, BELUM MEMENUHI SYARAT KELULUSAN
-                    @endif
-                </div>
-                <div class="desc">
-                    @if($statusKelulusan === 'Lulus')
-                        Selamat! Calon santri telah memenuhi kriteria akademik dan syarat kelulusan seleksi penerimaan santri baru.
-                    @elseif($statusKelulusan === 'Lulus Bersyarat')
-                        Calon santri diterima dengan persyaratan pembinaan khusus / matrikulasi keagamaan.
-                    @elseif($statusKelulusan === 'Cadangan')
-                        Calon santri masuk daftar tunggu seleksi. Panitia akan menginfokan ketersediaan kuota.
-                    @else
-                        Tetap semangat dan terus belajar. Keputusan panitia penerimaan santri baru bersifat mutlak.
-                    @endif
-                </div>
-            </div>
-
-            <!-- Score Overview -->
-            <div class="score-grid">
-                <div class="score-item highlight">
-                    <div class="lbl">Nilai Akhir (CBT)</div>
-                    <div class="num">{{ $reg->nilai_ujian ?? 0 }}</div>
-                </div>
-                <div class="score-item">
-                    <div class="lbl">Standar KKM</div>
-                    <div class="num">{{ $kkm ?? 70 }}</div>
-                </div>
-                <div class="score-item">
-                    <div class="lbl">Soal Dijawab Benar</div>
-                    <div class="num">{{ $correctCount ?? 0 }} <span style="font-size:16px; font-weight:500; color:#64748b;">/ {{ $totalQuestions ?? 0 }}</span></div>
-                </div>
-            </div>
-
-            @php
-                $mapelData = $subjectResults ?? ($reg->nilai_per_mapel_array ?? []);
-            @endphp
-
-            <!-- Rincian Nilai Per Mata Pelajaran -->
-            <div class="subject-breakdown-card">
-                <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg style="width: 17px; height: 17px; color: #15803d;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                        <span style="font-size: 13px; font-weight: 700; color: #1e293b;">Rincian Nilai Per Mata Pelajaran</span>
+            @if($isPublished)
+                <!-- Status Kelulusan Banner (Mode Transparan) -->
+                <div class="status-banner {{ $bannerClass }}">
+                    <div class="title">
+                        @if($statusKelulusan === 'Lulus')
+                            ALHAMDULILLAH, DINYATAKAN LULUS SELEKSI
+                        @elseif($statusKelulusan === 'Lulus Bersyarat')
+                            DINYATAKAN LULUS BERSYARAT
+                        @elseif($statusKelulusan === 'Cadangan')
+                            STATUS: SANTRI CADANGAN
+                        @else
+                            MOHON MAAF, BELUM MEMENUHI SYARAT KELULUSAN
+                        @endif
                     </div>
-                    <span style="font-size: 11px; font-weight: 600; color: #64748b;">Standar KKM: {{ $kkm ?? 70 }}</span>
+                    <div class="desc">
+                        @if($statusKelulusan === 'Lulus')
+                            Selamat! Calon santri telah memenuhi kriteria akademik dan syarat kelulusan seleksi penerimaan santri baru.
+                        @elseif($statusKelulusan === 'Lulus Bersyarat')
+                            Calon santri diterima dengan persyaratan pembinaan khusus / matrikulasi keagamaan.
+                        @elseif($statusKelulusan === 'Cadangan')
+                            Calon santri masuk daftar tunggu seleksi. Panitia akan menginfokan ketersediaan kuota.
+                        @else
+                            Tetap semangat dan terus belajar. Keputusan panitia penerimaan santri baru bersifat mutlak.
+                        @endif
+                    </div>
                 </div>
 
-                <div style="overflow-x: auto;">
-                    <table class="mapel-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align: center; width: 36px;">No</th>
-                                <th style="text-align: left;">Mata Pelajaran</th>
-                                <th style="text-align: center; width: 80px;">Soal</th>
-                                <th style="text-align: center; width: 80px;">Benar</th>
-                                <th style="text-align: center; width: 85px;">Nilai</th>
-                                <th style="text-align: center; width: 105px;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($mapelData as $m)
-                                @php
-                                    $targetKkm = $m['kkm'] ?? ($kkm ?? 70);
-                                    $isPassed = ($m['skor'] ?? 0) >= $targetKkm;
-                                @endphp
-                                <tr>
-                                    <td style="text-align: center; color: #64748b; font-weight: 600;">{{ $loop->iteration }}</td>
-                                    <td style="font-weight: 600; color: #1e293b;">
-                                        {{ $m['kategori'] }}
-                                    </td>
-                                    <td style="text-align: center; color: #475569;">
-                                        {{ $m['total_soal'] }}
-                                    </td>
-                                    <td style="text-align: center; font-weight: 600; color: {{ ($m['benar'] ?? 0) > 0 ? '#15803d' : '#64748b' }};">
-                                        {{ $m['benar'] ?? 0 }} / {{ $m['total_soal'] }}
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <span style="font-size: 14px; font-weight: 800; font-family: 'EB Garamond', Georgia, serif; color: {{ $isPassed ? '#15803d' : '#b91c1c' }};">
-                                            {{ $m['skor'] ?? 0 }}
-                                        </span>
-                                    </td>
-                                    <td style="text-align: center;">
-                                        @if($isPassed)
-                                            <span class="badge-tuntas">Tuntas</span>
-                                        @else
-                                            <span class="badge-belum">Belum Tuntas</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" style="padding: 16px; text-align: center; color: #94a3b8;">
-                                        Rincian nilai per mata pelajaran belum tersedia.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <!-- Score Overview -->
+                <div class="score-grid">
+                    <div class="score-item highlight">
+                        <div class="lbl">Nilai Akhir (CBT)</div>
+                        <div class="num">{{ $reg->nilai_ujian ?? 0 }}</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="lbl">Standar KKM</div>
+                        <div class="num">{{ $kkm ?? 70 }}</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="lbl">Soal Dijawab Benar</div>
+                        <div class="num">{{ $correctCount ?? 0 }} <span style="font-size:16px; font-weight:500; color:#64748b;">/ {{ $totalQuestions ?? 0 }}</span></div>
+                    </div>
                 </div>
-            </div>
+
+                @php
+                    $mapelData = $subjectResults ?? ($reg->nilai_per_mapel_array ?? []);
+                @endphp
+
+                <!-- Rincian Nilai Per Mata Pelajaran -->
+                <div class="subject-breakdown-card">
+                    <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg style="width: 17px; height: 17px; color: #15803d;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            <span style="font-size: 13px; font-weight: 700; color: #1e293b;">Rincian Nilai Per Mata Pelajaran</span>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 600; color: #64748b;">Standar KKM: {{ $kkm ?? 70 }}</span>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="mapel-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center; width: 36px;">No</th>
+                                    <th style="text-align: left;">Mata Pelajaran</th>
+                                    <th style="text-align: center; width: 80px;">Soal</th>
+                                    <th style="text-align: center; width: 80px;">Benar</th>
+                                    <th style="text-align: center; width: 85px;">Nilai</th>
+                                    <th style="text-align: center; width: 105px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($mapelData as $m)
+                                    @php
+                                        $targetKkm = $m['kkm'] ?? ($kkm ?? 70);
+                                        $isPassed = ($m['skor'] ?? 0) >= $targetKkm;
+                                    @endphp
+                                    <tr>
+                                        <td style="text-align: center; color: #64748b; font-weight: 600;">{{ $loop->iteration }}</td>
+                                        <td style="font-weight: 600; color: #1e293b;">
+                                            {{ $m['kategori'] }}
+                                        </td>
+                                        <td style="text-align: center; color: #475569;">
+                                            {{ $m['total_soal'] }}
+                                        </td>
+                                        <td style="text-align: center; font-weight: 600; color: {{ ($m['benar'] ?? 0) > 0 ? '#15803d' : '#64748b' }};">
+                                            {{ $m['benar'] ?? 0 }} / {{ $m['total_soal'] }}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span style="font-size: 14px; font-weight: 800; font-family: 'EB Garamond', Georgia, serif; color: {{ $isPassed ? '#15803d' : '#b91c1c' }};">
+                                                {{ $m['skor'] ?? 0 }}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            @if($isPassed)
+                                                <span class="badge-tuntas">Tuntas</span>
+                                            @else
+                                                <span class="badge-belum">Belum Tuntas</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" style="padding: 16px; text-align: center; color: #94a3b8;">
+                                            Rincian nilai per mata pelajaran belum tersedia.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @else
+                <!-- Banner Lembar Jawaban Diterima (Mode Nilai Dirahasiakan Sementara) -->
+                <div class="status-banner" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1.5px solid #86efac; color: #166534; padding: 22px; text-align: left;">
+                    <div class="title" style="color: #14532d; display: flex; align-items: center; gap: 8px; font-size: 18px;">
+                        <svg style="width: 24px; height: 24px; color: #16a34a; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>ALHAMDULILLAH, LEMBAR JAWABAN BERHASIL DITERIMA</span>
+                    </div>
+                    <div class="desc" style="color: #166534; font-size: 13px; line-height: 1.6; margin-top: 8px;">
+                        Ujian Masuk Seleksi Santri Baru telah berhasil Anda selesaikan. Seluruh lembar jawaban Anda telah tersimpan dan diverifikasi secara aman pada pangkalan data panitia seleksi.
+                        <div style="margin-top: 10px; padding: 10px 14px; background: rgba(255, 255, 255, 0.7); border-radius: 8px; border: 1px dashed #86efac;">
+                            <strong>📢 Pemberitahuan Panitia Seleksi:</strong><br>
+                            Nilai hasil ujian dan penetapan status kelulusan saat ini <strong>dirahasiakan sementara</strong> dan akan diumumkan secara serentak melalui Surat Keputusan Resmi Panitia PSB Pondok Pesantren Hidayatullah. Simpan kartu bukti ini sebagai tanda sah keikutsertaan ujian.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Overview Santri -->
+                <div class="score-grid">
+                    <div class="score-item" style="border-top: 3px solid #16a34a;">
+                        <div class="lbl">Status Pengerjaan</div>
+                        <div class="num" style="font-size: 18px; color: #15803d; font-family: inherit;">Selesai Disubmit</div>
+                    </div>
+                    <div class="score-item" style="border-top: 3px solid #3b82f6;">
+                        <div class="lbl">Waktu Pengiriman</div>
+                        <div class="num" style="font-size: 15px; color: #1e293b; font-family: inherit;">{{ $reg->ujian_selesai_at ? $reg->ujian_selesai_at->format('H:i:s') . ' WIB' : now()->format('H:i:s') . ' WIB' }}</div>
+                    </div>
+                    <div class="score-item" style="border-top: 3px solid #f59e0b;">
+                        <div class="lbl">Status Pengumuman Nilai</div>
+                        <div class="num" style="font-size: 15px; color: #b45309; font-family: inherit;">Menunggu Panitia</div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Notes or Anti-cheat if any -->
             @if($reg->pelanggaran_curang_count > 0)
@@ -622,6 +733,7 @@
                 </div>
             @endif
 
+            @if($isPublished)
             <!-- Berkas Dokumen Resmi Ujian & Kelulusan -->
             <div class="no-print" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #a7f3d0; border-radius: 14px; padding: 16px; margin-top: 22px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.08);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
@@ -649,6 +761,7 @@
                     </a>
                 </div>
             </div>
+            @endif
 
             <!-- Actions -->
             <div class="action-btns">
@@ -658,7 +771,7 @@
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                         <rect x="6" y="14" width="12" height="8"></rect>
                     </svg>
-                    <span>Cetak Kartu Hasil</span>
+                    <span>{{ $isPublished ? 'Cetak Kartu Hasil' : 'Cetak Bukti Selesai Ujian' }}</span>
                 </button>
                 <a href="{{ route('psb.checkStatus', ['no_reg' => $reg->no_registrasi]) }}" class="btn-home">
                     <span>Pantau Pengumuman</span>

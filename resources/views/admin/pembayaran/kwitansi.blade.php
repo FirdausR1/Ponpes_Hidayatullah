@@ -96,6 +96,31 @@ if ($itemsList->isEmpty()) {
     ]);
 }
 $targetRowCount = max(6, $itemsList->count());
+
+$stu = $payment->student ?? null;
+$psb = $payment->psbRegistration ?? null;
+
+$namaSantri = $stu ? ($stu->nama_lengkap ?? 'Santri') : ($psb ? ($psb->nama_lengkap ?? 'Calon Santri') : ($payment->penerima_nama ?: 'Santri'));
+$kelasTeks = $stu 
+    ? (($stu->kelas ?? '—') . ' (' . ($stu->jenjang ?? 'MTs/MA') . ') • NIS: ' . ($stu->nis ?? '—'))
+    : ($psb 
+        ? ('Calon Santri (' . ($psb->jenjang ?? 'MTs/MA') . ') • Reg: ' . ($psb->no_registrasi ?? '—')) 
+        : '—');
+$namaPenyetor = $stu 
+    ? ($stu->nama_wali ?: $stu->nama_lengkap) 
+    : ($psb 
+        ? ($psb->nama_wali ?: ($psb->wali_nama ?: ($psb->ayah_nama ?: $psb->nama_lengkap))) 
+        : ($payment->penerima_nama ?: 'Wali Santri'));
+$alamatPenyetor = $stu 
+    ? ($stu->alamat ?: 'Pringsurat, Kab. Temanggung') 
+    : ($psb 
+        ? ($psb->alamat_lengkap ?: ($psb->ayah_alamat ?: 'Pringsurat, Kab. Temanggung')) 
+        : 'Pringsurat, Kab. Temanggung');
+$noHpPenyetor = $stu 
+    ? ($stu->no_whatsapp ?: ($stu->no_hp ?: '—')) 
+    : ($psb 
+        ? ($psb->no_whatsapp ?: ($psb->ayah_telepon ?: '—')) 
+        : '—');
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -235,7 +260,7 @@ $targetRowCount = max(6, $itemsList->count());
                     <span class="w-28 text-slate-700 font-semibold shrink-0">Nama Santri</span>
                     <span class="text-slate-400 shrink-0">:</span>
                     <span class="flex-1 font-bold text-slate-900 border-b border-dotted border-slate-400 pb-0.5 uppercase">
-                        {{ $payment->student->nama_lengkap ?? '—' }}
+                        {{ $namaSantri }}
                     </span>
                 </div>
 
@@ -244,7 +269,7 @@ $targetRowCount = max(6, $itemsList->count());
                     <span class="w-28 text-slate-700 font-semibold shrink-0">Kelas</span>
                     <span class="text-slate-400 shrink-0">:</span>
                     <span class="flex-1 font-semibold text-slate-800 border-b border-dotted border-slate-400 pb-0.5">
-                        {{ $payment->student->kelas ?? '—' }} ({{ $payment->student->jenjang ?? 'MTs/MA' }}) &bull; NIS: {{ $payment->student->nis ?? '—' }}
+                        {{ $kelasTeks }}
                     </span>
                 </div>
 
@@ -268,7 +293,7 @@ $targetRowCount = max(6, $itemsList->count());
                     <span class="w-28 text-slate-700 font-semibold shrink-0">{{ $isPenarikanTabungan ? 'Penerima Dana' : 'Nama Penyetor' }}</span>
                     <span class="text-slate-400 shrink-0">:</span>
                     <span class="flex-1 font-medium text-slate-900 border-b border-dotted border-slate-400 pb-0.5">
-                        {{ $payment->student->nama_wali ?: $payment->student->nama_lengkap }}
+                        {{ $namaPenyetor }}
                     </span>
                 </div>
 
@@ -277,7 +302,7 @@ $targetRowCount = max(6, $itemsList->count());
                     <span class="w-28 text-slate-700 font-semibold shrink-0">Alamat</span>
                     <span class="text-slate-400 shrink-0">:</span>
                     <span class="flex-1 text-slate-700 border-b border-dotted border-slate-400 pb-0.5">
-                        {{ $payment->student->alamat ?: 'Pringsurat, Kab. Temanggung' }}
+                        {{ $alamatPenyetor }}
                     </span>
                 </div>
 
@@ -286,7 +311,7 @@ $targetRowCount = max(6, $itemsList->count());
                     <span class="w-28 text-slate-700 font-semibold shrink-0">No. HP</span>
                     <span class="text-slate-400 shrink-0">:</span>
                     <span class="flex-1 font-mono text-slate-800 border-b border-dotted border-slate-400 pb-0.5">
-                        {{ $payment->student->no_whatsapp ?: ($payment->student->no_hp ?: '—') }}
+                        {{ $noHpPenyetor }}
                     </span>
                 </div>
 
@@ -339,7 +364,7 @@ $targetRowCount = max(6, $itemsList->count());
                             <span class="text-[10px] text-slate-300 italic">(Tanda Tangan)</span>
                         </div>
                         <div class="border-t border-dotted border-slate-600 pt-1 w-32 font-semibold text-slate-800 text-[11px] truncate">
-                            {{ $payment->student->nama_wali ?: $payment->student->nama_lengkap }}
+                            {{ $namaPenyetor }}
                         </div>
                         <span class="text-[9px] text-slate-500">Wali / Santri</span>
                     </div>
@@ -471,7 +496,7 @@ $targetRowCount = max(6, $itemsList->count());
                 scrollY: 0
             }).then(canvas => {
                 const link = document.createElement('a');
-                const rawName = "{{ $payment->student->nama_lengkap ?? ($payment->penerima_nama ?? 'Santri') }}";
+                const rawName = "{{ addslashes($namaSantri) }}";
                 const cleanName = rawName.replace(/[^a-zA-Z0-9]/g, '_');
                 const noTransaksi = "{{ preg_replace('/[^A-Za-z0-9_-]/', '', $payment->no_transaksi) }}";
                 link.download = `Kwitansi_${noTransaksi}_${cleanName}.png`;

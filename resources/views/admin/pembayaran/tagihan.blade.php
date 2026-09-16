@@ -6,6 +6,7 @@
 <div class="space-y-6" x-data="{ 
     modalBulanan: false, 
     modalTambahan: false,
+    modalImportTunggakan: false,
     selectedPosTambahan: 'SOT',
     selectedKategori: 'bulanan',
     selectedBulan: '{{ ['January'=>'Januari','February'=>'Februari','March'=>'Maret','April'=>'April','May'=>'Mei','June'=>'Juni','July'=>'Juli','August'=>'Agustus','September'=>'September','October'=>'Oktober','November'=>'November','December'=>'Desember'][date('F')] ?? 'September' }}',
@@ -135,6 +136,10 @@
             <button type="button" @click="openModalTambahan('bulanan', 'SOT')" class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-gray-800 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
                 <span>Buat Tagihan Santri</span>
+            </button>
+            <button type="button" @click="modalImportTunggakan = true" class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-semibold text-amber-900 shadow-theme-xs hover:bg-amber-100 hover:border-amber-400 transition" title="Upload data santri massal beserta tunggakan tagihan masa lalu via Excel">
+                <svg class="w-4 h-4 text-amber-600 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
+                <span>Upload Santri &amp; Tunggakan Lalu</span>
             </button>
         </div>
     </div>
@@ -385,12 +390,17 @@
                             <!-- Santri & Rombel -->
                             <td class="px-5 py-4">
                                 <div class="font-bold text-gray-900 text-xs sm:text-sm">{{ $b->student->nama_lengkap ?? '—' }}</div>
-                                <div class="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                                <div class="flex items-center gap-1.5 flex-wrap mt-0.5 text-xs text-gray-500">
                                     <span class="font-mono">NIS: {{ $b->student->nis ?? '—' }}</span>
                                     <span>•</span>
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         Kelas {{ $b->student->kelas ?? '—' }}
                                     </span>
+                                    @if($b->student)
+                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold shadow-2xs {{ $b->student->hunian === 'Mukim' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-blue-800 border border-blue-200' }}">
+                                            {{ $b->student->kategori_label }}
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
 
@@ -519,8 +529,11 @@
                                             $rekKonfPhone = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
                                             $rekKonfNama = \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A');
 
+                                            $namaSantri = $st?->nama_lengkap ?? 'Santri';
+                                            $kelasSantri = $st?->kelas ?? '-';
+
                                             $msgBill = "Assalamu'alaikum Wr. Wb.\n\n"
-                                                . "Yth. Orang Tua / Wali Santri dari *{$st->nama_lengkap}* (Kelas {$st->kelas})\n\n"
+                                                . "Yth. Orang Tua / Wali Santri dari *{$namaSantri}* (Kelas {$kelasSantri})\n\n"
                                                 . "Kami dari Bagian Keuangan Pondok Pesantren Hidayatullah Tuksongo menginformasikan rincian tagihan santri:\n\n"
                                                 . "• Tagihan: {$b->judul_tagihan} ({$b->pos_biaya})\n"
                                                 . "• Periode: {$periodeStr}\n"
@@ -531,8 +544,8 @@
                                                 . "• BRI: *{$rekBriNo}* (a.n. {$rekBriAn})\n"
                                                 . "• BCA: *{$rekBcaNo}* (a.n. {$rekBcaAn})\n\n"
                                                 . "KONFIRMASI BUKTI TRANSFER DENGAN MENYERTAKAN DATA SEBAGAI BERIKUT:\n"
-                                                . "• NAMA : {$st->nama_lengkap}\n"
-                                                . "• KELAS : {$st->kelas}\n"
+                                                . "• NAMA : {$namaSantri}\n"
+                                                . "• KELAS : {$kelasSantri}\n"
                                                 . "• JENIS PEMBAYARAN : {$b->judul_tagihan} ({$periodeStr})\n"
                                                 . "• NOMINAL : Rp {$sisaRp}\n\n"
                                                 . "Kirim bukti transfer ke WA Keuangan: {$rekKonfPhone} ({$rekKonfNama})\n\n"
@@ -1242,6 +1255,88 @@
                     Tutup
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: UPLOAD SANTRI MASSAL & TAGIHAN TUNGGAKAN LALU (BENDAHARA) -->
+    <div x-show="modalImportTunggakan" class="ta-modal-backdrop" style="display: none;" x-cloak>
+        <div class="ta-modal max-w-xl" @click.away="modalImportTunggakan = false">
+            <div class="ta-modal-header">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-600 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
+                        <span>Upload Data Santri &amp; Tagihan Tunggakan Lalu</span>
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Unggah data santri baru/lama serentak via Excel beserta histori tunggakan yang lalu.</p>
+                </div>
+                <button type="button" @click="modalImportTunggakan = false" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+
+            <form action="{{ route('admin.siswa.importExcel') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="ta-modal-body space-y-4 text-xs">
+                    <!-- Langkah 1: Download Template -->
+                    <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-emerald-950 block">Langkah 1: Unduh Format Template Excel (.xlsx)</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-600 text-white uppercase tracking-wider">Format Resmi</span>
+                        </div>
+                        <p class="text-gray-600 leading-relaxed text-[11px]">
+                            Template ini telah disederhanakan khusus untuk Bendahara (Hanya 10 Kolom Praktis) agar cepat diisi dari catatan manual:
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-700 bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <div class="flex items-start gap-1.5">
+                                <span class="text-emerald-600 font-bold">✓</span>
+                                <span><strong>Kolom A-G:</strong> Data Pokok (Nama, NIS, L/P, Tgl Lahir, Kelas, Wali, WA)</span>
+                            </div>
+                            <div class="flex items-start gap-1.5">
+                                <span class="text-amber-600 font-bold">✓</span>
+                                <span><strong>Kolom H:</strong> Sisa Uang Pangkal / Daftar Ulang</span>
+                            </div>
+                            <div class="flex items-start gap-1.5">
+                                <span class="text-amber-600 font-bold">✓</span>
+                                <span><strong>Kolom I:</strong> Tunggakan SPP Bulanan</span>
+                            </div>
+                            <div class="flex items-start gap-1.5">
+                                <span class="text-amber-600 font-bold">✓</span>
+                                <span><strong>Kolom J:</strong> Rincian / Keterangan Tunggakan</span>
+                            </div>
+                        </div>
+                        <div class="pt-1">
+                            <a href="{{ route('admin.siswa.downloadTemplate') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-theme-xs transition">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
+                                <span>Unduh Template Excel Praktis (10 Kolom)</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Langkah 2: Upload File -->
+                    <div class="space-y-2">
+                        <label class="block font-bold text-gray-800 uppercase tracking-wider">Langkah 2: Pilih File Excel yang Telah Diisi</label>
+                        <input type="file" name="file_excel" accept=".xlsx, .xls, .csv" required class="ta-input text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700">
+                        <p class="text-[11px] text-gray-500">Mendukung format Microsoft Excel <code>.xlsx</code> atau <code>.xls</code> (Maksimal 15 MB).</p>
+                    </div>
+
+                    <!-- Info Integrasi Finansial -->
+                    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] space-y-1.5">
+                        <span class="font-bold block text-amber-950">💡 Informasi Penting untuk Bendahara:</span>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700 text-[10.5px]">
+                            <li><strong>Santri Lama:</strong> Jika santri sudah ada di sistem dan kolom NIS diisi sesuai NIS santri, sistem otomatis menambahkan tagihan tunggakan tanpa membuat akun ganda.</li>
+                            <li><strong>Santri Baru:</strong> Akun santri baru langsung terbuat otomatis dengan password default tanggal lahir (format DDMMYYYY).</li>
+                            <li><strong>Kalkulasi Kasir:</strong> Seluruh tunggakan yang diunggah akan langsung muncul di Kasir POS Pembayaran dan Rekap Tunggakan Keuangan.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="ta-modal-footer">
+                    <button type="button" @click="modalImportTunggakan = false" class="ta-btn-sm-outline">
+                        Batal
+                    </button>
+                    <button type="submit" class="ta-btn-sm-primary bg-amber-600 hover:bg-amber-700 border-amber-600">
+                        Mulai Proses Upload &amp; Terbitkan Tagihan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

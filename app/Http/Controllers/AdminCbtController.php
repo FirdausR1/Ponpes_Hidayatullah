@@ -23,9 +23,14 @@ class AdminCbtController extends Controller
     public function soalIndex(Request $request)
     {
         $kategori = $request->query('kategori');
+        $jenjang = $request->query('jenjang');
         $search = $request->query('q');
 
         $query = Question::query();
+
+        if (!empty($jenjang) && in_array($jenjang, ['MTs', 'MA', 'Semua'])) {
+            $query->where('jenjang', $jenjang);
+        }
 
         if (!empty($kategori)) {
             $query->where('kategori', $kategori);
@@ -52,9 +57,13 @@ class AdminCbtController extends Controller
         $totalQuestions = Question::count();
         $totalMath = Question::where('is_math', true)->count();
         $totalArabic = Question::where('is_arabic', true)->count();
+        $totalMts = Question::where('jenjang', 'MTs')->count();
+        $totalMa = Question::where('jenjang', 'MA')->count();
+        $totalSemuaJenjang = Question::where('jenjang', 'Semua')->count();
 
         return view('admin.cbt.soal.index', compact(
-            'questions', 'categories', 'kategori', 'search', 'totalQuestions', 'totalMath', 'totalArabic', 'categoryCounts'
+            'questions', 'categories', 'kategori', 'jenjang', 'search', 'totalQuestions', 'totalMath', 'totalArabic', 'categoryCounts',
+            'totalMts', 'totalMa', 'totalSemuaJenjang'
         ));
     }
 
@@ -65,7 +74,8 @@ class AdminCbtController extends Controller
     public function soalCreate()
     {
         $categories = $this->getCbtCategories();
-        return view('admin.cbt.soal.create', compact('categories'));
+        $jenjangOptions = ['Semua', 'MTs', 'MA'];
+        return view('admin.cbt.soal.create', compact('categories', 'jenjangOptions'));
     }
 
     /**
@@ -74,6 +84,7 @@ class AdminCbtController extends Controller
     public function soalStore(Request $request)
     {
         $validated = $request->validate([
+            'jenjang' => 'nullable|string|in:Semua,MTs,MA',
             'kategori' => 'required|string|max:100',
             'soal' => 'required|string',
             'gambar_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:2048',
@@ -90,6 +101,7 @@ class AdminCbtController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
+        $validated['jenjang'] = $request->input('jenjang') ?: 'Semua';
         $validated['is_math'] = $request->has('is_math');
         $validated['is_arabic'] = $request->has('is_arabic');
         $validated['is_active'] = $request->has('is_active');
@@ -117,7 +129,8 @@ class AdminCbtController extends Controller
     {
         $question = Question::findOrFail($id);
         $categories = $this->getCbtCategories();
-        return view('admin.cbt.soal.edit', compact('question', 'categories'));
+        $jenjangOptions = ['Semua', 'MTs', 'MA'];
+        return view('admin.cbt.soal.edit', compact('question', 'categories', 'jenjangOptions'));
     }
 
     /**
@@ -128,6 +141,7 @@ class AdminCbtController extends Controller
         $question = Question::findOrFail($id);
 
         $validated = $request->validate([
+            'jenjang' => 'nullable|string|in:Semua,MTs,MA',
             'kategori' => 'required|string|max:100',
             'soal' => 'required|string',
             'gambar_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:2048',
@@ -144,6 +158,8 @@ class AdminCbtController extends Controller
             'pembahasan' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ]);
+
+        $validated['jenjang'] = $request->input('jenjang') ?: 'Semua';
 
         $validated['is_math'] = $request->has('is_math');
         $validated['is_arabic'] = $request->has('is_arabic');
@@ -187,6 +203,79 @@ class AdminCbtController extends Controller
         $question->delete();
 
         return redirect()->route('admin.cbt.soal.index')->with('success', 'Soal berhasil dihapus dari Bank Soal.');
+    }
+
+    /**
+     * Hapus Soal Secara Massal (Checkbox terpilih, Berdasarkan Filter Mapel/Jenjang, atau Kosongkan Semua)
+     */
+    public function soalBulkDestroy(Request $request)
+    {
+        $mode = $request->input('mode', 'selected'); // 'selected', 'filtered', 'truncate'
+
+        if ($mode === 'truncate') {
+            $questions = Question::all();
+            foreach ($questions as $q) {
+                if ($q->gambar && file_exists(public_path($q->gambar))) {
+                    @unlink(public_path($q->gambar));
+                }
+            }
+            $count = Question::count();
+            Question::truncate();
+
+            return redirect()->route('admin.cbt.soal.index')->with('success', "Seluruh Bank Soal berhasil dikosongkan ($count butir soal dihapus).");
+        }
+
+        if ($mode === 'filtered') {
+            $query = Question::query();
+            $kategori = $request->input('kategori');
+            $jenjang = $request->input('jenjang');
+
+            if (!empty($kategori)) {
+                $query->where('kategori', $kategori);
+            }
+            if (!empty($jenjang)) {
+                $query->where('jenjang', $jenjang);
+            }
+
+            $questions = $query->get();
+            $count = $questions->count();
+
+            if ($count === 0) {
+                return redirect()->route('admin.cbt.soal.index')->with('warning', 'Tidak ada butir soal yang cocok dengan kriteria filter untuk dihapus.');
+            }
+
+            foreach ($questions as $q) {
+                if ($q->gambar && file_exists(public_path($q->gambar))) {
+                    @unlink(public_path($q->gambar));
+                }
+                $q->delete();
+            }
+
+            $desc = [];
+            if (!empty($kategori)) $desc[] = "Mapel: $kategori";
+            if (!empty($jenjang)) $desc[] = "Jenjang: $jenjang";
+            $filterStr = !empty($desc) ? ' (' . implode(', ', $desc) . ')' : '';
+
+            return redirect()->route('admin.cbt.soal.index')->with('success', "Berhasil menghapus $count butir soal secara massal$filterStr.");
+        }
+
+        // Mode 'selected' (berdasarkan checklist id)
+        $ids = $request->input('ids');
+        if (empty($ids) || !is_array($ids)) {
+            return redirect()->route('admin.cbt.soal.index')->with('warning', 'Pilih minimal satu butir soal dengan mencentang kotak checkbox terlebih dahulu.');
+        }
+
+        $questions = Question::whereIn('id', $ids)->get();
+        $count = $questions->count();
+
+        foreach ($questions as $q) {
+            if ($q->gambar && file_exists(public_path($q->gambar))) {
+                @unlink(public_path($q->gambar));
+            }
+            $q->delete();
+        }
+
+        return redirect()->route('admin.cbt.soal.index')->with('success', "Berhasil menghapus $count butir soal terpilih secara massal.");
     }
 
     /**
@@ -479,6 +568,7 @@ class AdminCbtController extends Controller
         ];
 
         foreach ($templates as $idx => $t) {
+            $t['jenjang'] = $t['jenjang'] ?? 'Semua';
             $t['urutan'] = $idx + 1;
             $t['is_active'] = true;
             Question::create($t);
@@ -507,6 +597,8 @@ class AdminCbtController extends Controller
             'cbt_start_date' => Setting::get('cbt_start_date', now()->format('Y-m-d\T08:00')),
             'cbt_end_date' => Setting::get('cbt_end_date', now()->addDays(7)->format('Y-m-d\T23:59')),
             'cbt_max_attempts' => (int) Setting::get('cbt_max_attempts', 1),
+            'cbt_publish_scores' => Setting::get('cbt_publish_scores', '1'),
+            'cbt_retake_score_rule' => Setting::get('cbt_retake_score_rule', 'tertinggi'),
         ];
 
         $totalQuestionsInBank = Question::where('is_active', true)->count();
@@ -570,6 +662,8 @@ class AdminCbtController extends Controller
         Setting::set('cbt_start_date', $request->input('cbt_start_date', ''), 'cbt');
         Setting::set('cbt_end_date', $request->input('cbt_end_date', ''), 'cbt');
         Setting::set('cbt_max_attempts', (string) $request->input('cbt_max_attempts', '1'), 'cbt');
+        Setting::set('cbt_publish_scores', $request->input('cbt_publish_scores', '1'), 'cbt');
+        Setting::set('cbt_retake_score_rule', $request->input('cbt_retake_score_rule', 'tertinggi'), 'cbt');
 
         // Simpan Jadwal Khusus Per Materi (Matematika, Bahasa Arab, dll)
         if ($request->has('category_schedules') && is_array($request->category_schedules)) {
@@ -717,6 +811,7 @@ class AdminCbtController extends Controller
     {
         $statusFilter = $request->query('status');
         $kelulusanFilter = $request->query('kelulusan');
+        $jenjangFilter = $request->query('jenjang');
         $search = $request->query('q');
 
         $query = PsbRegistration::query();
@@ -733,10 +828,15 @@ class AdminCbtController extends Controller
             $query->where('status_ujian', $statusFilter);
         }
 
+        if (!empty($jenjangFilter) && in_array($jenjangFilter, ['MTs', 'MA'])) {
+            $query->where('jenjang', 'like', "%{$jenjangFilter}%");
+        }
+
         $students = $query->latest()->paginate(20)->withQueryString();
 
         $kkm = (int) Setting::get('cbt_passing_grade', 70);
 
+        // Statistik Global
         $totalParticipants = PsbRegistration::count();
         $totalFinished = PsbRegistration::where('status_ujian', 'Selesai')->count();
         $totalPassed = PsbRegistration::where('status_ujian', 'Selesai')
@@ -747,12 +847,40 @@ class AdminCbtController extends Controller
                           ->where('nilai_ujian', '>=', $kkm);
                   });
             })->count();
-
         $totalViolations = PsbRegistration::sum('pelanggaran_curang_count');
 
+        // Statistik Khusus MTs
+        $totalMts = PsbRegistration::where('jenjang', 'like', '%MTs%')->count();
+        $finishedMts = PsbRegistration::where('jenjang', 'like', '%MTs%')->where('status_ujian', 'Selesai')->count();
+        $passedMts = PsbRegistration::where('jenjang', 'like', '%MTs%')->where('status_ujian', 'Selesai')
+            ->where(function($q) use ($kkm) {
+                $q->where('status_kelulusan_override', 'Lulus')
+                  ->orWhere(function($sub) use ($kkm) {
+                      $sub->whereNull('status_kelulusan_override')
+                          ->where('nilai_ujian', '>=', $kkm);
+                  });
+            })->count();
+
+        // Statistik Khusus MA
+        $totalMa = PsbRegistration::where('jenjang', 'like', '%MA%')->count();
+        $finishedMa = PsbRegistration::where('jenjang', 'like', '%MA%')->where('status_ujian', 'Selesai')->count();
+        $passedMa = PsbRegistration::where('jenjang', 'like', '%MA%')->where('status_ujian', 'Selesai')
+            ->where(function($q) use ($kkm) {
+                $q->where('status_kelulusan_override', 'Lulus')
+                  ->orWhere(function($sub) use ($kkm) {
+                      $sub->whereNull('status_kelulusan_override')
+                          ->where('nilai_ujian', '>=', $kkm);
+                  });
+            })->count();
+
+        $publishScores = Setting::get('cbt_publish_scores', '0') === '1';
+
         return view('admin.cbt.hasil.index', compact(
-            'students', 'statusFilter', 'kelulusanFilter', 'search', 'kkm',
-            'totalParticipants', 'totalFinished', 'totalPassed', 'totalViolations'
+            'students', 'statusFilter', 'kelulusanFilter', 'jenjangFilter', 'search', 'kkm',
+            'publishScores',
+            'totalParticipants', 'totalFinished', 'totalPassed', 'totalViolations',
+            'totalMts', 'finishedMts', 'passedMts',
+            'totalMa', 'finishedMa', 'passedMa'
         ));
     }
 
@@ -818,6 +946,30 @@ class AdminCbtController extends Controller
     }
 
     /**
+     * Buka Kesempatan Ujian Ulang / Reset Pelanggaran bagi Santri Terpilih
+     */
+    public function resetUjian($id)
+    {
+        $reg = PsbRegistration::findOrFail($id);
+
+        $reg->update([
+            'status_ujian' => 'Sedang Ujian',
+            'pelanggaran_curang_count' => 0,
+            'pelanggaran_curang_log' => null,
+            'cbt_soal_urutan_json' => null,
+            'jawaban_santri_json' => null,
+            'cbt_ragu_json' => null,
+            'cbt_current_question_index' => 0,
+            'cbt_extra_time_minutes' => 0,
+            'nilai_ujian' => null,
+            'ujian_selesai_at' => null,
+            'cbt_proctor_message' => '🔄 Ujian Anda telah dibuka kembali oleh Admin / Dewan Penguji untuk kesempatan mengulang.',
+        ]);
+
+        return back()->with('success', "Sesi ujian santri an. {$reg->nama_lengkap} ({$reg->no_registrasi}) berhasil direset dan dibuka kembali untuk ujian ulang.");
+    }
+
+    /**
      * Cetak Lembar Soal Resmi (Print / PDF)
      */
     public function cetakSoal(Request $request)
@@ -835,17 +987,355 @@ class AdminCbtController extends Controller
 
     /**
      * Cetak Rekapitulasi Nilai & Kelulusan (Print / PDF)
+     * Mendukung pemisahan dokumen rekap MTs dan MA
      */
     public function cetakNilai(Request $request)
     {
         $kkm = (int) Setting::get('cbt_passing_grade', 70);
-        $students = PsbRegistration::where('status_ujian', 'Selesai')
-            ->orderByDesc('nilai_ujian')
-            ->get();
+        $jenjang = $request->query('jenjang');
 
-        $title = 'Rekapitulasi Nilai Ujian Seleksi Masuk (CBT) TA ' . Setting::get('tahun_ajaran', '2026/2027');
+        $query = PsbRegistration::where('status_ujian', 'Selesai');
 
-        return view('admin.cbt.cetak_nilai', compact('students', 'kkm', 'title'));
+        if ($jenjang === 'MTs') {
+            $query->where('jenjang', 'like', '%MTs%');
+            $title = 'Rekapitulasi Nilai Ujian Seleksi Masuk Jenjang MTs (Madrasah Tsanawiyah) TA ' . Setting::get('tahun_ajaran', '2026/2027');
+        } elseif ($jenjang === 'MA') {
+            $query->where('jenjang', 'like', '%MA%');
+            $title = 'Rekapitulasi Nilai Ujian Seleksi Masuk Jenjang MA (Madrasah Aliyah) TA ' . Setting::get('tahun_ajaran', '2026/2027');
+        } else {
+            $title = 'Rekapitulasi Nilai Ujian Seleksi Masuk (CBT) Seluruh Jenjang TA ' . Setting::get('tahun_ajaran', '2026/2027');
+        }
+
+        $students = $query->orderByDesc('nilai_ujian')->get();
+
+        return view('admin.cbt.cetak_nilai', compact('students', 'kkm', 'title', 'jenjang'));
+    }
+
+    /**
+     * Buka / Tutup Pengumuman Nilai CBT untuk Santri
+     */
+    public function togglePublishScores(Request $request)
+    {
+        $current = Setting::get('cbt_publish_scores', '0');
+        $new = $current === '1' ? '0' : '1';
+        Setting::set('cbt_publish_scores', $new, 'cbt');
+
+        if ($new === '1') {
+            $msg = '📢 Pengumuman Nilai Ujian BERHASIL DIBUKA! Seluruh calon santri sekarang dapat melihat nilai CBT, rincian per mapel, dan status kelulusan di kartu hasil ujian masing-masing.';
+        } else {
+            $msg = '🔒 Pengumuman Nilai Ujian BERHASIL DITUTUP! Nilai ujian dan status kelulusan kini kembali dirahasiakan dari santri.';
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /**
+     * Download Rekapitulasi Daftar Nilai CBT Secara Massal (.xlsx)
+     */
+    public function exportNilai(Request $request)
+    {
+        $jenjang = $request->query('jenjang');
+        $status = $request->query('status');
+        $search = $request->query('q');
+        $kkm = (int) Setting::get('cbt_passing_grade', 70);
+        $ta = Setting::get('tahun_ajaran', '2026/2027');
+
+        $query = PsbRegistration::query();
+
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhere('no_registrasi', 'like', "%{$search}%")
+                  ->orWhere('nisn', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($status)) {
+            $query->where('status_ujian', $status);
+        }
+
+        if (!empty($jenjang) && in_array($jenjang, ['MTs', 'MA'])) {
+            $query->where('jenjang', 'like', "%{$jenjang}%");
+            $jenjangLabel = "Jenjang {$jenjang}";
+        } else {
+            $jenjangLabel = "Seluruh Jenjang (MTs & MA)";
+        }
+
+        // Urutkan nilai tertinggi ke terendah, lalu nama
+        $students = $query->orderByDesc('nilai_ujian')->orderBy('nama_lengkap')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Rekap Nilai CBT');
+
+        // Header Title
+        $sheet->mergeCells('A1:M1');
+        $sheet->setCellValue('A1', 'PONDOK PESANTREN HIDAYATULLAH TUKSONGO PRINGSURAT TEMANGGUNG');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF15803D'));
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->mergeCells('A2:M2');
+        $sheet->setCellValue('A2', 'REKAPITULASI HASIL NILAI UJIAN SELEKSI MASUK (CBT) CALON SANTRI BARU');
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->mergeCells('A3:M3');
+        $sheet->setCellValue('A3', "Tahun Ajaran {$ta} • Kelompok: {$jenjangLabel} • Standar KKM: {$kkm} Poin • Diekspor: " . date('d F Y H:i') . ' WIB');
+        $sheet->getStyle('A3')->getFont()->setSize(10)->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF475569'));
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Table Header
+        $headers = [
+            'A5' => 'No',
+            'B5' => 'Peringkat',
+            'C5' => 'No. Registrasi',
+            'D5' => 'NISN',
+            'E5' => 'Nama Lengkap Santri',
+            'F5' => 'Jenis Kelamin',
+            'G5' => 'Jenjang',
+            'H5' => 'Status Ujian',
+            'I5' => 'Nilai CBT',
+            'J5' => 'KKM',
+            'K5' => 'Status Kelulusan',
+            'L5' => 'Catatan Penguji / Afirmasi',
+            'M5' => 'Waktu Selesai Ujian',
+        ];
+
+        foreach ($headers as $cell => $text) {
+            $sheet->setCellValue($cell, $text);
+        }
+
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'],
+                'size' => 10,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF15803D'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF065F46'],
+                ],
+            ],
+        ];
+        $sheet->getStyle('A5:M5')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(5)->setRowHeight(26);
+
+        $row = 6;
+        $rank = 1;
+        foreach ($students as $index => $s) {
+            $kelulusan = $s->status_kelulusan;
+            $hasScore = $s->nilai_ujian !== null;
+
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $hasScore && $s->status_ujian === 'Selesai' ? $rank++ : '-');
+            $sheet->setCellValueExplicit('C' . $row, $s->no_registrasi ?? '', DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $row, $s->nisn ?? '-', DataType::TYPE_STRING);
+            $sheet->setCellValue('E' . $row, $s->nama_lengkap);
+            $sheet->setCellValue('F' . $row, $s->jenis_kelamin ?? '-');
+            $sheet->setCellValue('G' . $row, $s->jenjang);
+            $sheet->setCellValue('H' . $row, $s->status_ujian ?? 'Belum Ujian');
+            $sheet->setCellValue('I' . $row, $hasScore ? (int) $s->nilai_ujian : 0);
+            $sheet->setCellValue('J' . $row, $kkm);
+            $sheet->setCellValue('K' . $row, $kelulusan);
+            $sheet->setCellValue('L' . $row, $s->catatan_penguji ?: '-');
+            $sheet->setCellValue('M' . $row, $s->ujian_selesai_at ? $s->ujian_selesai_at->format('d/m/Y H:i') : '-');
+
+            // Alignments
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('B' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('C' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('F' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('H' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('J' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('K' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('M' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Highlight baris kelulusan
+            if ($kelulusan === 'Lulus') {
+                $sheet->getStyle('K' . $row)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF15803D'));
+            } elseif ($kelulusan === 'Tidak Lulus') {
+                $sheet->getStyle('K' . $row)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFDC2626'));
+            }
+
+            // Zebra background
+            if ($row % 2 === 0) {
+                $sheet->getStyle('A' . $row . ':M' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF8FAFC');
+            }
+
+            $row++;
+        }
+
+        $lastRow = max(6, $row - 1);
+        $sheet->getStyle('A5:M' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFCBD5E1');
+
+        foreach (range('A', 'M') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $jenjangClean = !empty($jenjang) ? "_{$jenjang}" : '_Semua';
+        $filename = 'Rekap_Nilai_CBT' . $jenjangClean . '_' . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'cbt_nilai_');
+        $writer->save($tempPath);
+
+        return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Download Data Khusus Santri yang Lulus Ujian Seleksi (.xlsx)
+     */
+    public function exportLulus(Request $request)
+    {
+        $jenjang = $request->query('jenjang');
+        $kkm = (int) Setting::get('cbt_passing_grade', 70);
+        $ta = Setting::get('tahun_ajaran', '2026/2027');
+
+        $query = PsbRegistration::where('status_ujian', 'Selesai')
+            ->where(function($q) use ($kkm) {
+                $q->where('status_kelulusan_override', 'Lulus')
+                  ->orWhere(function($sub) use ($kkm) {
+                      $sub->whereNull('status_kelulusan_override')
+                          ->where('nilai_ujian', '>=', $kkm);
+                  });
+            });
+
+        if (!empty($jenjang) && in_array($jenjang, ['MTs', 'MA'])) {
+            $query->where('jenjang', 'like', "%{$jenjang}%");
+            $jenjangLabel = "Jenjang {$jenjang}";
+        } else {
+            $jenjangLabel = "Seluruh Jenjang (MTs & MA)";
+        }
+
+        // Peringkat kelulusan berdasarkan nilai tertinggi
+        $students = $query->orderByDesc('nilai_ujian')->orderBy('nama_lengkap')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Santri Lulus CBT');
+
+        // Header Title
+        $sheet->mergeCells('A1:L1');
+        $sheet->setCellValue('A1', 'PONDOK PESANTREN HIDAYATULLAH TUKSONGO PRINGSURAT TEMANGGUNG');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF15803D'));
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->mergeCells('A2:L2');
+        $sheet->setCellValue('A2', 'DAFTAR RESMI CALON SANTRI DINYATAKAN LULUS SELEKSI UJIAN MASUK (CBT)');
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->mergeCells('A3:L3');
+        $sheet->setCellValue('A3', "Tahun Ajaran {$ta} • Kelompok: {$jenjangLabel} • Total Lulus: " . count($students) . " Santri • Diekspor: " . date('d F Y H:i') . ' WIB');
+        $sheet->getStyle('A3')->getFont()->setSize(10)->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF475569'));
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Table Header
+        $headers = [
+            'A5' => 'No',
+            'B5' => 'Ranking',
+            'C5' => 'No. Registrasi',
+            'D5' => 'NISN',
+            'E5' => 'Nama Lengkap Santri',
+            'F5' => 'Jenis Kelamin',
+            'G5' => 'Jenjang Pilihan',
+            'H5' => 'Jalur',
+            'I5' => 'Nilai CBT',
+            'J5' => 'Nama Wali / Orang Tua',
+            'K5' => 'No. WhatsApp Wali',
+            'L5' => 'Keputusan & Catatan Penguji',
+        ];
+
+        foreach ($headers as $cell => $text) {
+            $sheet->setCellValue($cell, $text);
+        }
+
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'],
+                'size' => 10,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF047857'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF064E3B'],
+                ],
+            ],
+        ];
+        $sheet->getStyle('A5:L5')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(5)->setRowHeight(26);
+
+        $row = 6;
+        foreach ($students as $index => $s) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, 'Peringkat ' . ($index + 1));
+            $sheet->setCellValueExplicit('C' . $row, $s->no_registrasi ?? '', DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $row, $s->nisn ?? '-', DataType::TYPE_STRING);
+            $sheet->setCellValue('E' . $row, $s->nama_lengkap);
+            $sheet->setCellValue('F' . $row, $s->jenis_kelamin ?? '-');
+            $sheet->setCellValue('G' . $row, $s->jenjang);
+            $sheet->setCellValue('H' . $row, $s->jalur ?: 'Reguler');
+            $sheet->setCellValue('I' . $row, (int) ($s->nilai_ujian ?? 0));
+            $sheet->setCellValue('J' . $row, $s->nama_wali ?: '-');
+            $sheet->setCellValueExplicit('K' . $row, $s->no_whatsapp ?: ($s->ayah_telepon ?: '-'), DataType::TYPE_STRING);
+            $sheet->setCellValue('L' . $row, $s->catatan_penguji ?: 'Lulus Seleksi Akademik CBT');
+
+            // Alignments
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('B' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('C' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('F' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('H' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('K' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Bold Score in Emerald
+            $sheet->getStyle('I' . $row)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF15803D'));
+
+            // Zebra background
+            if ($row % 2 === 0) {
+                $sheet->getStyle('A' . $row . ':L' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0FDF4');
+            }
+
+            $row++;
+        }
+
+        $lastRow = max(6, $row - 1);
+        $sheet->getStyle('A5:L' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFCBD5E1');
+
+        foreach (range('A', 'L') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $jenjangClean = !empty($jenjang) ? "_{$jenjang}" : '_Semua';
+        $filename = 'Data_Santri_Lulus_CBT' . $jenjangClean . '_' . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'cbt_lulus_');
+        $writer->save($tempPath);
+
+        return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
     }
 
     // =========================================================
@@ -966,38 +1456,11 @@ class AdminCbtController extends Controller
     {
         $format = strtolower($request->query('format', 'xlsx'));
 
-        $columns = ['kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
+        $columns = ['jenjang', 'kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
 
         $sampleRows = [
             [
-                'kategori'      => 'IPA (Fisika)',
-                'soal'          => 'Sebuah benda bermassa $m = 2\\text{ kg}$ bergerak dengan kecepatan konstan $v = 10\\text{ m/s}$. Berapakah energi kinetik ($E_k = \\frac{1}{2}mv^2$) benda tersebut?',
-                'opsi_a'        => '100 Joule',
-                'opsi_b'        => '50 Joule',
-                'opsi_c'        => '200 Joule',
-                'opsi_d'        => '20 Joule',
-                'opsi_e'        => '150 Joule',
-                'kunci_jawaban' => 'A',
-                'bobot'         => '1',
-                'pembahasan'    => 'Rumus: $E_k = \\frac{1}{2} \\times 2 \\times 10^2 = 100\\text{ Joule}$.',
-                'is_math'       => '1',
-                'is_arabic'     => '0',
-            ],
-            [
-                'kategori'      => 'IPA (Kimia)',
-                'soal'          => 'Gas yang dikeluarkan oleh manusia saat bernapas dan diserap oleh tanaman hijau untuk fotosintesis memiliki rumus kimia...',
-                'opsi_a'        => '$\\text{CO}_2$ (Karbondioksida)',
-                'opsi_b'        => '$\\text{O}_2$ (Oksigen)',
-                'opsi_c'        => '$\\text{H}_2\\text{O}$ (Air)',
-                'opsi_d'        => '$\\text{CO}$ (Karbonmonoksida)',
-                'opsi_e'        => '$\\text{N}_2$ (Nitrogen)',
-                'kunci_jawaban' => 'A',
-                'bobot'         => '1',
-                'pembahasan'    => 'CO2 adalah senyawa karbondioksida.',
-                'is_math'       => '1',
-                'is_arabic'     => '0',
-            ],
-            [
+                'jenjang'       => 'MTs',
                 'kategori'      => 'Matematika',
                 'soal'          => 'Hasil perhitungan pecahan berikut adalah: $$\\frac{3}{4} + \\frac{2}{5} - \\frac{1}{2} = \\dots$$',
                 'opsi_a'        => '$\\frac{13}{20}$',
@@ -1012,6 +1475,52 @@ class AdminCbtController extends Controller
                 'is_arabic'     => '0',
             ],
             [
+                'jenjang'       => 'MTs',
+                'kategori'      => 'IPA',
+                'soal'          => 'Gas yang dikeluarkan oleh manusia saat bernapas dan diserap oleh tanaman hijau untuk fotosintesis memiliki rumus kimia...',
+                'opsi_a'        => '$\\text{CO}_2$ (Karbondioksida)',
+                'opsi_b'        => '$\\text{O}_2$ (Oksigen)',
+                'opsi_c'        => '$\\text{H}_2\\text{O}$ (Air)',
+                'opsi_d'        => '$\\text{CO}$ (Karbonmonoksida)',
+                'opsi_e'        => '$\\text{N}_2$ (Nitrogen)',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'CO2 adalah senyawa karbondioksida.',
+                'is_math'       => '1',
+                'is_arabic'     => '0',
+            ],
+            [
+                'jenjang'       => 'MA',
+                'kategori'      => 'Matematika',
+                'soal'          => 'Akar-akar penyelesaian dari persamaan kuadrat berikut adalah: $$x^2 - 5x + 6 = 0$$',
+                'opsi_a'        => '$x = 2$ atau $x = 3$',
+                'opsi_b'        => '$x = -2$ atau $x = -3$',
+                'opsi_c'        => '$x = 1$ atau $x = 6$',
+                'opsi_d'        => '$x = -1$ atau $x = 6$',
+                'opsi_e'        => '$x = 0$ atau $x = 5$',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Faktorisasi: (x - 2)(x - 3) = 0, diperoleh x = 2 atau x = 3.',
+                'is_math'       => '1',
+                'is_arabic'     => '0',
+            ],
+            [
+                'jenjang'       => 'MA',
+                'kategori'      => 'Fisika',
+                'soal'          => 'Sebuah benda bermassa $m = 2\\text{ kg}$ bergerak dengan kecepatan konstan $v = 10\\text{ m/s}$. Berapakah energi kinetik ($E_k = \\frac{1}{2}mv^2$) benda tersebut?',
+                'opsi_a'        => '100 Joule',
+                'opsi_b'        => '50 Joule',
+                'opsi_c'        => '200 Joule',
+                'opsi_d'        => '20 Joule',
+                'opsi_e'        => '150 Joule',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Rumus: $E_k = \\frac{1}{2} \\times 2 \\times 10^2 = 100\\text{ Joule}$.',
+                'is_math'       => '1',
+                'is_arabic'     => '0',
+            ],
+            [
+                'jenjang'       => 'Semua',
                 'kategori'      => 'Bahasa Arab',
                 'soal'          => 'مَا هُوَ مُفْرَدُ كَلِمَةِ «أَسَاتِذَةٌ» فِي اللُّغَةِ الْعَرَبِيَّةِ؟',
                 'opsi_a'        => 'أُسْتَاذٌ (Ustadz / Guru laki-laki)',
@@ -1026,6 +1535,22 @@ class AdminCbtController extends Controller
                 'is_arabic'     => '1',
             ],
             [
+                'jenjang'       => 'Semua',
+                'kategori'      => 'Pendidikan Agama Islam',
+                'soal'          => 'Hukum tajwid nun mati atau tanwin bertemu dengan huruf Ba (ب) disertai ghunnah (mendengung) disebut...',
+                'opsi_a'        => 'Iqlab',
+                'opsi_b'        => 'Idzhar Halqi',
+                'opsi_c'        => 'Idgham Bighunnah',
+                'opsi_d'        => 'Ikhfa Haqiqi',
+                'opsi_e'        => 'Idgham Bilaghunnah',
+                'kunci_jawaban' => 'A',
+                'bobot'         => '1',
+                'pembahasan'    => 'Nun sukun/tanwin bertemu ba dibaca iqlab (suara nun diganti mim).',
+                'is_math'       => '0',
+                'is_arabic'     => '0',
+            ],
+            [
+                'jenjang'       => 'Semua',
                 'kategori'      => 'Bahasa Indonesia',
                 'soal'          => 'Manakah deretan kata baku berikut yang seluruhnya sesuai dengan PUEBI/KBBI?',
                 'opsi_a'        => 'Ijazah, nasihat, kualitas, praktik, apotek',
@@ -1040,19 +1565,20 @@ class AdminCbtController extends Controller
                 'is_arabic'     => '0',
             ],
             [
-                'kategori'      => 'Pendidikan Agama Islam',
-                'soal'          => 'Hukum tajwid nun mati atau tanwin bertemu dengan huruf Ba (ب) disertai ghunnah (mendengung) disebut...',
-                'opsi_a'        => 'Iqlab',
-                'opsi_b'        => 'Idzhar Halqi',
-                'opsi_c'        => 'Idgham Bighunnah',
-                'opsi_d'        => 'Ikhfa Haqiqi',
-                'opsi_e'        => 'Idgham Bilaghunnah',
+                'jenjang'       => 'Semua',
+                'kategori'      => 'Bahasa Inggris',
+                'soal'          => 'Which sentence is grammatically correct in Simple Present Tense?',
+                'opsi_a'        => 'The santri recites the Holy Quran every morning.',
+                'opsi_b'        => 'The santri reciting the Holy Quran every morning.',
+                'opsi_c'        => 'The santri recite the Holy Quran every morning.',
+                'opsi_d'        => 'The santri are recite the Holy Quran every morning.',
+                'opsi_e'        => 'The santri was reciting the Holy Quran every morning.',
                 'kunci_jawaban' => 'A',
                 'bobot'         => '1',
-                'pembahasan'    => 'Nun sukun/tanwin bertemu ba dibaca iqlab (suara nun diganti mim).',
+                'pembahasan'    => 'Subject singular (The santri) menggunakan verb-s (recites).',
                 'is_math'       => '0',
                 'is_arabic'     => '0',
-            ],
+            ]
         ];
 
         if ($format === 'csv') {
@@ -1082,52 +1608,54 @@ class AdminCbtController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Soal CBT');
 
-        $colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+        $colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M'];
         foreach ($columns as $idx => $col) {
             $sheet->setCellValue($colLetters[$idx] . '1', $col);
         }
 
         // Header Style (Emerald Green)
-        $sheet->getStyle('A1:L1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF10B981');
-        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1:M1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:M1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF10B981');
+        $sheet->getStyle('A1:M1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(1)->setRowHeight(28);
 
         // Baris Contoh
         $rowNum = 2;
         foreach ($sampleRows as $row) {
-            $sheet->setCellValueExplicit('A' . $rowNum, $row['kategori'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('B' . $rowNum, $row['soal'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('C' . $rowNum, $row['opsi_a'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('D' . $rowNum, $row['opsi_b'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('E' . $rowNum, $row['opsi_c'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('F' . $rowNum, $row['opsi_d'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('G' . $rowNum, $row['opsi_e'], DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('H' . $rowNum, $row['kunci_jawaban'], DataType::TYPE_STRING);
-            $sheet->setCellValue('I' . $rowNum, (int)$row['bobot']);
-            $sheet->setCellValueExplicit('J' . $rowNum, $row['pembahasan'], DataType::TYPE_STRING);
-            $sheet->setCellValue('K' . $rowNum, (int)$row['is_math']);
-            $sheet->setCellValue('L' . $rowNum, (int)$row['is_arabic']);
+            $sheet->setCellValueExplicit('A' . $rowNum, $row['jenjang'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('B' . $rowNum, $row['kategori'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C' . $rowNum, $row['soal'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $rowNum, $row['opsi_a'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('E' . $rowNum, $row['opsi_b'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('F' . $rowNum, $row['opsi_c'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('G' . $rowNum, $row['opsi_d'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('H' . $rowNum, $row['opsi_e'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('I' . $rowNum, $row['kunci_jawaban'], DataType::TYPE_STRING);
+            $sheet->setCellValue('J' . $rowNum, (int)$row['bobot']);
+            $sheet->setCellValueExplicit('K' . $rowNum, $row['pembahasan'], DataType::TYPE_STRING);
+            $sheet->setCellValue('L' . $rowNum, (int)$row['is_math']);
+            $sheet->setCellValue('M' . $rowNum, (int)$row['is_arabic']);
 
-            $sheet->getStyle('H' . $rowNum . ':I' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle('K' . $rowNum . ':L' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('A' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('I' . $rowNum . ':J' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('L' . $rowNum . ':M' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getRowDimension($rowNum)->setRowHeight(32);
             $rowNum++;
         }
 
         $lastRow = $rowNum - 1;
-        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->getColor()->setARGB('FFD1D5DB');
+        $sheet->getStyle('A1:M' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A1:M' . $lastRow)->getBorders()->getAllBorders()->getColor()->setARGB('FFD1D5DB');
 
         $widths = [
-            'A' => 20, 'B' => 60, 'C' => 28, 'D' => 28, 'E' => 28, 'F' => 28,
-            'G' => 28, 'H' => 16, 'I' => 12, 'J' => 45, 'K' => 14, 'L' => 14
+            'A' => 15, 'B' => 24, 'C' => 60, 'D' => 28, 'E' => 28, 'F' => 28,
+            'G' => 28, 'H' => 28, 'I' => 16, 'J' => 12, 'K' => 45, 'L' => 14, 'M' => 14
         ];
         foreach ($widths as $col => $w) {
             $sheet->getColumnDimension($col)->setWidth($w);
         }
-        $sheet->getStyle('B2:B' . $lastRow)->getAlignment()->setWrapText(true);
-        $sheet->getStyle('J2:J' . $lastRow)->getAlignment()->setWrapText(true);
+        $sheet->getStyle('C2:C' . $lastRow)->getAlignment()->setWrapText(true);
+        $sheet->getStyle('K2:K' . $lastRow)->getAlignment()->setWrapText(true);
 
         $filename = 'template_soal_cbt_pesantren.xlsx';
         return response()->streamDownload(function() use ($spreadsheet) {
@@ -1145,16 +1673,23 @@ class AdminCbtController extends Controller
     public function soalExport(Request $request)
     {
         $kategori = $request->query('kategori');
+        $jenjang  = $request->query('jenjang');
         $format   = strtolower($request->query('format', 'xlsx'));
 
         $query = Question::query();
         if (!empty($kategori)) {
             $query->where('kategori', $kategori);
         }
-        $questions = $query->orderBy('kategori')->orderBy('id')->get();
+        if (!empty($jenjang) && in_array($jenjang, ['MTs', 'MA', 'Semua'])) {
+            $query->where('jenjang', $jenjang);
+        }
+        $questions = $query->orderBy('jenjang')->orderBy('kategori')->orderBy('id')->get();
 
-        $slug = !empty($kategori) ? \Illuminate\Support\Str::slug($kategori) . '_' : '';
-        $columns = ['kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
+        $slug = '';
+        if (!empty($jenjang)) $slug .= \Illuminate\Support\Str::slug($jenjang) . '_';
+        if (!empty($kategori)) $slug .= \Illuminate\Support\Str::slug($kategori) . '_';
+
+        $columns = ['jenjang', 'kategori', 'soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'kunci_jawaban', 'bobot', 'pembahasan', 'is_math', 'is_arabic'];
 
         if ($format === 'csv') {
             $filename = 'bank_soal_cbt_' . $slug . date('Ymd_His') . '.csv';
@@ -1173,6 +1708,7 @@ class AdminCbtController extends Controller
                 fputcsv($file, $columns);
                 foreach ($questions as $q) {
                     fputcsv($file, [
+                        $q->jenjang ?: 'Semua',
                         $q->kategori,
                         $q->soal,
                         $q->opsi_a,
@@ -1199,49 +1735,51 @@ class AdminCbtController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Bank Soal CBT');
 
-        $colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+        $colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M'];
         foreach ($columns as $idx => $col) {
             $sheet->setCellValue($colLetters[$idx] . '1', $col);
         }
 
-        $sheet->getStyle('A1:L1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF10B981');
-        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1:M1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:M1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF10B981');
+        $sheet->getStyle('A1:M1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(1)->setRowHeight(28);
 
         $rowIdx = 2;
         foreach ($questions as $q) {
-            $sheet->setCellValueExplicit('A' . $rowIdx, (string)$q->kategori, DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('B' . $rowIdx, (string)$q->soal, DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('C' . $rowIdx, (string)$q->opsi_a, DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('D' . $rowIdx, (string)$q->opsi_b, DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('E' . $rowIdx, (string)$q->opsi_c, DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('F' . $rowIdx, (string)$q->opsi_d, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('A' . $rowIdx, (string)($q->jenjang ?: 'Semua'), DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('B' . $rowIdx, (string)$q->kategori, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C' . $rowIdx, (string)$q->soal, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $rowIdx, (string)$q->opsi_a, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('E' . $rowIdx, (string)$q->opsi_b, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('F' . $rowIdx, (string)$q->opsi_c, DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('G' . $rowIdx, (string)($q->opsi_e ?? ''), DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('H' . $rowIdx, (string)$q->kunci_jawaban, DataType::TYPE_STRING);
-            $sheet->setCellValue('I' . $rowIdx, (int)$q->bobot);
-            $sheet->setCellValueExplicit('J' . $rowIdx, (string)($q->pembahasan ?? ''), DataType::TYPE_STRING);
-            $sheet->setCellValue('K' . $rowIdx, $q->is_math ? 1 : 0);
-            $sheet->setCellValue('L' . $rowIdx, $q->is_arabic ? 1 : 0);
+            $sheet->setCellValueExplicit('H' . $rowIdx, (string)($q->opsi_e ?? ''), DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('I' . $rowIdx, (string)$q->kunci_jawaban, DataType::TYPE_STRING);
+            $sheet->setCellValue('J' . $rowIdx, (int)$q->bobot);
+            $sheet->setCellValueExplicit('K' . $rowIdx, (string)($q->pembahasan ?? ''), DataType::TYPE_STRING);
+            $sheet->setCellValue('L' . $rowIdx, $q->is_math ? 1 : 0);
+            $sheet->setCellValue('M' . $rowIdx, $q->is_arabic ? 1 : 0);
 
-            $sheet->getStyle('H' . $rowIdx . ':I' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle('K' . $rowIdx . ':L' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('I' . $rowIdx . ':J' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('L' . $rowIdx . ':M' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $rowIdx++;
         }
 
         $lastRow = max(2, $rowIdx - 1);
-        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getStyle('A1:L' . $lastRow)->getBorders()->getAllBorders()->getColor()->setARGB('FFD1D5DB');
+        $sheet->getStyle('A1:M' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A1:M' . $lastRow)->getBorders()->getAllBorders()->getColor()->setARGB('FFD1D5DB');
 
         $widths = [
-            'A' => 20, 'B' => 60, 'C' => 28, 'D' => 28, 'E' => 28, 'F' => 28,
-            'G' => 28, 'H' => 16, 'I' => 12, 'J' => 45, 'K' => 14, 'L' => 14
+            'A' => 15, 'B' => 24, 'C' => 60, 'D' => 28, 'E' => 28, 'F' => 28,
+            'G' => 28, 'H' => 28, 'I' => 16, 'J' => 12, 'K' => 45, 'L' => 14, 'M' => 14
         ];
         foreach ($widths as $col => $w) {
             $sheet->getColumnDimension($col)->setWidth($w);
         }
-        $sheet->getStyle('B2:B' . $lastRow)->getAlignment()->setWrapText(true);
-        $sheet->getStyle('J2:J' . $lastRow)->getAlignment()->setWrapText(true);
+        $sheet->getStyle('C2:C' . $lastRow)->getAlignment()->setWrapText(true);
+        $sheet->getStyle('K2:K' . $lastRow)->getAlignment()->setWrapText(true);
 
         return response()->streamDownload(function() use ($spreadsheet) {
             $writer = new Xlsx($spreadsheet);
@@ -1256,17 +1794,19 @@ class AdminCbtController extends Controller
      * Proses upload dan impor soal dari file Excel (.xlsx / .xls) atau CSV.
      *
      * Format kolom (header baris pertama):
-     * kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_math, is_arabic
+     * jenjang, kategori, soal, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci_jawaban, bobot, pembahasan, is_math, is_arabic
      */
     public function soalImport(Request $request)
     {
         $request->validate([
+            'jenjang_import'  => 'nullable|string|max:50',
             'kategori_import' => 'required|string|max:100',
             'excel_file'      => 'nullable|file|mimes:xlsx,xls,csv,txt|max:10240',
             'csv_file'        => 'nullable|file|mimes:xlsx,xls,csv,txt|max:10240',
         ]);
 
         $defaultKategori = trim($request->input('kategori_import'));
+        $defaultJenjang = trim($request->input('jenjang_import', 'sesuai_excel'));
         $file = $request->file('excel_file') ?? $request->file('csv_file');
 
         if (!$file) {
@@ -1351,7 +1891,27 @@ class AdminCbtController extends Controller
                 $data = $row;
             }
 
-            $soalText = trim((string)($data['soal'] ?? $data[1] ?? $data[0] ?? ''));
+            // Tentukan Jenjang Soal (MTs, MA, atau Semua)
+            $rawJenjang = !empty($data['jenjang']) ? trim((string)$data['jenjang']) : '';
+            if (!empty($rawJenjang)) {
+                $uj = strtoupper($rawJenjang);
+                if (str_contains($uj, 'MTS')) {
+                    $jenjang = 'MTs';
+                } elseif (str_contains($uj, 'MA')) {
+                    $jenjang = 'MA';
+                } else {
+                    $jenjang = 'Semua';
+                }
+            } else {
+                if ($defaultJenjang !== 'sesuai_excel' && in_array($defaultJenjang, ['MTs', 'MA', 'Semua'])) {
+                    $jenjang = $defaultJenjang;
+                } else {
+                    $jenjang = 'Semua';
+                }
+            }
+
+            // Tentukan Soal & Kolom
+            $soalText = trim((string)($data['soal'] ?? $data[2] ?? $data[1] ?? $data[0] ?? ''));
             if (empty($soalText)) continue;
 
             $rowKategori = !empty($data['kategori']) ? trim((string)$data['kategori']) : '';
@@ -1361,14 +1921,14 @@ class AdminCbtController extends Controller
                 $kategori = !empty($rowKategori) ? $rowKategori : ($defaultKategori === 'sesuai_csv' ? 'Umum' : $defaultKategori);
             }
 
-            $opsiA  = trim((string)($data['opsi_a'] ?? $data[2] ?? ''));
-            $opsiB  = trim((string)($data['opsi_b'] ?? $data[3] ?? ''));
-            $opsiC  = trim((string)($data['opsi_c'] ?? $data[4] ?? ''));
-            $opsiD  = trim((string)($data['opsi_d'] ?? $data[5] ?? ''));
-            $opsiE  = trim((string)($data['opsi_e'] ?? $data[6] ?? '')) ?: null;
-            $kunci  = strtoupper(trim((string)($data['kunci_jawaban'] ?? $data[7] ?? 'A')));
-            $bobot  = max(1, (int) ($data['bobot'] ?? $data[8] ?? 1));
-            $pembahasan = trim((string)($data['pembahasan'] ?? $data[9] ?? ''));
+            $opsiA  = trim((string)($data['opsi_a'] ?? $data[3] ?? $data[2] ?? ''));
+            $opsiB  = trim((string)($data['opsi_b'] ?? $data[4] ?? $data[3] ?? ''));
+            $opsiC  = trim((string)($data['opsi_c'] ?? $data[5] ?? $data[4] ?? ''));
+            $opsiD  = trim((string)($data['opsi_d'] ?? $data[6] ?? $data[5] ?? ''));
+            $opsiE  = trim((string)($data['opsi_e'] ?? $data[7] ?? $data[6] ?? '')) ?: null;
+            $kunci  = strtoupper(trim((string)($data['kunci_jawaban'] ?? $data[8] ?? $data[7] ?? 'A')));
+            $bobot  = max(1, (int) ($data['bobot'] ?? $data[9] ?? $data[8] ?? 1));
+            $pembahasan = trim((string)($data['pembahasan'] ?? $data[10] ?? $data[9] ?? ''));
 
             if (empty($opsiA) || empty($opsiB) || empty($opsiC) || empty($opsiD)) {
                 $errors[] = "Baris {$rowNum}: Opsi A-D tidak lengkap, dilewati.";
@@ -1393,6 +1953,7 @@ class AdminCbtController extends Controller
             }
 
             Question::create([
+                'jenjang'        => $jenjang,
                 'kategori'       => $kategori,
                 'soal'           => $soalText,
                 'is_math'        => $isMath,

@@ -39,10 +39,12 @@
     tabunganWithdrawal: '',
 
     // Calon PSB Specific State
-    psbStandardNominal: 3225000,
+    psbData: null,
+    psbShowBreakdown: false,
+    psbStandardNominal: 3220000,
     psbTerbayar: 0,
-    psbSisa: 3225000,
-    psbNominalInput: 3225000,
+    psbSisa: 3220000,
+    psbNominalInput: 3220000,
     psbChecked: true,
 
     // Checkout Parameters
@@ -95,6 +97,10 @@
                     nomor: st.nis,
                     kelas: st.kelas,
                     jenjang: st.jenjang,
+                    jenjang_short: st.jenjang_short || (st.jenjang && st.jenjang.includes('MA') ? 'MA' : 'MTs'),
+                    hunian: st.hunian || (st.jenjang && st.jenjang.toLowerCase().includes('laju') ? 'Laju' : 'Mukim'),
+                    kategori_label: st.kategori_label || (st.jenjang || 'Santri'),
+                    tarif_bulanan: st.tarif_bulanan || null,
                     asrama: st.kamar_asrama,
                     foto: st.foto,
                     saldo_tabungan: st.saldo_tabungan || 0,
@@ -114,6 +120,10 @@
                 nomor: s.nis,
                 kelas: s.kelas,
                 jenjang: s.jenjang,
+                jenjang_short: s.jenjang_short || (s.jenjang && s.jenjang.includes('MA') ? 'MA' : 'MTs'),
+                hunian: s.hunian || (s.jenjang && s.jenjang.toLowerCase().includes('laju') ? 'Laju' : 'Mukim'),
+                kategori_label: s.kategori_label || (s.jenjang || 'Santri'),
+                tarif_bulanan: s.tarif_bulanan || null,
                 asrama: s.kamar_asrama,
                 foto: s.foto,
                 saldo_tabungan: s.saldo_tabungan || 0,
@@ -223,9 +233,10 @@
         fetch('{{ url('/admin/pembayaran/ajax-psb') }}/' + psbId)
             .then(res => res.json())
             .then(data => {
-                this.psbStandardNominal = data.standard_nominal || 3225000;
+                this.psbData = data;
+                this.psbStandardNominal = data.standard_nominal || 3220000;
                 this.psbTerbayar = data.terbayar || 0;
-                this.psbSisa = data.sisa !== undefined ? data.sisa : 3225000;
+                this.psbSisa = data.sisa !== undefined ? data.sisa : this.psbStandardNominal;
                 this.psbNominalInput = this.psbSisa > 0 ? this.psbSisa : this.psbStandardNominal;
                 this.psbChecked = true;
                 this.loadingBills = false;
@@ -571,10 +582,13 @@
                                                 <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-1.5 mt-0.5">
                                                     <!-- Badge Tipe -->
                                                     <span class="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider" :class="p.type === 'santri' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800'" x-text="p.type === 'santri' ? 'Santri Aktif' : 'Calon PSB'"></span>
+                                                    <!-- Badge Kategori Jenjang & Hunian -->
+                                                    <span x-show="p.type === 'santri' && p.kategori_label" class="px-1.5 py-0.2 rounded text-[10px] font-extrabold border shadow-2xs" :class="p.hunian === 'Mukim' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300'" x-text="p.kategori_label"></span>
                                                     <span>&bull;</span>
                                                     <span x-text="(p.type === 'santri' ? 'NIS: ' : 'No Reg: ') + p.nomor" class="font-mono text-gray-700 font-semibold"></span>
                                                     <span>&bull;</span>
                                                     <span class="text-gray-600" x-text="p.kelas"></span>
+                                                    <span x-show="p.type === 'santri' && p.tarif_bulanan" class="text-[10px] text-emerald-700 font-bold ml-1 font-mono" x-text="'&bull; ' + formatRupiah(p.tarif_bulanan.total_bulanan) + '/bln'"></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -615,6 +629,7 @@
                                         <div class="flex items-center gap-2">
                                             <h3 class="text-base font-black tracking-tight" x-text="selectedPerson ? selectedPerson.nama : ''"></h3>
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase" :class="paymentType === 'santri' ? 'bg-emerald-300 text-emerald-950' : 'bg-amber-300 text-purple-950'" x-text="paymentType === 'santri' ? 'Santri Aktif' : 'Calon Santri PSB'"></span>
+                                            <span x-show="paymentType === 'santri' && selectedPerson && selectedPerson.kategori_label" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow-xs" :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-blue-200 text-blue-950 border border-blue-300'" x-text="selectedPerson ? selectedPerson.kategori_label : ''"></span>
                                         </div>
                                         <div class="text-xs text-emerald-200 flex flex-wrap items-center gap-2 mt-0.5">
                                             <span x-text="(paymentType === 'santri' ? 'NIS: ' : 'No Reg: ') + (selectedPerson ? selectedPerson.nomor : '')" class="font-mono text-white font-bold"></span>
@@ -636,6 +651,31 @@
                                             <span>Rincian Tunggakan (<span x-text="tunggakanByMonth.length"></span> Periode)</span>
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Info Standar Tagihan Bulanan Resmi Sesuai Brosur Pesantren -->
+                            <div x-show="paymentType === 'santri' && selectedPerson && selectedPerson.tarif_bulanan" class="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl text-xs space-y-1.5 shadow-2xs">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/70 pb-1.5">
+                                    <div class="font-bold text-emerald-950 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        <span>Standar Tagihan Bulanan Resmi: <strong class="text-emerald-900" x-text="selectedPerson ? selectedPerson.kategori_label : ''"></strong></span>
+                                    </div>
+                                    <div class="text-right font-mono font-black text-emerald-900 text-xs sm:text-sm">
+                                        Total Iuran: <span x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.total_bulanan : 0) + ' / bulan'"></span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3 text-[11px] text-emerald-900 pt-0.5">
+                                    <span class="inline-flex items-center gap-1">
+                                        &bull; Uang Makan 3x: <strong class="font-mono font-bold" x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.uang_makan : 0)"></strong>
+                                        <span x-show="selectedPerson && selectedPerson.hunian === 'Laju'" class="text-emerald-700 italic font-semibold">(Non-Asrama / Rp 0)</span>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1">
+                                        &bull; Syahriah: <strong class="font-mono font-bold" x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.syahriah : 0)"></strong>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1">
+                                        &bull; Tabungan Wajib: <strong class="font-mono font-bold" x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.tabungan_wajib : 0)"></strong>
+                                    </span>
                                 </div>
                             </div>
 
@@ -683,16 +723,31 @@
                                     <div class="flex items-start gap-3">
                                         <input type="checkbox" x-model="psbChecked" @change="psbNominalInput = psbChecked ? (psbSisa > 0 ? psbSisa : psbStandardNominal) : 0" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300 mt-1 cursor-pointer">
                                         <div>
-                                            <div class="flex items-center gap-2">
-                                                <span class="px-2 py-0.5 rounded-md font-mono font-black text-[10px] bg-purple-200 text-purple-900 tracking-wide">PENDAFTARAN</span>
-                                                <span class="font-bold text-xs text-gray-900">Pendaftaran, Seragam &amp; Daftar Ulang PSB</span>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <span class="px-2 py-0.5 rounded-md font-mono font-black text-[10px] bg-purple-200 text-purple-900 tracking-wide">DAFTAR ULANG</span>
+                                                <span class="font-bold text-xs text-gray-900">Pendaftaran &amp; Daftar Ulang PSB</span>
+                                                <!-- Badge Jenjang & Tipe Hunian (Mukim / Laju) -->
+                                                <span x-show="psbData && psbData.jenjang_label" class="px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold shadow-2xs" :class="psbData && psbData.hunian === 'Mukim' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-blue-100 text-blue-900 border border-blue-300'" x-text="psbData ? psbData.jenjang_label : ''"></span>
                                             </div>
-                                            <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-1">
-                                                <span>Standar Biaya: <strong class="text-gray-800" x-text="formatRupiah(psbStandardNominal)"></strong></span>
+                                            
+                                            <!-- Rincian Biaya Awal -->
+                                            <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-1.5">
+                                                <span>Total Biaya Masuk: <strong class="text-gray-800 font-mono font-bold" x-text="formatRupiah(psbData ? psbData.total_biaya_masuk : psbStandardNominal)"></strong></span>
+                                                <span>&bull;</span>
+                                                <span>Biaya Pendaftaran: <strong :class="psbData && psbData.pendaftaran_lunas ? 'text-emerald-700' : 'text-amber-700'" x-text="psbData && psbData.pendaftaran_lunas ? 'Rp 200.000 (✓ Lunas)' : 'Rp 200.000 (Belum Lunas)'"></strong></span>
+                                                <span>&bull;</span>
+                                                <span>Sisa Tagihan Daftar Ulang: <strong class="text-rose-600 font-mono font-bold" x-text="formatRupiah(psbSisa)"></strong></span>
                                                 <span>&bull;</span>
                                                 <span>Terbayar: <strong class="text-emerald-700" x-text="formatRupiah(psbTerbayar)"></strong></span>
-                                                <span>&bull;</span>
-                                                <span>Sisa: <strong class="text-rose-600 font-mono font-bold" x-text="formatRupiah(psbSisa)"></strong></span>
+                                            </div>
+
+                                            <!-- Toggle Lihat Rincian 9 Item -->
+                                            <div class="mt-2">
+                                                <button type="button" @click="psbShowBreakdown = !psbShowBreakdown" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-100/70 hover:bg-purple-100 px-2.5 py-1 rounded-md transition">
+                                                    <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                                    <span x-text="psbShowBreakdown ? 'Sembunyikan Rincian 9 Item Biaya' : 'Lihat Rincian 9 Item Komponen Biaya Resmi'"></span>
+                                                    <span x-text="psbShowBreakdown ? '▲' : '▼'" class="text-[9px]"></span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -714,6 +769,22 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                <!-- Accordion Rincian 9 Item Biaya Resmi -->
+                                <div x-show="psbShowBreakdown" x-transition class="mt-4 pt-3 border-t border-purple-200 text-xs">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-bold text-gray-800 uppercase tracking-wider text-[10px]">Rincian Komponen Biaya Resmi Sesuai Brosur SK Pondok</span>
+                                        <span class="text-[10px] text-gray-500 font-semibold" x-text="'Kategori: ' + (psbData ? psbData.jenjang_label : '')"></span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <template x-for="(item, idx) in (psbData ? psbData.items_daftar_ulang : [])" :key="idx">
+                                            <div class="flex items-center justify-between px-3 py-1.5 bg-white rounded-lg border border-purple-100 text-[11px]">
+                                                <span class="text-gray-700 font-medium" x-text="item.nama"></span>
+                                                <span class="font-bold text-gray-900 font-mono" x-text="formatRupiah(item.nominal)"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -722,6 +793,30 @@
                         <!-- ========================================================= -->
                         <div x-show="paymentType === 'santri'" class="space-y-4">
                             
+                            <!-- Banner Kategori & Standar Tarif Resmi Santri Lama / Aktif -->
+                            <div class="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                                 :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-50/70 border-emerald-300' : 'bg-blue-50/70 border-blue-300'">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0"
+                                         :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-gray-900">Kategori Tagihan Santri:</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[11px] font-black uppercase shadow-2xs"
+                                                  :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950 border border-emerald-400' : 'bg-blue-200 text-blue-950 border border-blue-400'"
+                                                  x-text="selectedPerson ? selectedPerson.kategori_label : ''"></span>
+                                        </div>
+                                        <div class="text-[11px] text-gray-600 mt-0.5 flex flex-wrap items-center gap-1.5">
+                                            <span>Standar Iuran:</span>
+                                            <strong class="font-mono text-gray-900 font-bold" x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.total_bulanan : 0) + ' / bulan'"></strong>
+                                            <span>(Uang Makan: <strong x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.uang_makan : 0)"></strong> &bull; Syahriah: <strong x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.syahriah : 0)"></strong> &bull; Tabungan: <strong x-text="formatRupiah(selectedPerson && selectedPerson.tarif_bulanan ? selectedPerson.tarif_bulanan.tabungan_wajib : 0)"></strong>)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Header & Quick Action Buttons -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-3">
                                 <div>
@@ -1116,7 +1211,7 @@
                                 <div class="flex items-center justify-between text-gray-800 py-1">
                                     <div>
                                         <strong class="font-mono text-purple-800">PENDAFTARAN PSB</strong>
-                                        <span class="text-[11px] text-gray-500 block">Daftar Ulang &amp; Seragam PSB</span>
+                                        <span class="text-[11px] text-gray-500 block">Daftar Ulang / Pendaftaran PSB</span>
                                     </div>
                                     <span class="font-mono font-bold text-gray-900" x-text="formatRupiah(psbNominalInput)"></span>
                                 </div>
@@ -1405,10 +1500,22 @@
                                 <span class="text-[11px] text-gray-400">{{ optional($p->tanggal_bayar)->format('d/m/Y') }}</span>
                             </td>
                             <td class="py-3.5 px-4">
-                                <div class="font-bold text-gray-900 text-sm">{{ $p->student->nama_lengkap ?? '—' }}</div>
+                                <div class="font-bold text-gray-900 text-sm">
+                                    {{ $p->student->nama_lengkap ?? ($p->psbRegistration->nama_lengkap ?? ($p->penerima_nama ?: '—')) }}
+                                </div>
                                 <div class="text-[11px] text-gray-400">
-                                    NIS: {{ $p->student->nis ?? '—' }} &bull; 
-                                    <span class="font-semibold text-blue-600">{{ $p->student->kelas ?? '—' }}</span>
+                                    @if($p->student)
+                                        NIS: {{ $p->student->nis ?? '—' }} &bull; 
+                                        <span class="font-semibold text-blue-600">Kls {{ $p->student->kelas ?? '—' }}</span> &bull; 
+                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold {{ $p->student->hunian === 'Mukim' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $p->student->kategori_label }}
+                                        </span>
+                                    @elseif($p->psbRegistration)
+                                        <span class="font-mono text-amber-700">PSB: {{ $p->psbRegistration->no_registrasi }}</span> &bull; 
+                                        <span class="font-semibold text-blue-600">{{ $p->psbRegistration->jenjang }}</span>
+                                    @else
+                                        <span class="text-gray-400">Umum / Santri</span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="py-3.5 px-4">
@@ -1433,7 +1540,7 @@
                                         Menunggu Verifikasi
                                     </span>
                                     @if($p->bukti_bayar)
-                                        <button type="button" @click="previewImgUrl = '{{ asset($p->bukti_bayar) }}'; previewTitle = 'Bukti Transfer: {{ addslashes($p->student->nama_lengkap ?? '') }}'; modalPreviewFoto = true" class="block text-[10px] font-medium text-brand-600 hover:underline mt-0.5">
+                                        <button type="button" @click="previewImgUrl = '{{ asset($p->bukti_bayar) }}'; previewTitle = 'Bukti Transfer: {{ addslashes($p->student->nama_lengkap ?? ($p->psbRegistration->nama_lengkap ?? 'Santri')) }}'; modalPreviewFoto = true" class="block text-[10px] font-medium text-brand-600 hover:underline mt-0.5">
                                             Lihat Bukti Transfer
                                         </button>
                                     @endif
@@ -1461,7 +1568,7 @@
                             <td class="py-3.5 px-4 text-right">
                                 <div class="flex items-center justify-end gap-1.5">
                                     @if($p->status === 'Menunggu Konfirmasi')
-                                        <form action="{{ route('admin.pembayaran.konfirmasi', $p->id) }}" method="POST" class="inline" onsubmit="return confirm('Konfirmasi dan setujui pembayaran {{ $p->no_transaksi }} atas nama {{ addslashes($p->student->nama_lengkap ?? '') }} sebagai LUNAS?');">
+                                        <form action="{{ route('admin.pembayaran.konfirmasi', $p->id) }}" method="POST" class="inline" onsubmit="return confirm('Konfirmasi dan setujui pembayaran {{ $p->no_transaksi }} atas nama {{ addslashes($p->student->nama_lengkap ?? ($p->psbRegistration->nama_lengkap ?? 'Santri')) }} sebagai LUNAS?');">
                                             @csrf
                                             <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium shadow-theme-xs transition" title="Setujui Pembayaran">
                                                 Setujui
@@ -1481,7 +1588,10 @@
 
                                         @php
                                             $st = $p->student;
-                                            $waNum = $st ? ($st->no_whatsapp ?: ($st->no_hp ?: $st->no_hp_wali)) : null;
+                                            $psb = $p->psbRegistration;
+                                            $namaSantri = $st ? ($st->nama_lengkap ?? 'Santri') : ($psb ? ($psb->nama_lengkap ?? 'Calon Santri') : ($p->penerima_nama ?: 'Santri'));
+                                            $infoKelas = $st ? " (Kelas {$st->kelas})" : ($psb ? " (PSB {$psb->jenjang})" : "");
+                                            $waNum = $st ? ($st->no_whatsapp ?: ($st->no_hp ?: $st->no_hp_wali)) : ($psb ? ($psb->no_whatsapp ?? ($psb->no_hp ?? null)) : null);
                                             $cleanWa = $waNum ? preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $waNum)) : '';
                                             $itemLines = [];
                                             foreach($p->items as $it) {
@@ -1490,7 +1600,7 @@
                                             $rincianStr = count($itemLines) > 0 ? implode("\n", $itemLines) : "- {$p->jenis_pembayaran}: {$p->formatted_nominal}";
                                             $kwitansiUrl = route('admin.pembayaran.kwitansi', $p->id);
                                             $waText = "Assalamu'alaikum Wr. Wb.\n\n"
-                                                . "Yth. Wali Santri dari *{$st->nama_lengkap}* (Kelas {$st->kelas})\n\n"
+                                                . "Yth. Wali Santri dari *{$namaSantri}*{$infoKelas}\n\n"
                                                 . "Pembayaran pesantren telah diterima dan diverifikasi:\n\n"
                                                 . "No. Transaksi: {$p->no_transaksi}\n"
                                                 . "Tanggal: " . optional($p->tanggal_bayar)->format('d/m/Y') . "\n"
@@ -1625,9 +1735,28 @@
                     @endif
                 </div>
             </div>
-            <span class="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-semibold text-xs shrink-0 self-start sm:self-auto">
-                {{ $psbPayments->total() }} Calon Santri
-            </span>
+            <div class="flex items-center gap-2">
+                @php
+                    $psbPendingTfBendahara = \App\Models\PsbRegistration::whereNotNull('bukti_transfer')
+                        ->where('bukti_transfer', '!=', '')
+                        ->where(function($q) {
+                            $q->where('status_pembayaran', '!=', 'Lunas')->orWhereNull('status_pembayaran');
+                        })->count();
+                @endphp
+                @if($psbPendingTfBendahara > 0)
+                    <form action="{{ route('admin.pembayaran.psbBulkVerify') }}" method="POST" class="inline" onsubmit="return confirm('Verifikasi pembayaran pendaftaran (Rp 200.000 Lunas) untuk SELURUH {{ $psbPendingTfBendahara }} calon santri yang telah mengunggah bukti transfer?')">
+                        @csrf
+                        <input type="hidden" name="mode" value="all_with_proof">
+                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-theme-xs transition inline-flex items-center gap-1.5 cursor-pointer" title="Verifikasi serentak semua yang sudah upload bukti transfer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>⚡ Verifikasi Semua Slip TF ({{ $psbPendingTfBendahara }})</span>
+                        </button>
+                    </form>
+                @endif
+                <span class="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-semibold text-xs shrink-0">
+                    {{ $psbPayments->total() }} Calon Santri
+                </span>
+            </div>
         </div>
 
         <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-xs overflow-hidden">
@@ -1685,7 +1814,7 @@
                             </td>
                             <td class="py-3.5 px-5">
                                 <div class="font-mono font-bold text-gray-900 text-sm">
-                                    Rp {{ number_format($psb->nominal_pembayaran ?: 3225000, 0, ',', '.') }}
+                                    Rp {{ number_format($psb->nominal_pembayaran ?: 200000, 0, ',', '.') }}
                                 </div>
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium {{ $psb->metode_pembayaran === 'Transfer Bank' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-700' }}">
                                     {{ $psb->metode_pembayaran ?: 'Tunai' }}
@@ -1738,13 +1867,13 @@
 
                                         @php
                                             $cleanWaPsb = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $psb->no_whatsapp));
-                                            $nominalPsb = number_format($psb->nominal_pembayaran ?: 3225000, 0, ',', '.');
+                                            $nominalPsb = number_format($psb->nominal_pembayaran ?: 200000, 0, ',', '.');
                                             $metodePsb = $psb->metode_pembayaran ?: 'Tunai';
                                             $kwitansiPsbUrl = route('admin.pembayaran.psb.kwitansi', $psb->id);
                                             $waMsgPsb = "Assalamu'alaikum Wr. Wb.\n\n"
                                                 . "Yth. Orang Tua / Wali Calon Santri: *{$psb->nama_lengkap}*\n"
                                                 . "No. Registrasi: *{$psb->no_registrasi}* ({$psb->jenjang})\n\n"
-                                                . "Pembayaran administrasi PSB Pondok Pesantren Hidayatullah Tuksongo sebesar *Rp {$nominalPsb}* ({$metodePsb}) telah diterima dan lunas.\n\n"
+                                                . "Pembayaran pendaftaran PSB Pondok Pesantren Hidayatullah Tuksongo sebesar *Rp {$nominalPsb}* ({$metodePsb}) telah diterima dan lunas.\n\n"
                                                 . "Bukti Setoran dapat diakses pada tautan berikut:\n{$kwitansiPsbUrl}\n\n"
                                                 . "Terima kasih.\n"
                                                 . "Panitia PSB & Bendahara Pondok Pesantren Hidayatullah Tuksongo";
@@ -1757,7 +1886,7 @@
                                             </a>
                                         @endif
 
-                                        <button type="button" @click="openPsbModal({{ $psb->id }}, '{{ addslashes($psb->nama_lengkap) }}', '{{ $psb->no_registrasi }}', '{{ $psb->jenjang }}', {{ $psb->nominal_pembayaran ?: 3225000 }}, '{{ $psb->metode_pembayaran ?: 'Tunai' }}', '{{ $psb->tanggal_bayar ? date('Y-m-d', strtotime($psb->tanggal_bayar)) : date('Y-m-d') }}', '{{ addslashes($psb->catatan_pembayaran ?: '') }}', {{ $psb->bukti_transfer ? 'true' : 'false' }})" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition" title="Edit Data">
+                                        <button type="button" @click="openPsbModal({{ $psb->id }}, '{{ addslashes($psb->nama_lengkap) }}', '{{ $psb->no_registrasi }}', '{{ $psb->jenjang }}', {{ $psb->nominal_pembayaran ?: 200000 }}, '{{ $psb->metode_pembayaran ?: 'Tunai' }}', '{{ $psb->tanggal_bayar ? date('Y-m-d', strtotime($psb->tanggal_bayar)) : date('Y-m-d') }}', '{{ addslashes($psb->catatan_pembayaran ?: '') }}', {{ $psb->bukti_transfer ? 'true' : 'false' }})" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition" title="Edit Data">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                         </button>
 
@@ -1769,35 +1898,32 @@
                                             </button>
                                         </form>
                                     @else
-                                        <button type="button" @click="openPsbModal({{ $psb->id }}, '{{ addslashes($psb->nama_lengkap) }}', '{{ $psb->no_registrasi }}', '{{ $psb->jenjang }}', {{ $psb->nominal_pembayaran ?: 3225000 }}, '{{ $psb->metode_pembayaran ?: 'Tunai' }}', '{{ date('Y-m-d') }}', '{{ addslashes($psb->catatan_pembayaran ?: '') }}', {{ $psb->bukti_transfer ? 'true' : 'false' }})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium shadow-theme-xs transition inline-flex items-center gap-1.5">
+                                        <button type="button" @click="openPsbModal({{ $psb->id }}, '{{ addslashes($psb->nama_lengkap) }}', '{{ $psb->no_registrasi }}', '{{ $psb->jenjang }}', {{ $psb->nominal_pembayaran ?: 200000 }}, '{{ $psb->metode_pembayaran ?: 'Tunai' }}', '{{ date('Y-m-d') }}', '{{ addslashes($psb->catatan_pembayaran ?: '') }}', {{ $psb->bukti_transfer ? 'true' : 'false' }})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium shadow-theme-xs transition inline-flex items-center gap-1.5">
                                             <span>Verifikasi Bayar</span>
                                         </button>
 
                                         @php
                                             $cleanWaPsb = preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $psb->no_whatsapp));
-                                            $nominalPsb = number_format($psb->nominal_pembayaran ?: 3225000, 0, ',', '.');
+                                            $nominalPsb = number_format($psb->nominal_pembayaran ?: 200000, 0, ',', '.');
                                             $rekBriNo = \App\Models\Setting::get('rek_admin_bri_no', '010201022009537');
                                             $rekBriAn = \App\Models\Setting::get('rek_admin_bri_an', 'DIKY FACHRI HUSEIN');
                                             $rekBcaNo = \App\Models\Setting::get('rek_admin_bca_no', '1221220167');
                                             $rekBcaAn = \App\Models\Setting::get('rek_admin_bca_an', 'DIKY FACHRI HUSEIN');
                                             $rekKonfPhone = \App\Models\Setting::get('rek_admin_konfirmasi_phone', '085290429617');
                                             $rekKonfNama = \App\Models\Setting::get('rek_admin_konfirmasi_nama', 'Ustdh. Harsih Nur A');
-
                                             $waRemindPsb = "Assalamu'alaikum Wr. Wb.\n\n"
                                                 . "Yth. Orang Tua / Wali Calon Santri Baru: *{$psb->nama_lengkap}*\n"
                                                 . "No. Registrasi: *{$psb->no_registrasi}* ({$psb->jenjang})\n\n"
-                                                . "Mengingatkan untuk kelengkapan administrasi pembayaran biaya masuk santri baru (PSB) sebesar *Rp {$nominalPsb}*.\n\n"
+                                                . "Mengingatkan untuk kelengkapan administrasi pembayaran biaya pendaftaran santri baru (PSB) sebesar *Rp {$nominalPsb}*.\n\n"
                                                 . "Pembayaran dapat dilakukan di Kasir Kantor Pesantren (Tunai) atau melalui Transfer ke Rekening Resmi Administrasi:\n"
                                                 . "• BRI: *{$rekBriNo}* (a.n. {$rekBriAn})\n"
                                                 . "• BCA: *{$rekBcaNo}* (a.n. {$rekBcaAn})\n\n"
                                                 . "KONFIRMASI BUKTI TRANSFER DENGAN MENYERTAKAN DATA SEBAGAI BERIKUT:\n"
                                                 . "• NAMA : {$psb->nama_lengkap}\n"
                                                 . "• NO REGISTRASI : {$psb->no_registrasi} ({$psb->jenjang})\n"
-                                                . "• JENIS PEMBAYARAN : Biaya Masuk Santri Baru (PSB)\n"
+                                                . "• JENIS PEMBAYARAN : Biaya Pendaftaran Santri Baru (PSB)\n"
                                                 . "• NOMINAL : Rp {$nominalPsb}\n\n"
                                                 . "Kirim konfirmasi bukti transfer ke WA Keuangan: {$rekKonfPhone} ({$rekKonfNama})\n\n"
-                                                . "⚠️ *Wajib Melakukan Konfirmasi*\n"
-                                                . "Demi terciptanya komunikasi yang tertib dan menghindari miskomunikasi, setiap keperluan transfer harap selalu diawali dengan konfirmasi kepada pihak terkait.\n\n"
                                                 . "Panitia PSB & Keuangan Pondok Pesantren Hidayatullah Tuksongo";
                                             $waRemindUrl = $cleanWaPsb ? ("https://wa.me/{$cleanWaPsb}?text=" . rawurlencode($waRemindPsb)) : null;
                                         @endphp
@@ -1923,8 +2049,23 @@
                 <h4 class="text-sm font-bold text-gray-900" x-text="previewTitle"></h4>
                 <button @click="modalPreviewFoto = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
             </div>
-            <div class="ta-modal-body flex items-center justify-center bg-gray-100 rounded-lg p-2 max-h-[70vh] overflow-y-auto">
-                <img :src="previewImgUrl" alt="Bukti Transfer" class="max-h-[65vh] object-contain rounded-lg">
+            <div class="ta-modal-body flex flex-col items-center justify-center bg-gray-100 rounded-lg p-3 min-h-[220px] max-h-[70vh] overflow-y-auto">
+                <template x-if="previewImgUrl && previewImgUrl.toLowerCase().endsWith('.pdf')">
+                    <div class="w-full flex flex-col items-center justify-center gap-3 py-6">
+                        <svg class="w-16 h-16 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h4"/></svg>
+                        <div class="text-center">
+                            <span class="text-sm font-bold text-gray-800 block">Dokumen Berformat PDF</span>
+                            <span class="text-xs text-gray-500">Klik tombol di bawah untuk membuka dokumen di tab baru</span>
+                        </div>
+                        <a :href="previewImgUrl" target="_blank" class="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            Buka File PDF
+                        </a>
+                    </div>
+                </template>
+                <template x-if="!previewImgUrl || !previewImgUrl.toLowerCase().endsWith('.pdf')">
+                    <img :src="previewImgUrl" alt="Bukti Transfer" class="max-h-[65vh] object-contain rounded-lg">
+                </template>
             </div>
         </div>
     </div>

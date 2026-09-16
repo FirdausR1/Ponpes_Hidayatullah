@@ -22,16 +22,16 @@
 @endsection
 
 @section('content')
-<div class="space-y-6 max-w-4xl mx-auto">
+<div class="space-y-6">
 
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Edit Soal #{{ $question->id }}</h1>
-            <p class="text-sm text-gray-500 mt-1">Perbarui pertanyaan, rumus matematika KaTeX, gambar ilustrasi, opsi jawaban, atau teks Arab.</p>
+            <h1 class="text-xl font-bold text-gray-900">Edit Soal #{{ $question->id }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Perbarui pertanyaan, rumus KaTeX, gambar ilustrasi, opsi jawaban, atau teks Arab.</p>
         </div>
-        <a href="{{ route('admin.cbt.soal.index') }}" class="ta-btn-outline">
-            Kembali ke Bank Soal
+        <a href="{{ route('admin.cbt.soal.index') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 transition">
+            &larr; Kembali
         </a>
     </div>
 
@@ -41,8 +41,19 @@
         @method('PUT')
 
         <div class="ta-card p-6 space-y-5">
-            <!-- Row: Kategori & Bobot -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Row: Jenjang, Kategori & Bobot -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Jenjang Sasaran <span class="text-rose-500">*</span>
+                    </label>
+                    <select name="jenjang" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none font-semibold text-slate-800">
+                        <option value="Semua" {{ old('jenjang', $question->jenjang ?: 'Semua') === 'Semua' ? 'selected' : '' }}>🌐 Semua (MTs &amp; MA)</option>
+                        <option value="MTs" {{ old('jenjang', $question->jenjang) === 'MTs' ? 'selected' : '' }}>🏫 Khusus MTs</option>
+                        <option value="MA" {{ old('jenjang', $question->jenjang) === 'MA' ? 'selected' : '' }}>🎓 Khusus MA</option>
+                    </select>
+                </div>
+
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Kategori Soal <span class="text-rose-500">*</span>
@@ -303,32 +314,33 @@
             </div>
 
             <!-- OPSI JAWABAN (A, B, C, D, E) -->
-            <div class="pt-4 border-t border-slate-200 space-y-4">
+            <div class="pt-4 border-t border-gray-200 space-y-3">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Pilihan Ganda & Kunci Jawaban</h3>
-                    <span class="text-[11px] text-slate-400">Klik huruf lingkaran atau radio untuk memilih kunci yang benar</span>
+                    <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Pilihan Ganda &amp; Kunci Jawaban</h3>
+                    <span class="text-[11px] text-gray-400">Klik radio untuk memilih jawaban yang benar</span>
                 </div>
 
-                <div class="space-y-3">
+                <div class="space-y-2">
                     @foreach(['A' => 'opsi_a', 'B' => 'opsi_b', 'C' => 'opsi_c', 'D' => 'opsi_d', 'E' => 'opsi_e'] as $opt => $field)
-                        <div class="flex items-start gap-3 p-3 rounded-lg border {{ old('kunci_jawaban', $question->kunci_jawaban) === $opt ? 'bg-emerald-50/50 border-emerald-300' : 'bg-white border-slate-200' }}" id="opt-container-{{ $opt }}">
-                            <div class="flex items-center gap-2 pt-2 shrink-0">
-                                <input type="radio" name="kunci_jawaban" value="{{ $opt }}" id="kunci_{{ $opt }}" {{ old('kunci_jawaban', $question->kunci_jawaban) === $opt ? 'checked' : '' }}
-                                       onchange="handleKunciChange('{{ $opt }}')"
-                                       class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                <label for="kunci_{{ $opt }}" class="w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold cursor-pointer">
-                                    {{ $opt }}
-                                </label>
-                            </div>
-                            <div class="flex-1">
-                                <input type="text" name="{{ $field }}" id="{{ $field }}" value="{{ old($field, $question->$field) }}" {{ in_array($opt, ['A','B','C','D']) ? 'required' : '' }} oninput="updatePreviews()"
-                                       placeholder="Isi teks pilihan {{ $opt }} {{ $opt === 'E' ? '(Opsional)' : '' }}"
-                                       class="formula-target w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none {{ $question->is_arabic ? 'arabic-input' : '' }}">
-                            </div>
+                        <div class="flex items-center gap-3 p-3 rounded-lg border transition {{ old('kunci_jawaban', $question->kunci_jawaban) === $opt ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200 hover:border-gray-300' }}" id="opt-container-{{ $opt }}">
+                            <input type="radio" name="kunci_jawaban" value="{{ $opt }}" id="kunci_{{ $opt }}"
+                                   {{ old('kunci_jawaban', $question->kunci_jawaban) === $opt ? 'checked' : '' }}
+                                   onchange="handleKunciChange('{{ $opt }}')"
+                                   class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0">
+                            <label for="kunci_{{ $opt }}"
+                                   class="w-6 h-6 rounded-full border-2 {{ old('kunci_jawaban', $question->kunci_jawaban) === $opt ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white text-gray-600' }} flex items-center justify-center text-xs font-bold cursor-pointer shrink-0">
+                                {{ $opt }}
+                            </label>
+                            <input type="text" name="{{ $field }}" id="{{ $field }}"
+                                   value="{{ old($field, $question->$field) }}"
+                                   {{ in_array($opt, ['A','B','C','D']) ? 'required' : '' }}
+                                   oninput="updatePreviews()"
+                                   placeholder="Isi teks pilihan {{ $opt }}{{ $opt === 'E' ? ' (opsional)' : '' }}"
+                                   class="formula-target flex-1 px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none {{ $question->is_arabic ? 'arabic-input' : '' }}">
                         </div>
                     @endforeach
                 </div>
-                <p class="text-xs text-slate-500 italic">* Pilih tombol radio lingkaran di sebelah kiri huruf untuk menentukan <strong>Kunci Jawaban yang Benar</strong>.</p>
+                <p class="text-xs text-gray-400 italic">* Klik radio di kiri untuk menentukan kunci jawaban yang benar. Opsi E bersifat opsional.</p>
             </div>
 
             <!-- Pembahasan / Catatan -->

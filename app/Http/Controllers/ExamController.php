@@ -111,57 +111,28 @@ class ExamController extends Controller
         }
 
         $now = now();
-        $selectedCategory = $request->input('kategori', 'all');
+        $selectedCategory = 'all';
 
-        // Cek Jadwal Spesifik Kategori (jika memilih materi tertentu)
-        if ($selectedCategory !== 'all' && !empty($selectedCategory)) {
-            $rawCatSchedules = json_decode(Setting::get('cbt_category_schedules', '[]'), true) ?: [];
-            $conf = $rawCatSchedules[$selectedCategory] ?? [];
-            
-            if (($conf['status'] ?? 'buka') === 'tutup') {
-                return back()->withErrors([
-                    'auth' => "Materi ujian {$selectedCategory} saat ini sedang DITUTUP oleh panitia seleksi."
-                ])->withInput();
-            }
+        // Cek Pembatasan Rentang Tanggal Pelaksanaan Ujian Global
+        $enableSchedule = Setting::get('cbt_enable_schedule', '0') === '1';
+        if ($enableSchedule) {
+            $startStr = Setting::get('cbt_start_date', '');
+            $endStr = Setting::get('cbt_end_date', '');
 
-            if (!empty($conf['enable_schedule']) && !empty($conf['start_date']) && !empty($conf['end_date'])) {
-                $cStart = \Carbon\Carbon::parse($conf['start_date']);
-                $cEnd = \Carbon\Carbon::parse($conf['end_date']);
+            if (!empty($startStr) && !empty($endStr)) {
+                $startDate = \Carbon\Carbon::parse($startStr);
+                $endDate = \Carbon\Carbon::parse($endStr);
 
-                if ($now->lt($cStart)) {
+                if ($now->lt($startDate)) {
                     return back()->withErrors([
-                        'auth' => "Ujian materi {$selectedCategory} belum dibuka. Jadwal pengerjaan baru dimulai pada " . $cStart->translatedFormat('d F Y, H:i') . ' WIB.'
+                        'auth' => 'Ujian seleksi CBT belum dibuka. Jadwal pengerjaan baru dimulai pada ' . $startDate->translatedFormat('d F Y, H:i') . ' WIB.'
                     ])->withInput();
                 }
 
-                if ($now->gt($cEnd)) {
+                if ($now->gt($endDate)) {
                     return back()->withErrors([
-                        'auth' => "Masa pengerjaan ujian materi {$selectedCategory} telah ditutup pada " . $cEnd->translatedFormat('d F Y, H:i') . ' WIB.'
+                        'auth' => 'Masa pengerjaan ujian seleksi CBT telah ditutup pada ' . $endDate->translatedFormat('d F Y, H:i') . ' WIB. Silakan hubungi panitia PSB jika Anda memerlukan bantuan.'
                     ])->withInput();
-                }
-            }
-        } else {
-            // Cek Pembatasan Rentang Tanggal Pelaksanaan Ujian Global
-            $enableSchedule = Setting::get('cbt_enable_schedule', '0') === '1';
-            if ($enableSchedule) {
-                $startStr = Setting::get('cbt_start_date', '');
-                $endStr = Setting::get('cbt_end_date', '');
-
-                if (!empty($startStr) && !empty($endStr)) {
-                    $startDate = \Carbon\Carbon::parse($startStr);
-                    $endDate = \Carbon\Carbon::parse($endStr);
-
-                    if ($now->lt($startDate)) {
-                        return back()->withErrors([
-                            'auth' => 'Ujian seleksi CBT belum dibuka. Jadwal pengerjaan baru dimulai pada ' . $startDate->translatedFormat('d F Y, H:i') . ' WIB.'
-                        ])->withInput();
-                    }
-
-                    if ($now->gt($endDate)) {
-                        return back()->withErrors([
-                            'auth' => 'Masa pengerjaan ujian seleksi CBT telah ditutup pada ' . $endDate->translatedFormat('d F Y, H:i') . ' WIB. Silakan hubungi panitia PSB jika Anda memerlukan bantuan.'
-                        ])->withInput();
-                    }
                 }
             }
         }
@@ -189,10 +160,18 @@ class ExamController extends Controller
             ])->withInput();
         }
 
-        // Simpan id registrasi dan kategori pilihan ke session
+        // Cek Verifikasi Pembayaran Pendaftaran (Rp 200.000) oleh Admin
+        if ($reg->status_pembayaran !== 'Lunas') {
+            $statusBayar = $reg->status_pembayaran ?: 'Menunggu Verifikasi';
+            return back()->withErrors([
+                'auth' => "Mohon maaf, status pembayaran infaq pendaftaran (Rp 200.000) Anda masih \"{$statusBayar}\". Ujian Seleksi Masuk (CBT Online) hanya dapat diakses setelah pembayaran diverifikasi oleh Admin Pesantren. Silakan pantau status pendaftaran Anda secara berkala di menu Cek Status PSB."
+            ])->withInput();
+        }
+
+        // Simpan id registrasi dan kategori ke session
         session([
             'psb_exam_reg_id' => $reg->id,
-            'psb_exam_category' => $selectedCategory,
+            'psb_exam_category' => 'all',
         ]);
 
         $maxAttempts = (int) Setting::get('cbt_max_attempts', 1);
@@ -217,6 +196,11 @@ class ExamController extends Controller
 
         $reg = PsbRegistration::findOrFail($regId);
 
+        // Pastikan status pembayaran Lunas
+        if ($reg->status_pembayaran !== 'Lunas') {
+            return redirect()->route('ujian.index')->with('warning', 'Pembayaran pendaftaran Anda belum diverifikasi oleh admin. Ujian CBT belum dapat dimulai.');
+        }
+
         $maxAttempts = (int) Setting::get('cbt_max_attempts', 1);
         $attemptsCount = (int) ($reg->cbt_attempts_count ?? ($reg->status_ujian === 'Selesai' ? 1 : 0));
 
@@ -231,30 +215,17 @@ class ExamController extends Controller
             return redirect()->route('ujian.index')->with('warning', 'Sesi ujian sedang dinonaktifkan oleh pengawas.');
         }
 
-        $selectedCategory = session('psb_exam_category', 'all');
-        $rawCatSchedules = json_decode(Setting::get('cbt_category_schedules', '[]'), true) ?: [];
-        $catConf = ($selectedCategory !== 'all' && isset($rawCatSchedules[$selectedCategory])) ? $rawCatSchedules[$selectedCategory] : null;
-
-        // Cek Pembatasan Jadwal
+        // Cek Pembatasan Rentang Tanggal Ujian Global
         $now = now();
-        if ($catConf && !empty($catConf['enable_schedule']) && !empty($catConf['start_date']) && !empty($catConf['end_date'])) {
-            $cStart = \Carbon\Carbon::parse($catConf['start_date']);
-            $cEnd = \Carbon\Carbon::parse($catConf['end_date']);
-            if ($now->lt($cStart) || $now->gt($cEnd)) {
-                return redirect()->route('ujian.index')->with('warning', "Akses pengerjaan materi {$selectedCategory} ditutup karena di luar jadwal resmi.");
-            }
-        } else {
-            // Cek Pembatasan Rentang Tanggal Ujian Global
-            $enableSchedule = Setting::get('cbt_enable_schedule', '0') === '1';
-            if ($enableSchedule) {
-                $startStr = Setting::get('cbt_start_date', '');
-                $endStr = Setting::get('cbt_end_date', '');
-                if (!empty($startStr) && !empty($endStr)) {
-                    $startDate = \Carbon\Carbon::parse($startStr);
-                    $endDate = \Carbon\Carbon::parse($endStr);
-                    if ($now->lt($startDate) || $now->gt($endDate)) {
-                        return redirect()->route('ujian.index')->with('warning', 'Akses pengerjaan soal ditutup karena di luar rentang jadwal resmi.');
-                    }
+        $enableSchedule = Setting::get('cbt_enable_schedule', '0') === '1';
+        if ($enableSchedule) {
+            $startStr = Setting::get('cbt_start_date', '');
+            $endStr = Setting::get('cbt_end_date', '');
+            if (!empty($startStr) && !empty($endStr)) {
+                $startDate = \Carbon\Carbon::parse($startStr);
+                $endDate = \Carbon\Carbon::parse($endStr);
+                if ($now->lt($startDate) || $now->gt($endDate)) {
+                    return redirect()->route('ujian.index')->with('warning', 'Akses pengerjaan soal ditutup karena di luar rentang jadwal resmi.');
                 }
             }
         }
@@ -264,16 +235,18 @@ class ExamController extends Controller
             $reg->update(['status_ujian' => 'Sedang Ujian']);
         }
 
-        // Durasi: jika materi memiliki durasi khusus, gunakan durasi materi
-        $durationMinutes = (int) ($catConf['duration_minutes'] ?? Setting::get('cbt_duration_minutes', 60));
+        // Pengaturan Ujian
+        $durationMinutes = (int) Setting::get('cbt_duration_minutes', 60);
         $shuffleQuestions = Setting::get('cbt_shuffle_questions', '1') === '1';
         $shuffleOptions = Setting::get('cbt_shuffle_options', '1') === '1';
-        $questionCountSetting = (int) ($catConf['question_count'] ?? Setting::get('cbt_question_count', 0));
+        $questionCountSetting = (int) Setting::get('cbt_question_count', 0);
         $maxViolations = (int) Setting::get('cbt_max_violations', 3);
         $examTitle = Setting::get('cbt_exam_title', 'Ujian Masuk Seleksi Santri Baru');
-        if ($selectedCategory !== 'all') {
-            $examTitle .= " — Materi: {$selectedCategory}";
-        }
+
+        // Deteksi Jenjang Santri (MTs atau MA)
+        $santriJenjangRaw = strtoupper($reg->jenjang ?: '');
+        $santriJenjang = str_contains($santriJenjangRaw, 'MA') ? 'MA' : (str_contains($santriJenjangRaw, 'MTS') ? 'MTs' : 'Semua');
+        $examTitle .= " — Jenjang " . ($santriJenjang !== 'Semua' ? $santriJenjang : 'Terpadu');
 
         // Pastikan ada soal di bank soal, jika belum ada generate template default
         if (Question::where('is_active', true)->count() === 0) {
@@ -282,7 +255,7 @@ class ExamController extends Controller
         }
 
         // Ambil atau inisialisasi daftar soal untuk sesi siswa ini
-        $sessionKey = 'cbt_questions_' . $reg->id . '_' . md5($selectedCategory);
+        $sessionKey = 'cbt_questions_' . $reg->id . '_' . $santriJenjang;
         $assignedIds = [];
 
         // Prioritas 1: Ambil dari rekaman urutan soal santri di database (jika sudah diinisialisasi)
@@ -299,43 +272,31 @@ class ExamController extends Controller
             $assignedIds = session($sessionKey, []);
         }
 
-        // Prioritas 3: Generate susunan soal baru: Dikelompokkan per mata pelajaran & diacak di dalam masing-masing mapel
+        // Prioritas 3: Generate susunan soal baru untuk jenjang santri ini (Semua materi sekaligus & acak soal jika aktif)
         if (empty($assignedIds)) {
-            if ($selectedCategory !== 'all') {
-                $query = Question::where('is_active', true)->where('kategori', $selectedCategory);
-                if ($shuffleQuestions) {
-                    $query->inRandomOrder();
-                } else {
-                    $query->orderBy('id');
-                }
-                if ($questionCountSetting > 0) {
-                    $query->take($questionCountSetting);
-                }
-                $assignedIds = $query->pluck('id')->toArray();
+            $query = Question::where('is_active', true);
+            if ($santriJenjang === 'MTs') {
+                $query->whereIn('jenjang', ['MTs', 'Semua']);
+            } elseif ($santriJenjang === 'MA') {
+                $query->whereIn('jenjang', ['MA', 'Semua']);
+            }
+
+            if ($shuffleQuestions) {
+                // Acak soal dinamis per peserta ujian
+                $query->inRandomOrder();
             } else {
-                $cbtCtrl = new AdminCbtController();
-                $cbtCategories = $cbtCtrl->getCbtCategories();
-                $existingCategories = Question::where('is_active', true)->distinct()->pluck('kategori')->toArray();
-                $orderedCategories = array_values(array_unique(array_merge($cbtCategories, $existingCategories)));
+                $query->orderBy('kategori')->orderBy('id');
+            }
 
-                $assignedIds = [];
-                foreach ($orderedCategories as $cat) {
-                    $catQuery = Question::where('is_active', true)->where('kategori', $cat);
-                    if ($shuffleQuestions) {
-                        $catQuery->inRandomOrder();
-                    } else {
-                        $catQuery->orderBy('id');
-                    }
-                    if (isset($rawCatSchedules[$cat]['question_count']) && (int)$rawCatSchedules[$cat]['question_count'] > 0) {
-                        $catQuery->take((int)$rawCatSchedules[$cat]['question_count']);
-                    }
-                    $catIds = $catQuery->pluck('id')->toArray();
-                    $assignedIds = array_merge($assignedIds, $catIds);
-                }
+            if ($questionCountSetting > 0) {
+                $query->take($questionCountSetting);
+            }
 
-                if ($questionCountSetting > 0 && count($assignedIds) > $questionCountSetting) {
-                    $assignedIds = array_slice($assignedIds, 0, $questionCountSetting);
-                }
+            $assignedIds = $query->pluck('id')->toArray();
+
+            // Jika acak soal aktif, shuffle lagi memastikan urutan setiap peserta benar-benar berbeda
+            if ($shuffleQuestions && count($assignedIds) > 1) {
+                shuffle($assignedIds);
             }
 
             session([$sessionKey => $assignedIds]);
@@ -590,14 +551,21 @@ class ExamController extends Controller
 
         $reg = PsbRegistration::findOrFail($regId);
 
-        $selectedCategory = session('psb_exam_category', 'all');
-        $sessionKey = 'cbt_questions_' . $reg->id . '_' . md5($selectedCategory);
+        $santriJenjangRaw = strtoupper($reg->jenjang ?: '');
+        $santriJenjang = str_contains($santriJenjangRaw, 'MA') ? 'MA' : (str_contains($santriJenjangRaw, 'MTS') ? 'MTs' : 'Semua');
+        $sessionKey = 'cbt_questions_' . $reg->id . '_' . $santriJenjang;
         $assignedIds = session($sessionKey, session('cbt_questions_' . $reg->id, []));
+
+        if (empty($assignedIds) && !empty($reg->cbt_soal_urutan_json)) {
+            $assignedIds = json_decode($reg->cbt_soal_urutan_json, true) ?: [];
+        }
 
         if (empty($assignedIds)) {
             $questionsQuery = Question::where('is_active', true);
-            if ($selectedCategory !== 'all') {
-                $questionsQuery->where('kategori', $selectedCategory);
+            if ($santriJenjang === 'MTs') {
+                $questionsQuery->whereIn('jenjang', ['MTs', 'Semua']);
+            } elseif ($santriJenjang === 'MA') {
+                $questionsQuery->whereIn('jenjang', ['MA', 'Semua']);
             }
             $questions = $questionsQuery->get();
         } else {
@@ -675,18 +643,47 @@ class ExamController extends Controller
         $currentAttempts = (int) ($reg->cbt_attempts_count ?? 0);
         $newAttemptsCount = $currentAttempts + 1;
 
+        // Penentuan Nilai Berdasarkan Kebijakan Ujian Ulang (Nilai Terbaik/Tertinggi, Terakhir, atau Rata-Rata)
+        $previousScore = $reg->nilai_ujian;
+        $retakeRule = Setting::get('cbt_retake_score_rule', 'tertinggi');
+
+        $finalScore = $score;
+        $attemptNote = null;
+
+        if ($previousScore !== null && $currentAttempts > 0) {
+            if ($retakeRule === 'tertinggi') {
+                $finalScore = max((int) $previousScore, $score);
+                if ($score >= (int) $previousScore) {
+                    $attemptNote = "Ujian Ulang ke-{$newAttemptsCount}: Nilai meningkat dari {$previousScore} menjadi {$score}.";
+                } else {
+                    $attemptNote = "Ujian Ulang ke-{$newAttemptsCount}: Skor pengerjaan={$score}. Nilai terbaik ({$finalScore}) tetap dipertahankan.";
+                }
+            } elseif ($retakeRule === 'rata_rata') {
+                $finalScore = round(((int) $previousScore + $score) / 2);
+                $attemptNote = "Ujian Ulang ke-{$newAttemptsCount}: Nilai akhir rata-rata ({$previousScore} dan {$score}) = {$finalScore}.";
+            } else {
+                // 'terakhir'
+                $finalScore = $score;
+                $attemptNote = "Ujian Ulang ke-{$newAttemptsCount}: Menggunakan nilai terakhir = {$score} (sebelumnya {$previousScore}).";
+            }
+        }
+
         $updateFields = [
             'status_ujian' => 'Selesai',
             'cbt_attempts_count' => $newAttemptsCount,
-            'nilai_ujian' => $score,
+            'nilai_ujian' => $finalScore,
             'ujian_selesai_at' => now(),
             'jawaban_santri_json' => json_encode($answerSheet),
             'cbt_nilai_per_mapel_json' => json_encode($perMapelResults),
             'cbt_last_activity_at' => now(),
         ];
 
+        if ($attemptNote) {
+            $updateFields['catatan_penguji'] = $attemptNote;
+        }
+
         // Otomatis Diterima jika nilai mencapai KKM dan sudah mengunggah bukti pembayaran (serta belum ditolak admin)
-        if ($score >= $kkm && !empty($reg->bukti_transfer) && $reg->status !== 'Ditolak') {
+        if ($finalScore >= $kkm && !empty($reg->bukti_transfer) && $reg->status !== 'Ditolak') {
             $updateFields['status'] = 'Diterima';
         }
 
@@ -756,9 +753,41 @@ class ExamController extends Controller
             }
         }
 
-        // Ambil rincian nilai per mata pelajaran
-        $subjectResults = $reg->nilai_per_mapel_array;
+        // Pengaturan apakah nilai ditampilkan langsung atau dirahasiakan sementara (default: 0 = dirahasiakan dari santri)
+        $publishScores = Setting::get('cbt_publish_scores', '0') === '1';
+        $subjectResults = !empty($reg->cbt_nilai_per_mapel_json) ? json_decode($reg->cbt_nilai_per_mapel_json, true) : [];
 
-        return view('ujian.result', compact('reg', 'kkm', 'examTitle', 'totalQuestions', 'correctCount', 'maxAttempts', 'attemptsCount', 'subjectResults'));
+        return view('ujian.result', compact('reg', 'kkm', 'examTitle', 'totalQuestions', 'correctCount', 'maxAttempts', 'attemptsCount', 'subjectResults', 'publishScores'));
+    }
+
+    /**
+     * Cek data calon santri secara instan berdasarkan Nomor Pendaftaran
+     * Otomatis mendeteksi Nama Lengkap dan Jenjang (MTs / MA).
+     */
+    public function checkCandidate(Request $request)
+    {
+        $noReg = trim($request->input('no_reg', ''));
+        if (empty($noReg)) {
+            return response()->json(['found' => false]);
+        }
+
+        $reg = PsbRegistration::where('no_registrasi', $noReg)
+            ->orWhere('no_registrasi', 'like', "%{$noReg}%")
+            ->first();
+
+        if (!$reg) {
+            return response()->json(['found' => false]);
+        }
+
+        $santriJenjangRaw = strtoupper($reg->jenjang ?: '');
+        $tipeJenjang = str_contains($santriJenjangRaw, 'MA') ? 'MA' : (str_contains($santriJenjangRaw, 'MTS') ? 'MTs' : 'Semua');
+
+        return response()->json([
+            'found' => true,
+            'no_reg' => $reg->no_registrasi,
+            'nama_lengkap' => $reg->nama_lengkap,
+            'jenjang' => $reg->jenjang,
+            'tipe_jenjang' => $tipeJenjang,
+        ]);
     }
 }

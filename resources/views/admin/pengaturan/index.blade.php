@@ -9,7 +9,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Pengaturan Konten Website</h1>
-            <p class="text-sm text-slate-500">Kelola Hero, Brosur, Buku Panduan, Falsafah, Kalam Pimpinan, Tabel Biaya PSB, Jadwal 24 Jam & Kontak.</p>
+            <p class="text-sm text-slate-500">Kelola Hero, Brosur, Buku Panduan, Falsafah, Kalam Pimpinan, Jadwal 24 Jam & Kontak.</p>
         </div>
         <div>
             <a href="{{ route('home') }}" target="_blank" class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-sm font-semibold px-4 py-2.5 rounded-lg shadow-sm transition">
@@ -62,10 +62,6 @@
         <button type="button" onclick="switchTab('tab-profil')" id="btn-tab-profil" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             Profil & Kalam Pimpinan
-        </button>
-        <button type="button" onclick="switchTab('tab-biaya')" id="btn-tab-biaya" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
-            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-            Tabel Biaya PSB
         </button>
         <button type="button" onclick="switchTab('tab-jadwal')" id="btn-tab-jadwal" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -731,156 +727,7 @@
 
     </div>
 
-    <!-- ==================== TAB 4: TABEL BIAYA PSB ==================== -->
-    <div id="tab-biaya" class="tab-content hidden space-y-6">
-
-        <!-- Card 1: Tabel Biaya Awal -->
-        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
-            @csrf
-            <input type="hidden" name="active_tab" value="tab-biaya">
-            <input type="hidden" name="section_name" value="Tabel Biaya Awal PSB">
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                <div>
-                    <h2 class="font-bold text-slate-800 text-base">Tabel Biaya Awal Masuk (Daftar Ulang Santri Baru)</h2>
-                    <p class="text-xs text-slate-500">Rincian biaya satu kali saat santri baru diterima (Uang Pangkal, Gedung, Fasilitas Asrama, dsb).</p>
-                </div>
-                <button type="button" onclick="addBiayaAwalRow()" class="inline-flex items-center gap-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 px-3.5 py-2 rounded-lg text-xs font-bold transition">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    + Tambah Baris Komponen
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm" id="tableBiayaAwal">
-                    <thead>
-                        <tr class="text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-200">
-                            <th class="py-2.5 px-3 min-w-[200px]">Komponen Biaya</th>
-                            <th class="py-2.5 px-3 w-32">MTs Mukim</th>
-                            <th class="py-2.5 px-3 w-32">MTs Laju</th>
-                            <th class="py-2.5 px-3 w-32">MA Mukim</th>
-                            <th class="py-2.5 px-3 w-32">MA Laju</th>
-                            <th class="py-2.5 px-3 text-center w-20">Total?</th>
-                            <th class="py-2.5 px-3 text-center w-14">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="biayaAwalRowsContainer" class="divide-y divide-slate-100">
-                        @foreach ($biayaAwal as $row)
-                        <tr class="hover:bg-slate-50/80 transition {{ !empty($row['is_total']) ? 'bg-emerald-50/50 font-bold' : '' }}">
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_awal_komponen[]" value="{{ $row['komponen'] ?? '' }}" placeholder="Nama Komponen" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_awal_mts_mukim[]" value="{{ $row['mts_mukim'] ?? '' }}" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_awal_mts_laju[]" value="{{ $row['mts_laju'] ?? '' }}" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_awal_ma_mukim[]" value="{{ $row['ma_mukim'] ?? '' }}" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_awal_ma_laju[]" value="{{ $row['ma_laju'] ?? '' }}" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3 text-center">
-                                <input type="hidden" name="biaya_awal_is_total[]" value="{{ !empty($row['is_total']) ? '1' : '0' }}">
-                                <input type="checkbox" {{ !empty($row['is_total']) ? 'checked' : '' }} onchange="this.previousElementSibling.value = this.checked ? '1' : '0'" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4" title="Tandai sebagai baris ringkasan total">
-                            </td>
-                            <td class="py-2 px-3 text-center">
-                                <button type="button" onclick="removeBiayaRow(this)" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition" title="Hapus Baris">
-                                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-xs text-slate-500">* Centang kotak "Total?" jika baris merupakan kalkulasi akumulasi total.</span>
-                <button type="submit" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm hover:shadow transition">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    Simpan Tabel Biaya Awal
-                </button>
-            </div>
-        </form>
-
-        <!-- Card 2: Tabel Biaya Bulanan -->
-        <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
-            @csrf
-            <input type="hidden" name="active_tab" value="tab-biaya">
-            <input type="hidden" name="section_name" value="Tabel Biaya Bulanan (SPP)">
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                <div>
-                    <h2 class="font-bold text-slate-800 text-base">Tabel Iuran Rutin Bulanan (SPP, Syahriyah & Makan)</h2>
-                    <p class="text-xs text-slate-500">Rincian SPP bulanan, biaya konsumsi 3x sehari santri mukim, dan tabungan wajib santri.</p>
-                </div>
-                <button type="button" onclick="addBiayaBulananRow()" class="inline-flex items-center gap-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 px-3.5 py-2 rounded-lg text-xs font-bold transition">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    + Tambah Baris Komponen
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm" id="tableBiayaBulanan">
-                    <thead>
-                        <tr class="text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 border-y border-slate-200">
-                            <th class="py-2.5 px-3 min-w-[200px]">Komponen Iuran</th>
-                            <th class="py-2.5 px-3 w-32">MTs Mukim</th>
-                            <th class="py-2.5 px-3 w-32">MTs Laju</th>
-                            <th class="py-2.5 px-3 w-32">MA Mukim</th>
-                            <th class="py-2.5 px-3 w-32">MA Laju</th>
-                            <th class="py-2.5 px-3 text-center w-20">Total?</th>
-                            <th class="py-2.5 px-3 text-center w-14">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="biayaBulananRowsContainer" class="divide-y divide-slate-100">
-                        @foreach ($biayaBulanan as $row)
-                        <tr class="hover:bg-slate-50/80 transition {{ !empty($row['is_total']) ? 'bg-emerald-50/50 font-bold' : '' }}">
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_bulanan_komponen[]" value="{{ $row['komponen'] ?? '' }}" placeholder="Nama Komponen" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_bulanan_mts_mukim[]" value="{{ $row['mts_mukim'] ?? '' }}" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_bulanan_mts_laju[]" value="{{ $row['mts_laju'] ?? '' }}" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_bulanan_ma_mukim[]" value="{{ $row['ma_mukim'] ?? '' }}" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3">
-                                <input type="text" name="biaya_bulanan_ma_laju[]" value="{{ $row['ma_laju'] ?? '' }}" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-                            </td>
-                            <td class="py-2 px-3 text-center">
-                                <input type="hidden" name="biaya_bulanan_is_total[]" value="{{ !empty($row['is_total']) ? '1' : '0' }}">
-                                <input type="checkbox" {{ !empty($row['is_total']) ? 'checked' : '' }} onchange="this.previousElementSibling.value = this.checked ? '1' : '0'" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4" title="Tandai sebagai baris ringkasan total">
-                            </td>
-                            <td class="py-2 px-3 text-center">
-                                <button type="button" onclick="removeBiayaRow(this)" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition" title="Hapus Baris">
-                                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-xs text-slate-500">* Pembayaran administrasi rutin disetorkan selambat-lambatnya sebelum tanggal 10 setiap bulannya.</span>
-                <button type="submit" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm hover:shadow transition">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    Simpan Tabel Biaya Bulanan
-                </button>
-            </div>
-        </form>
-
-    </div>
-
-    <!-- ==================== TAB 5: JADWAL & AGENDA SANTRI ==================== -->
+    <!-- ==================== TAB 4: JADWAL & AGENDA SANTRI ==================== -->
     <div id="tab-jadwal" class="tab-content hidden space-y-6">
 
         <!-- Card 1: Jadwal Rutinitas Santri 24 Jam -->
@@ -1748,84 +1595,6 @@
             row.remove();
         } else {
             alert('Minimal harus ada satu agenda berkala santri.');
-        }
-    }
-
-    // Dynamic Row Biaya Awal
-    function addBiayaAwalRow() {
-        const tbody = document.getElementById('biayaAwalRowsContainer');
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50/80 transition';
-        tr.innerHTML = `
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_awal_komponen[]" placeholder="Nama Komponen" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_awal_mts_mukim[]" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_awal_mts_laju[]" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_awal_ma_mukim[]" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_awal_ma_laju[]" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3 text-center">
-                <input type="hidden" name="biaya_awal_is_total[]" value="0">
-                <input type="checkbox" onchange="this.previousElementSibling.value = this.checked ? '1' : '0'" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4" title="Tandai sebagai baris ringkasan total">
-            </td>
-            <td class="py-2 px-3 text-center">
-                <button type="button" onclick="removeBiayaRow(this)" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition" title="Hapus Baris">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    }
-
-    // Dynamic Row Biaya Bulanan
-    function addBiayaBulananRow() {
-        const tbody = document.getElementById('biayaBulananRowsContainer');
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50/80 transition';
-        tr.innerHTML = `
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_bulanan_komponen[]" placeholder="Nama Komponen" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_bulanan_mts_mukim[]" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_bulanan_mts_laju[]" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_bulanan_ma_mukim[]" placeholder="Rp 0" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3">
-                <input type="text" name="biaya_bulanan_ma_laju[]" placeholder="Rp 0 atau —" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
-            </td>
-            <td class="py-2 px-3 text-center">
-                <input type="hidden" name="biaya_bulanan_is_total[]" value="0">
-                <input type="checkbox" onchange="this.previousElementSibling.value = this.checked ? '1' : '0'" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-4 w-4" title="Tandai sebagai baris ringkasan total">
-            </td>
-            <td class="py-2 px-3 text-center">
-                <button type="button" onclick="removeBiayaRow(this)" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition" title="Hapus Baris">
-                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    }
-
-    function removeBiayaRow(btn) {
-        const row = btn.closest('tr');
-        const tbody = row.closest('tbody');
-        if (tbody.children.length > 1) {
-            row.remove();
-        } else {
-            alert('Minimal harus ada satu komponen rincian biaya.');
         }
     }
 

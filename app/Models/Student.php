@@ -138,6 +138,135 @@ class Student extends Authenticatable
         return (float) ($setoran - $tarikan);
     }
 
+    /**
+     * Dapatkan jenjang ringkas santri (MTs atau MA)
+     */
+    public function getJenjangShortAttribute(): string
+    {
+        $str = strtoupper($this->jenjang ?? '');
+        if (str_contains($str, 'MA')) {
+            return 'MA';
+        }
+        return 'MTs';
+    }
+
+    /**
+     * Dapatkan status hunian santri (Mukim atau Laju)
+     */
+    public function getHunianAttribute(): string
+    {
+        $jenjangStr = strtolower($this->jenjang ?? '');
+        if (str_contains($jenjangStr, 'laju')) {
+            return 'Laju';
+        }
+        if (str_contains($jenjangStr, 'mukim') || str_contains($jenjangStr, 'pondok')) {
+            return 'Mukim';
+        }
+        if (!empty($this->dormitory_id)) {
+            return 'Mukim';
+        }
+        $asramaStr = strtolower($this->kamar_asrama ?? '');
+        if (!empty($asramaStr) && !str_contains($asramaStr, 'laju') && !str_contains($asramaStr, 'non-asrama') && $asramaStr !== '—' && $asramaStr !== '-') {
+            return 'Mukim';
+        }
+        return 'Laju';
+    }
+
+    /**
+     * Dapatkan label kategori lengkap (e.g. MTs Mukim (Asrama) atau MA Laju (Non-Asrama))
+     */
+    public function getKategoriLabelAttribute(): string
+    {
+        $jenjang = $this->jenjang_short;
+        $hunian = $this->hunian;
+        return $jenjang . ' ' . $hunian . ($hunian === 'Mukim' ? ' (Asrama)' : ' (Non-Asrama)');
+    }
+
+    /**
+     * Rincian tarif bulanan resmi sesuai Brosur SK Pondok Pesantren
+     * Tabel 2: Uang Makan 3X, Syahriah, Tabungan Wajib
+     */
+    public function getTarifBulananAttribute(): array
+    {
+        return self::getTarifBulananByKategori($this->jenjang_short, $this->hunian);
+    }
+
+    /**
+     * Helper statis kalkulasi tarif bulanan resmi
+     */
+    public static function getTarifBulananByKategori(string $jenjang, string $hunian): array
+    {
+        $isMA = strtoupper($jenjang) === 'MA' || str_contains(strtoupper($jenjang), 'MA');
+        $isMukim = strtolower($hunian) === 'mukim' || str_contains(strtolower($hunian), 'mukim');
+
+        if ($isMA) {
+            if ($isMukim) {
+                return [
+                    'jenjang' => 'MA',
+                    'hunian' => 'Mukim',
+                    'kategori_label' => 'MA Mukim (Asrama)',
+                    'uang_makan' => 300000,
+                    'syahriah' => 105000,
+                    'tabungan_wajib' => 25000,
+                    'total_bulanan' => 430000,
+                    'items' => [
+                        ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 300000],
+                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 105000],
+                        ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
+                    ],
+                ];
+            } else {
+                return [
+                    'jenjang' => 'MA',
+                    'hunian' => 'Laju',
+                    'kategori_label' => 'MA Laju (Non-Asrama)',
+                    'uang_makan' => 0,
+                    'syahriah' => 75000,
+                    'tabungan_wajib' => 25000,
+                    'total_bulanan' => 100000,
+                    'items' => [
+                        ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 0, 'keterangan' => 'Santri Laju'],
+                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 75000],
+                        ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
+                    ],
+                ];
+            }
+        } else {
+            if ($isMukim) {
+                return [
+                    'jenjang' => 'MTs',
+                    'hunian' => 'Mukim',
+                    'kategori_label' => 'MTs Mukim (Asrama)',
+                    'uang_makan' => 300000,
+                    'syahriah' => 85000,
+                    'tabungan_wajib' => 25000,
+                    'total_bulanan' => 410000,
+                    'items' => [
+                        ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 300000],
+                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 85000],
+                        ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
+                    ],
+                ];
+            } else {
+                return [
+                    'jenjang' => 'MTs',
+                    'hunian' => 'Laju',
+                    'kategori_label' => 'MTs Laju (Non-Asrama)',
+                    'uang_makan' => 0,
+                    'syahriah' => 55000,
+                    'tabungan_wajib' => 25000,
+                    'total_bulanan' => 80000,
+                    'items' => [
+                        ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 0, 'keterangan' => 'Santri Laju'],
+                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 55000],
+                        ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
+                    ],
+                ];
+            }
+        }
+    }
+
+
 
     protected $hidden = [
         'password',

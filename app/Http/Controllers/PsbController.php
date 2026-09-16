@@ -27,10 +27,13 @@ class PsbController extends Controller
             'jalur' => 'required|string|in:Reguler,Prestasi,Tahfidz',
             'jenjang' => 'nullable|string|in:MTs Mukim,MTs Laju,MA Mukim,MA Laju',
             'bukti_transfer' => 'required|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'pas_foto' => 'required|file|mimes:jpeg,png,jpg,webp|max:10240',
+            'file_akta_kelahiran' => 'required|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_kk' => 'required|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_ktp_ortu' => 'required|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
             
             // Data Diri Santri
             'nama_lengkap' => 'required|string|max:255',
-            'pas_foto' => 'required|file|mimes:jpeg,png,jpg,webp|max:10240',
             'nisn' => 'required|string|max:30',
             'jenis_kelamin' => 'required|string|in:Laki-laki,Perempuan',
             'nik' => 'required|string|max:30',
@@ -88,7 +91,15 @@ class PsbController extends Controller
             $rules['bukti_prestasi_tahfidz'] = 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240';
         }
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'bukti_transfer.required' => 'Bukti transfer infaq pendaftaran (Rp 200.000) wajib diunggah.',
+            'pas_foto.required' => 'Pas foto 3x4 santri (background merah) wajib diunggah.',
+            'file_akta_kelahiran.required' => 'Scan / Foto Akta Kelahiran wajib diunggah.',
+            'file_kk.required' => 'Scan / Foto Kartu Keluarga (KK) wajib diunggah.',
+            'file_ktp_ortu.required' => 'Scan / Foto KTP Orang Tua (Ayah / Ibu) wajib diunggah.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
 
         // Helper upload folder
         $fotoPath = null;
@@ -113,6 +124,31 @@ class PsbController extends Controller
             $filename = time() . '_bayar_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/psb/transfer'), $filename);
             $transferPath = '/uploads/psb/transfer/' . $filename;
+        }
+
+        // Upload Berkas Dokumen Wajib
+        $aktaPath = null;
+        if ($request->hasFile('file_akta_kelahiran')) {
+            $file = $request->file('file_akta_kelahiran');
+            $filename = time() . '_akta_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/psb/berkas'), $filename);
+            $aktaPath = '/uploads/psb/berkas/' . $filename;
+        }
+
+        $kkPath = null;
+        if ($request->hasFile('file_kk')) {
+            $file = $request->file('file_kk');
+            $filename = time() . '_kk_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/psb/berkas'), $filename);
+            $kkPath = '/uploads/psb/berkas/' . $filename;
+        }
+
+        $ktpPath = null;
+        if ($request->hasFile('file_ktp_ortu')) {
+            $file = $request->file('file_ktp_ortu');
+            $filename = time() . '_ktp_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/psb/berkas'), $filename);
+            $ktpPath = '/uploads/psb/berkas/' . $filename;
         }
 
         $prestasiPath = null;
@@ -141,6 +177,9 @@ class PsbController extends Controller
             'bukti_prestasi_tahfidz' => $prestasiPath,
             'nama_lengkap' => $request->nama_lengkap,
             'pas_foto' => $fotoPath,
+            'file_akta_kelahiran' => $aktaPath,
+            'file_kk' => $kkPath,
+            'file_ktp_ortu' => $ktpPath,
             'foto_status' => $fotoVerification['status'],
             'foto_catatan' => $fotoVerification['catatan'],
             'nisn' => $request->nisn,
@@ -188,6 +227,9 @@ class PsbController extends Controller
             'no_whatsapp' => $request->ayah_telepon ?: $request->ibu_telepon ?: $request->wali_telepon,
             'alamat' => $request->alamat_lengkap,
             'status' => 'Menunggu',
+            'status_pembayaran' => 'Menunggu Konfirmasi',
+            'nominal_pembayaran' => 200000,
+            'metode_pembayaran' => 'Transfer Bank',
         ]);
 
         return redirect()->route('psb.success', $registration->id)->with('success', 'Formulir Pendaftaran Berhasil Dikirim!');

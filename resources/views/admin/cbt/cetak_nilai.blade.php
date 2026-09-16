@@ -154,21 +154,14 @@
     </div>
 
     <div class="sheet">
-        <!-- KOP SURAT RESMI -->
-        <div class="header-kop">
-            <img src="/logo.png" alt="Logo" class="kop-logo">
-            <div class="kop-text">
-                <h2>Pondok Pesantren Hidayatullah Tuksongo</h2>
-                <div class="arabic-sub">معهد هداية الله للتربية الإسلامية — برينغسورات تيمانتغونغ</div>
-                <p>NSPP: 512032304095 • Terakreditasi B (BAN-SM Kemenag MTs & MA)</p>
-                <p>Alamat: Dusun Tuksongo RT 01/RW 01, Nglorog, Pringsurat, Kab. Temanggung, Jawa Tengah 56272</p>
-            </div>
-            <img src="/logo.png" alt="Logo" class="kop-logo" style="visibility:hidden;">
+        <!-- KOP SURAT RESMI (PONDOK TUKSONGO) -->
+        <div style="text-align: center; margin-bottom: 12px; border-bottom: 2.5px solid #0f172a; padding-bottom: 8px;">
+            <img src="/images/kop_psb.png" alt="Kop Surat Resmi Pondok Pesantren Hidayatullah Tuksongo" style="max-height: 95px; width: auto; max-width: 100%; object-fit: contain;">
         </div>
 
         <div class="title-block">
             <h3>{{ $title }}</h3>
-            <p>Standar Kriteria Ketuntasan Minimal (KKM): <strong>{{ $kkm }}</strong> • Dicetak pada: {{ now()->translatedFormat('l, d F Y H:i') }} WIB</p>
+            <p>Standar Kriteria Ketuntasan Minimal (KKM): <strong>{{ $kkm }}</strong> • @if(!empty($jenjang)) <span style="color:#0d3b1e; font-weight:700;">Kelompok: Jenjang {{ $jenjang }}</span> • @endif Dicetak pada: {{ now()->translatedFormat('l, d F Y H:i') }} WIB</p>
         </div>
 
         <table>

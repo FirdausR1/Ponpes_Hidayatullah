@@ -16,6 +16,9 @@ class PsbRegistration extends Model
         'bukti_prestasi_tahfidz',
         'nama_lengkap',
         'pas_foto',
+        'file_akta_kelahiran',
+        'file_kk',
+        'file_ktp_ortu',
         'foto_status',
         'foto_catatan',
         'nisn',
@@ -236,12 +239,161 @@ class PsbRegistration extends Model
         return $this->hasOne(Student::class, 'psb_registration_id');
     }
 
+    /**
+     * Relasi ke riwayat transaksi pembayaran PSB.
+     */
+    public function payments()
+    {
+        return $this->hasMany(StudentPayment::class, 'psb_registration_id');
+    }
+
+    /**
+     * Hitung struktur tarif resmi berdasarkan jenjang & hunian (Mukim vs Laju).
+     * Dinamis membaca konfigurasi tarif resmi yang diatur Bendahara di Pengaturan Tarif / Web.
+     */
+    public static function getTarifBreakdown($jenjang)
+    {
+        $jenjangUpper = strtoupper($jenjang ?? '');
+        $isMa = str_contains($jenjangUpper, 'MA');
+        $isLaju = str_contains($jenjangUpper, 'LAJU');
+
+        $jenjangLabel = $isMa ? 'MA' : 'MTs';
+        $hunianLabel = $isLaju ? 'Laju' : 'Mukim';
+        $fullLabel = "{$jenjangLabel} " . ($isLaju ? 'Laju (Non-Asrama)' : 'Mukim (Asrama)');
+
+        $fieldKey = ($isMa ? 'ma_' : 'mts_') . ($isLaju ? 'laju' : 'mukim');
+
+        // 1. Ambil Data Tarif Biaya Awal / Daftar Ulang Dinamis
+        $rawBiayaAwal = Setting::get('biaya_awal_json');
+        $biayaAwalList = json_decode($rawBiayaAwal ?? '[]', true) ?: [];
+
+        $itemsDaftarUlang = [];
+        $totalMasuk = 0;
+        $biayaPendaftaran = 200000;
+
+        if (!empty($biayaAwalList)) {
+            foreach ($biayaAwalList as $row) {
+                if (!empty($row['is_total'])) continue;
+                $nama = trim($row['komponen'] ?? '');
+                if (empty($nama)) continue;
+
+                $valStr = $row[$fieldKey] ?? '0';
+                $nom = (float) preg_replace('/[^0-9]/', '', $valStr);
+
+                $itemsDaftarUlang[] = [
+                    'nama' => $nama,
+                    'nominal' => $nom,
+                    'keterangan' => ($isLaju && stripos($nama, 'almari') !== false) ? 'Khusus Santri Mukim' : null,
+                ];
+                $totalMasuk += $nom;
+
+                if (stripos($nama, 'pendaftaran') !== false && $nom > 0) {
+                    $biayaPendaftaran = $nom;
+                }
+            }
+            $sisaDaftarUlang = max(0, $totalMasuk - $biayaPendaftaran);
+        } else {
+            // Standar brosur resmi sebagai fallback
+            $kts = 60000;
+            $pangkal = $isMa 
+                ? ($isLaju ? 1800000 : 1400000) 
+                : ($isLaju ? 1500000 : 1200000);
+            $kertas = 200000;
+            $syahriahJuli = $isMa 
+                ? ($isLaju ? 100000 : 430000) 
+                : ($isLaju ? 80000 : 410000);
+            $kesehatan = 200000;
+            $kegiatan = 300000;
+            $almari = $isLaju ? 0 : 350000;
+            $gedung = 500000;
+            $pendaftaran = 200000;
+
+            $totalMasuk = $kts + $pangkal + $kertas + $syahriahJuli + $kesehatan + $kegiatan + $almari + $gedung + $pendaftaran;
+            $sisaDaftarUlang = $totalMasuk - $pendaftaran;
+            $biayaPendaftaran = $pendaftaran;
+
+            $itemsDaftarUlang = [
+                ['nama' => 'Santri Baru KTS', 'nominal' => $kts],
+                ['nama' => 'Uang Pangkal Masuk', 'nominal' => $pangkal],
+                ['nama' => 'Kertas / Evaluasi Belajar (1 Th)', 'nominal' => $kertas],
+                ['nama' => 'Syahriah Bulan Juli', 'nominal' => $syahriahJuli],
+                ['nama' => 'Kesehatan Santri (1 Th)', 'nominal' => $kesehatan],
+                ['nama' => 'Kegiatan Santri (1 Th)', 'nominal' => $kegiatan],
+                ['nama' => 'Pembelian Almari', 'nominal' => $almari, 'keterangan' => $isLaju ? 'Khusus Santri Mukim' : 'Fasilitas Kamar'],
+                ['nama' => 'Uang Gedung & Sarpras', 'nominal' => $gedung],
+                ['nama' => 'Biaya Pendaftaran PSB', 'nominal' => $pendaftaran],
+            ];
+        }
+
+        // 2. Ambil Data Tarif Iuran Bulanan Dinamis
+        $rawBiayaBulanan = Setting::get('biaya_bulanan_json');
+        $biayaBulananList = json_decode($rawBiayaBulanan ?? '[]', true) ?: [];
+
+        $itemsBulanan = [];
+        $totalBulanan = 0;
+
+        if (!empty($biayaBulananList)) {
+            foreach ($biayaBulananList as $row) {
+                if (!empty($row['is_total'])) continue;
+                $nama = trim($row['komponen'] ?? '');
+                if (empty($nama)) continue;
+
+                $valStr = $row[$fieldKey] ?? '0';
+                $nom = (float) preg_replace('/[^0-9]/', '', $valStr);
+
+                $itemsBulanan[] = [
+                    'nama' => $nama,
+                    'nominal' => $nom,
+                ];
+                $totalBulanan += $nom;
+            }
+        } else {
+            $uangMakan = $isLaju ? 0 : 300000;
+            $syahriahBulanan = $isMa 
+                ? ($isLaju ? 75000 : 105000) 
+                : ($isLaju ? 55000 : 85000);
+            $tabunganWajib = 25000;
+            $totalBulanan = $uangMakan + $syahriahBulanan + $tabunganWajib;
+
+            $itemsBulanan = [
+                ['nama' => 'Uang Makan 3x Sehari', 'nominal' => $uangMakan],
+                ['nama' => 'Syahriah Pendidikan', 'nominal' => $syahriahBulanan],
+                ['nama' => 'Tabungan Wajib Santri', 'nominal' => $tabunganWajib],
+            ];
+        }
+
+        return [
+            'jenjang_short' => $jenjangLabel,
+            'hunian' => $hunianLabel,
+            'kategori_label' => $fullLabel,
+            'biaya_pendaftaran' => $biayaPendaftaran,
+            'total_biaya_masuk' => $totalMasuk,
+            'sisa_daftar_ulang' => $sisaDaftarUlang,
+            'total_bulanan' => $totalBulanan,
+            'items_daftar_ulang' => $itemsDaftarUlang,
+            'items_bulanan' => $itemsBulanan,
+        ];
+    }
+
+    public function getTarifDetailsAttribute()
+    {
+        return static::getTarifBreakdown($this->jenjang);
+    }
+
     protected static function booted()
     {
         static::creating(function ($model) {
             if (!$model->no_registrasi) {
-                $count = static::count() + 1;
-                $model->no_registrasi = 'PSB-25-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $academicYear = Setting::get('tahun_ajaran', date('Y'));
+                $yearCode = '26';
+                if (preg_match('/20(\d{2})/', $academicYear, $matches)) {
+                    $yearCode = $matches[1];
+                } elseif (date('y')) {
+                    $yearCode = date('y');
+                }
+                $prefix = "PSB-{$yearCode}-";
+                $count = static::where('no_registrasi', 'like', "{$prefix}%")->count() + 1;
+                $model->no_registrasi = $prefix . str_pad($count, 4, '0', STR_PAD_LEFT);
             }
             if (!$model->nama_wali) {
                 $model->nama_wali = $model->ayah_nama ?: $model->ibu_nama ?: $model->wali_nama ?: '-';

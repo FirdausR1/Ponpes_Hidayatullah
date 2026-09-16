@@ -187,24 +187,12 @@
             @if(($mode ?? 'all') == 'all' || ($mode ?? 'all') == 'cv')
             <div class="sheet">
                 
-                <!-- KOP SURAT RESMI PESANTREN -->
-                <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 shrink-0 flex items-center justify-center">
-                        <img src="/logo.png" alt="Logo" class="max-w-full max-h-full object-contain">
+                <!-- KOP SURAT RESMI PESANTREN (PONDOK TUKSONGO) -->
+                <div class="flex items-center justify-between gap-3 mb-1">
+                    <div class="flex-1 flex items-center justify-center">
+                        <img src="/images/kop_psb.png" alt="Kop Surat Resmi Pondok Pesantren Hidayatullah Tuksongo" class="w-full max-h-24 sm:max-h-28 object-contain">
                     </div>
-                    <div class="flex-1 text-center">
-                        <h4 class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">Yayasan Pondok Pesantren Hidayatullah Temanggung</h4>
-                        <img src="/logo1.png" alt="Kaligrafi Hidayatullah" class="h-7 mx-auto my-0.5 object-contain">
-                        <h2 class="text-xl font-serif font-bold text-[#0d3b1e] tracking-wide uppercase">Pondok Pesantren Hidayatullah Tuksongo</h2>
-                        <p class="text-[11px] font-semibold text-slate-800 mt-0.5">
-                            Madrasah Tsanawiyah (MTs) &bull; Madrasah Aliyah (MA) Tahfidz & Sains Al-Qur'an
-                        </p>
-                        <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
-                            Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
-                            Hotline PSB / WhatsApp: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }} &bull; Website: ponpeshidayatullahtuksongo.com
-                        </p>
-                    </div>
-                    <div class="w-20 shrink-0 text-right">
+                    <div class="w-20 shrink-0 text-right hidden sm:block">
                         <!-- Barcode / Reg Stamp -->
                         <div class="border border-slate-300 rounded p-1 text-center bg-slate-50">
                             <span class="text-[8px] font-mono text-slate-400 block">FORMULIR</span>
@@ -643,23 +631,12 @@
                 $evaluasi = $reg->evaluasiSyaratPenerimaan();
             @endphp
             <div class="sheet">
-                <!-- KOP SURAT RESMI PESANTREN -->
-                <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 shrink-0 flex items-center justify-center">
-                        <img src="/logo.png" alt="Logo Pesantren" class="max-w-full max-h-full object-contain">
+                <!-- KOP SURAT RESMI PESANTREN (PONDOK TUKSONGO) -->
+                <div class="flex items-center justify-between gap-3 mb-1">
+                    <div class="flex-1 flex items-center justify-center">
+                        <img src="/images/kop_psb.png" alt="Kop Surat Resmi Pondok Pesantren Hidayatullah Tuksongo" class="w-full max-h-24 sm:max-h-28 object-contain">
                     </div>
-                    <div class="flex-1 text-center">
-                        <h4 class="text-[11px] font-bold tracking-wider text-slate-700 uppercase">Yayasan Pondok Pesantren Hidayatullah Temanggung</h4>
-                        <h2 class="text-xl font-serif font-bold text-[#0d3b1e] tracking-wide uppercase">Pondok Pesantren Hidayatullah Tuksongo</h2>
-                        <p class="text-[11px] font-semibold text-slate-800 mt-0.5">
-                            Madrasah Tsanawiyah (MTs) &bull; Madrasah Aliyah (MA) Tahfidz &amp; Sains Al-Qur'an
-                        </p>
-                        <p class="text-[9.5px] text-slate-500 mt-0.5 leading-tight">
-                            Jl. Magelang - Semarang KM 14, Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah 56272<br>
-                            Hotline PSB / WhatsApp: {{ \App\Models\Setting::get('kontak_hotline', \App\Models\Setting::get('kontak_hotline_1', '0813-9110-9966')) }} &bull; Website: ponpeshidayatullahtuksongo.com
-                        </p>
-                    </div>
-                    <div class="w-20 shrink-0 text-right">
+                    <div class="w-20 shrink-0 text-right hidden sm:block">
                         <div class="border border-slate-300 rounded p-1 text-center bg-slate-50">
                             <span class="text-[8px] font-mono text-slate-400 block">BERKAS CBT</span>
                             <span class="text-[10px] font-mono font-bold text-slate-800">CBT-{{ date('y') }}</span>

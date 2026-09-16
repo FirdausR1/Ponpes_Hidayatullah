@@ -115,4 +115,20 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Relasi ke transaksi pembayaran santri yang dicatat oleh user ini.
+     */
+    public function studentPayments()
+    {
+        return $this->hasMany(StudentPayment::class, 'user_id');
+    }
+
+    /**
+     * Relasi ke catatan beban kas pengeluaran operasional yang dicatat oleh user ini.
+     */
+    public function operationalExpenses()
+    {
+        return $this->hasMany(OperationalExpense::class, 'user_id');
+    }
 }

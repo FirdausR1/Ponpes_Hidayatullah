@@ -19,6 +19,26 @@
 
         <!-- Action Bar (TailAdmin Button Group) -->
         <div class="flex flex-wrap items-center gap-2.5">
+            @php
+                $pendingTfCount = \App\Models\PsbRegistration::whereNotNull('bukti_transfer')
+                    ->where('bukti_transfer', '!=', '')
+                    ->where(function($q) {
+                        $q->where('status_pembayaran', '!=', 'Lunas')->orWhereNull('status_pembayaran');
+                    })->count();
+            @endphp
+
+            @if($pendingTfCount > 0)
+                <!-- Tombol Verifikasi Cepat Seluruh Bukti Transfer -->
+                <form action="{{ route('admin.psb.bulkVerify') }}" method="POST" class="inline" onsubmit="return confirm('Verifikasi pembayaran pendaftaran (Rp 200.000 Lunas) untuk SELURUH {{ $pendingTfCount }} calon santri yang telah mengunggah bukti transfer?')">
+                    @csrf
+                    <input type="hidden" name="mode" value="all_with_proof">
+                    <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2.5 text-xs font-bold shadow-theme-xs transition cursor-pointer" title="Verifikasi otomatis seluruh calon santri yang sudah mengunggah slip transfer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>⚡ Verifikasi Semua Bukti TF ({{ $pendingTfCount }})</span>
+                    </button>
+                </form>
+            @endif
+
             <!-- 1. Tombol Buka Modal Seleksi Otomatis -->
             <button type="button" onclick="document.getElementById('modalAutoSeleksi').classList.remove('hidden')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 text-xs font-semibold shadow-theme-xs transition cursor-pointer" title="Jalankan proses seleksi otomatis berdasarkan kriteria nilai CBT / pembayaran / kuota">
                 <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -203,9 +223,12 @@
             <table class="min-w-full text-left">
                 <thead class="bg-gray-50/70 text-gray-500 uppercase font-medium text-xs tracking-wider border-b border-gray-200">
                     <tr>
+                        <th class="px-3 py-3.5 w-10 text-center">
+                            <input type="checkbox" id="selectAllPsb" onclick="toggleSelectAllPsb(this)" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 transition cursor-pointer" title="Pilih Semua">
+                        </th>
                         <th class="px-5 py-3.5 sm:px-6">Pas Foto & Identitas</th>
                         <th class="px-5 py-3.5">Jalur & Jenjang</th>
-                        <th class="px-5 py-3.5">Upload Dokumen</th>
+                        <th class="px-5 py-3.5">Dokumen & Biaya</th>
                         <th class="px-5 py-3.5">Wali & WhatsApp</th>
                         <th class="px-5 py-3.5">Hasil Ujian CBT</th>
                         <th class="px-5 py-3.5">Status Seleksi</th>
@@ -214,38 +237,39 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($registrations as $reg)
-                        <tr class="hover:bg-slate-50/70 transition">
+                        <tr class="hover:bg-slate-50/70 transition" id="row-psb-{{ $reg->id }}">
+                            <!-- Checkbox Row -->
+                            <td class="px-3 py-4 text-center">
+                                <input type="checkbox" name="selected_psb_ids[]" value="{{ $reg->id }}" class="psb-row-checkbox w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 transition cursor-pointer" onchange="updatePsbSelection()">
+                            </td>
+
                             <!-- Foto & Calon Santri -->
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3.5">
                                     <div class="relative shrink-0">
                                         @if($reg->pas_foto)
-                                            <div class="w-12 h-16 rounded-lg overflow-hidden border-2 {{ ($reg->foto_status ?? 'Sesuai') === 'Perlu Perbaikan' ? 'border-amber-500' : 'border-red-500' }} shadow-sm bg-red-600 cursor-pointer" onclick="showApplicantModal({{ json_encode($reg) }})">
-                                                <img src="{{ $reg->pas_foto }}" alt="{{ $reg->nama_lengkap }}" class="w-full h-full object-cover">
+                                            <div class="w-11 h-14 rounded-lg overflow-hidden border-2 {{ ($reg->foto_status ?? 'Sesuai') === 'Perlu Perbaikan' ? 'border-amber-400' : 'border-emerald-500' }} shadow-xs bg-slate-100 cursor-pointer group" onclick="showApplicantModal({{ json_encode($reg) }})" title="Klik untuk lihat foto & berkas">
+                                                <img src="{{ $reg->pas_foto }}" alt="{{ $reg->nama_lengkap }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
                                             </div>
                                         @else
-                                            <div class="w-12 h-16 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center font-bold text-xs bg-slate-100 text-slate-400">
-                                                <svg class="icon-svg w-5 h-5 text-slate-400" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                                <span class="text-[9px] mt-0.5">3x4</span>
+                                            <div class="w-11 h-14 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center font-bold text-xs bg-slate-100 text-slate-400">
+                                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                <span class="text-[8px] mt-0.5">3x4</span>
                                             </div>
                                         @endif
 
                                         @if(($reg->foto_status ?? 'Sesuai') === 'Perlu Perbaikan')
-                                            <span class="absolute -bottom-2 -left-1 px-1.5 py-0.5 bg-amber-500 text-white rounded text-[9px] font-bold shadow-xs whitespace-nowrap" title="{{ $reg->foto_catatan ?: 'Foto miring / tidak ketentuan' }}">
-                                                Miring / Ulang
-                                            </span>
+                                            <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white" title="{{ $reg->foto_catatan ?: 'Foto miring / tidak sesuai ketentuan' }}"></span>
                                         @else
-                                            <span class="absolute -bottom-2 -left-1 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[9px] font-bold shadow-xs whitespace-nowrap">
-                                                Foto OK
-                                            </span>
+                                            <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" title="Foto Sesuai Ketentuan"></span>
                                         @endif
                                     </div>
-                                    <div>
-                                        <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="font-bold text-slate-900 hover:text-brand-600 block text-left leading-tight transition">
+                                    <div class="min-w-0">
+                                        <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="font-bold text-gray-900 hover:text-emerald-700 block text-left leading-tight transition truncate max-w-[180px]">
                                             {{ $reg->nama_lengkap }}
                                         </button>
-                                        <span class="text-[11px] font-mono text-brand-600 font-semibold block mt-0.5">{{ $reg->no_registrasi ?: ('ID #' . $reg->id) }}</span>
-                                        <span class="text-xs text-slate-400 block">NISN: {{ $reg->nisn ?: '—' }} | NIK: {{ $reg->nik ?: '—' }}</span>
+                                        <span class="text-[11px] font-mono text-emerald-700 font-semibold block mt-0.5">{{ $reg->no_registrasi ?: ('ID #' . $reg->id) }}</span>
+                                        <span class="text-[11px] text-gray-400 block truncate">NISN: {{ $reg->nisn ?: '—' }} &bull; NIK: {{ $reg->nik ?: '—' }}</span>
                                     </div>
                                 </div>
                             </td>
@@ -259,49 +283,69 @@
                                     }}">
                                         Jalur {{ $reg->jalur ?: 'Reguler' }}
                                     </span>
-                                    <span class="text-xs font-semibold text-slate-700 block">
+                                    <span class="text-xs font-bold text-gray-800 block">
                                         {{ $reg->jenjang }}
                                     </span>
-                                    <span class="text-[11px] text-slate-400 block truncate max-w-[160px]" title="{{ $reg->nama_sekolah ?: $reg->asal_sekolah }}">
+                                    <span class="text-[11px] text-gray-400 block truncate max-w-[150px]" title="{{ $reg->nama_sekolah ?: $reg->asal_sekolah }}">
                                         {{ $reg->nama_sekolah ?: $reg->asal_sekolah ?: '—' }}
                                     </span>
                                 </div>
                             </td>
 
-                            <!-- Upload Dokumen / Berkas -->
+                            <!-- Dokumen & Status Biaya 200rb -->
                             <td class="px-4 py-4">
-                                <div class="flex flex-col gap-1.5">
-                                    <!-- Bukti Transfer -->
-                                    @if($reg->bukti_transfer)
-                                        <a href="{{ $reg->bukti_transfer }}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-semibold transition w-fit">
-                                            <svg class="icon-svg w-3 h-3 text-emerald-600" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                                            Transfer Rp 200rb
-                                        </a>
-                                    @else
-                                        <span class="text-[11px] text-slate-400 italic">Belum transfer</span>
-                                    @endif
+                                @php
+                                    $docCount = 0;
+                                    if (!empty($reg->berkas_akta)) $docCount++;
+                                    if (!empty($reg->berkas_kk)) $docCount++;
+                                    if (!empty($reg->berkas_ktp_ayah)) $docCount++;
+                                    if (!empty($reg->berkas_ktp_ibu)) $docCount++;
+                                    $isLunas = ($reg->status_pembayaran === 'Lunas' || $reg->pembayaran_status === 'Lunas');
+                                @endphp
+                                <div class="space-y-1.5">
+                                    <!-- Status Pembayaran 200rb -->
+                                    <div class="flex items-center gap-1.5">
+                                        @if($isLunas)
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                200rb Lunas
+                                            </span>
+                                        @elseif($reg->bukti_transfer)
+                                            <form action="{{ route('admin.pembayaran.psbVerify', $reg->id) }}" method="POST" class="inline" onsubmit="return confirm('Verifikasi pembayaran pendaftaran Rp 200.000 untuk ananda {{ addslashes($reg->nama_lengkap) }}?')">
+                                                @csrf
+                                                <input type="hidden" name="status" value="Lunas">
+                                                <input type="hidden" name="nominal_pembayaran" value="200000">
+                                                <input type="hidden" name="metode_pembayaran" value="Transfer Bank">
+                                                <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition" title="Klik untuk verifikasi Rp 200.000">
+                                                    Verifikasi 200rb
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                                                Belum Bayar
+                                            </span>
+                                        @endif
+                                    </div>
 
-                                    <!-- Bukti Prestasi -->
-                                    @if($reg->bukti_prestasi_tahfidz)
-                                        <a href="{{ $reg->bukti_prestasi_tahfidz }}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md text-[11px] font-semibold transition w-fit">
-                                            <svg class="icon-svg w-3 h-3 text-amber-600" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-                                            Prestasi / Tahfidz
-                                        </a>
-                                    @endif
-
-                                    <!-- Bukti Bansos -->
-                                    @if($reg->bukti_bantuan_sosial)
-                                        <a href="{{ $reg->bukti_bantuan_sosial }}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold transition w-fit">
-                                            <svg class="icon-svg w-3 h-3 text-blue-600" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-                                            Berkas Bansos
-                                        </a>
-                                    @endif
+                                    <!-- Indikator Berkas Dokumen & Slip TF -->
+                                    <div class="flex items-center gap-1.5 text-[11px]">
+                                        <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="inline-flex items-center gap-1 text-gray-600 hover:text-emerald-700 font-medium transition" title="Lihat detail dokumen persyaratan">
+                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            <span>{{ $docCount > 0 ? "{$docCount}/4 Berkas" : 'Berkas Kosong' }}</span>
+                                        </button>
+                                        @if($reg->bukti_transfer)
+                                            <span class="text-gray-300">&bull;</span>
+                                            <a href="{{ $reg->bukti_transfer }}" target="_blank" class="text-emerald-700 hover:text-emerald-800 font-medium hover:underline" title="Lihat Bukti Transfer Bank">
+                                                Slip TF
+                                            </a>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
 
                             <!-- Wali & WA -->
                             <td class="px-4 py-4">
-                                <span class="text-xs font-medium text-slate-800 block">
+                                <span class="text-xs font-semibold text-gray-800 block">
                                     {{ $reg->ayah_nama ?: $reg->nama_wali ?: 'Wali Santri' }}
                                 </span>
                                 @php
@@ -317,11 +361,11 @@
                                     <a href="https://wa.me/{{ $cleanPhone }}?text=Assalamu%27alaikum%2C+kami+dari+Panitia+PSB+Ponpes+Hidayatullah+Tuksongo+mengonfirmasi+pendaftaran+ananda+{{ urlencode($reg->nama_lengkap) }}+({{ $reg->no_registrasi }})." 
                                        target="_blank" 
                                        class="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 font-medium mt-0.5">
-                                        <svg class="icon-svg w-3 h-3 text-emerald-500" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                                        {{ $phone }}
+                                        <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        <span>{{ $phone }}</span>
                                     </a>
                                 @else
-                                    <span class="text-xs text-slate-400">-</span>
+                                    <span class="text-xs text-gray-400">—</span>
                                 @endif
                             </td>
 
@@ -330,148 +374,123 @@
                                 @if($reg->status_ujian === 'Selesai' && $reg->nilai_ujian !== null)
                                     <div class="space-y-1">
                                         <div class="flex items-center gap-1">
-                                            <span class="text-xs font-black {{ $reg->nilai_ujian >= 70 ? 'text-emerald-700' : 'text-rose-600' }}">
+                                            <span class="text-xs font-extrabold {{ $reg->nilai_ujian >= 70 ? 'text-emerald-700' : 'text-rose-600' }}">
                                                 {{ $reg->nilai_ujian }}
                                             </span>
-                                            <span class="text-[10px] text-slate-400">/ 100</span>
+                                            <span class="text-[10px] text-gray-400">/ 100</span>
                                         </div>
                                         @php
                                             $stKelulusan = $reg->status_kelulusan;
                                         @endphp
                                         @if($stKelulusan === 'Lulus')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                                 ✓ Lulus
                                             </span>
                                         @elseif($stKelulusan === 'Tidak Lulus')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 shadow-2xs">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
                                                 ✕ Tidak Lulus
                                             </span>
                                         @elseif($stKelulusan === 'Lulus Bersyarat')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shadow-2xs">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                                                 ⚠️ Bersyarat
                                             </span>
                                         @elseif($stKelulusan === 'Cadangan')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                                                 Cadangan
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-700">
                                                 {{ $stKelulusan }}
                                             </span>
                                         @endif
                                     </div>
                                 @elseif($reg->status_ujian === 'Sedang Ujian')
-                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                    <span class="inline-flex items-center gap-1 text-[10.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
                                         Sedang Ujian
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                                    <span class="inline-flex items-center gap-1 text-[10.5px] text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">
                                         Belum Ujian
                                     </span>
                                 @endif
                             </td>
 
-                            <!-- Status & Quick Switcher -->
+                            <!-- Status Seleksi -->
                             <td class="px-4 py-4">
                                 <form action="{{ route('admin.psb.updateStatus', $reg->id) }}" method="POST" class="inline-block">
                                     @csrf
                                     @method('PATCH')
                                     <select name="status" onchange="this.form.submit()" class="text-xs font-semibold rounded-lg px-2.5 py-1.5 border transition cursor-pointer outline-none shadow-2xs {{ 
-                                        $reg->status == 'Diterima' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                                        ($reg->status == 'Ditolak' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200') 
+                                        $reg->status == 'Diterima' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 
+                                        ($reg->status == 'Ditolak' ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-amber-50 text-amber-700 border-amber-300') 
                                     }}">
                                         <option value="Menunggu" {{ $reg->status == 'Menunggu' ? 'selected' : '' }}>⏳ Menunggu</option>
                                         <option value="Diterima" {{ $reg->status == 'Diterima' ? 'selected' : '' }}>✓ Diterima</option>
                                         <option value="Ditolak" {{ $reg->status == 'Ditolak' ? 'selected' : '' }}>✕ Ditolak</option>
                                     </select>
                                 </form>
-                                @php
-                                    $evalReg = $reg->evaluasiSyaratPenerimaan();
-                                @endphp
-                                <div class="mt-1">
-                                    @if($evalReg['memenuhi'])
-                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" title="Memenuhi kriteria: Nilai ujian >= KKM dan bukti pembayaran terunggah">
-                                            ⚡ Nilai &amp; Bayar OK
-                                        </span>
-                                    @elseif($reg->bukti_transfer && !$evalReg['sudah_ujian'])
-                                        <span class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
-                                            Bayar OK &bull; Belum Ujian
-                                        </span>
-                                    @elseif($evalReg['sudah_ujian'] && !$reg->bukti_transfer)
-                                        <span class="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                                            Nilai OK &bull; Belum Bayar
-                                        </span>
-                                    @endif
-                                </div>
                             </td>
 
-                            <!-- Actions (TailAdmin Compact Style) -->
+                            <!-- Aksi Ringkas: Detail + Menu Opsi -->
                             <td class="px-5 py-4 text-right">
-                                <div class="inline-flex items-center justify-end gap-1">
-                                    <!-- 1. View Details & Berkas Modal Trigger -->
-                                    <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Lihat Detail & Berkas Santri">
-                                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" fill="currentColor"/>
-                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M0.833252 10C1.94436 5.83333 5.55547 2.5 9.99992 2.5C14.4444 2.5 18.0555 5.83333 19.1666 10C18.0555 14.1667 14.4444 17.5 9.99992 17.5C5.55547 17.5 1.94436 14.1667 0.833252 10ZM14.1666 10C14.1666 12.3012 12.3011 14.1667 9.99992 14.1667C7.69873 14.1667 5.83325 12.3012 5.83325 10C5.83325 7.69882 7.69873 5.83333 9.99992 5.83333C12.3011 5.83333 14.1666 7.69882 14.1666 10Z" fill="currentColor"/>
-                                        </svg>
+                                <div class="inline-flex items-center justify-end gap-1.5">
+                                    <!-- Tombol Utama: Detail -->
+                                    <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold transition shadow-2xs">
+                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M0.833252 10C1.94436 5.83333 5.55547 2.5 9.99992 2.5C14.4444 2.5 18.0555 5.83333 19.1666 10C18.0555 14.1667 14.4444 17.5 9.99992 17.5C5.55547 17.5 1.94436 14.1667 0.833252 10ZM14.1666 10C14.1666 12.3012 12.3011 14.1667 9.99992 14.1667C7.69873 14.1667 5.83325 12.3012 5.83325 10C5.83325 7.69882 7.69873 5.83333 9.99992 5.83333C12.3011 5.83333 14.1666 7.69882 14.1666 10Z"/></svg>
+                                        <span>Detail</span>
                                     </button>
 
-                                    <!-- 2. Cetak Kartu CV & Dokumen Santri -->
-                                    <a href="{{ route('admin.psb.print', ['ids' => $reg->id]) }}" target="_blank" class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition" title="Cetak Berkas CV & Nilai">
-                                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M6 2C4.89543 2 4 2.89543 4 4V8H20V4C20 2.89543 19.1046 2 18 2H6ZM18 14V19C18 20.1046 17.1046 21 16 21H8C6.89543 21 6 20.1046 6 19V14H18ZM20 10H4C2.89543 10 2 10.8954 2 12V16C2 17.1046 2.89543 18 4 18H4.5V14C4.5 12.8954 5.39543 12 6.5 12H17.5C18.6046 12 19.5 12.8954 19.5 14V18H20C21.1046 18 22 17.1046 22 16V12C22 10.8954 21.1046 10 20 10Z" fill="currentColor"/>
-                                        </svg>
-                                    </a>
-
-                                    <!-- 3. WhatsApp Notification Button (if available) -->
-                                    @php
-                                        $targetPhone = $reg->ayah_telepon ?: $reg->no_whatsapp;
-                                        $cleanTargetPhone = preg_replace('/[^0-9]/', '', $targetPhone);
-                                        if(str_starts_with($cleanTargetPhone, '0')) {
-                                            $cleanTargetPhone = '62' . substr($cleanTargetPhone, 1);
-                                        }
-                                        $checkStatusUrl = route('psb.checkStatus', ['no_reg' => $reg->no_registrasi]);
-                                        $waMsg = "Assalamu'alaikum Wr. Wb.\n\nBpk/Ibu Wali dari ananda *{$reg->nama_lengkap}*,\n\nKami dari Panitia PSB Pondok Pesantren Hidayatullah Tuksongo menginformasikan status verifikasi pendaftaran:\n- No. Registrasi: *{$reg->no_registrasi}*\n- Jenjang: *{$reg->jenjang}*\n- Status Seleksi: *{$reg->status}*\n- Status Pas Foto: *{$reg->foto_status}*" . ($reg->foto_catatan ? " ({$reg->foto_catatan})" : "") . "\n\nAnda dapat memantau progres atau memperbarui berkas mandiri melalui tautan berikut:\n{$checkStatusUrl}\n\nJazakumullah khairan katsiran.\nPanitia PSB Ponpes Hidayatullah Tuksongo";
-                                    @endphp
-                                    @if($cleanTargetPhone)
-                                    <a href="https://wa.me/{{ $cleanTargetPhone }}?text={{ urlencode($waMsg) }}" target="_blank" class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Hubungi Wali via WA">
-                                        <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.04 20.16C10.56 20.16 9.11 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.8 7.37 7.5 3.67 12.04 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.16 12.04 20.16ZM16.56 14.41C16.31 14.29 15.1 13.69 14.88 13.61C14.65 13.53 14.49 13.49 14.32 13.74C14.16 13.99 13.69 14.54 13.55 14.71C13.4 14.87 13.26 14.89 13.01 14.77C12.76 14.64 11.97 14.38 11.03 13.55C10.3 12.9 9.8 12.1 9.68 11.89C9.55 11.69 9.67 11.58 9.79 11.46C9.9 11.35 10.04 11.17 10.16 11.03C10.28 10.89 10.32 10.79 10.41 10.63C10.49 10.46 10.45 10.32 10.39 10.2C10.33 10.07 9.84 8.87 9.63 8.38C9.43 7.9 9.23 7.96 9.08 7.95C8.94 7.95 8.77 7.94 8.61 7.94C8.45 7.94 8.18 8 7.96 8.25C7.73 8.49 7.1 9.08 7.1 10.29C7.1 11.5 7.98 12.67 8.11 12.83C8.23 13 9.85 15.49 12.33 16.56C12.92 16.82 13.38 16.97 13.74 17.08C14.33 17.27 14.87 17.24 15.3 17.18C15.77 17.11 16.76 16.58 16.96 16.01C17.17 15.44 17.17 14.95 17.11 14.85C17.04 14.75 16.88 14.54 16.56 14.41Z" fill="currentColor"/>
-                                        </svg>
-                                    </a>
-                                    @endif
-
-                                    <!-- 4. TailAdmin Kebab Dropdown Menu -->
+                                    <!-- Kebab Dropdown Menu -->
                                     <div class="relative inline-block text-left" x-data="{ rowOpen: false }" @click.outside="rowOpen = false">
-                                        <button @click="rowOpen = !rowOpen" type="button" class="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition" title="Menu Opsi Lainnya">
-                                            <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 6C10.8284 6 11.5 5.32843 11.5 4.5C11.5 3.67157 10.8284 3 10 3C9.17157 3 8.5 3.67157 8.5 4.5C8.5 5.32843 9.17157 6 10 6Z" fill="currentColor"/>
-                                                <path d="M10 11.5C10.8284 11.5 11.5 10.8284 11.5 10C11.5 9.17157 10.8284 8.5 10 8.5C9.17157 8.5 8.5 9.17157 8.5 10C8.5 10.8284 9.17157 11.5 10 11.5Z" fill="currentColor"/>
-                                                <path d="M10 17C10.8284 17 11.5 16.3284 11.5 15.5C11.5 14.6716 10.8284 14 10 14C9.17157 14 8.5 14.6716 8.5 15.5C8.5 16.3284 9.17157 17 10 17Z" fill="currentColor"/>
-                                            </svg>
+                                        <button @click="rowOpen = !rowOpen" type="button" class="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition border border-gray-200" title="Menu Opsi Lainnya">
+                                            <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 6C10.8284 6 11.5 5.32843 11.5 4.5C11.5 3.67157 10.8284 3 10 3C9.17157 3 8.5 3.67157 8.5 4.5C8.5 5.32843 9.17157 6 10 6Z"/><path d="M10 11.5C10.8284 11.5 11.5 10.8284 11.5 10C11.5 9.17157 10.8284 8.5 10 8.5C9.17157 8.5 8.5 9.17157 8.5 10C8.5 10.8284 9.17157 11.5 10 11.5Z"/><path d="M10 17C10.8284 17 11.5 16.3284 11.5 15.5C11.5 14.6716 10.8284 14 10 14C9.17157 14 8.5 14.6716 8.5 15.5C8.5 16.3284 9.17157 17 10 17Z"/></svg>
                                         </button>
 
-                                        <div x-show="rowOpen" x-transition class="absolute right-0 mt-1 w-48 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg z-30 text-left" style="display: none;">
+                                        <div x-show="rowOpen" x-transition class="absolute right-0 mt-1 w-52 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg z-30 text-left" style="display: none;">
                                             @if($reg->status === 'Diterima')
                                             <form action="{{ route('admin.siswa.importPsb', $reg->id) }}" method="POST" onsubmit="return confirm('Daftarkan ananda {{ $reg->nama_lengkap }} sebagai Siswa/Santri Aktif?')">
                                                 @csrf
-                                                <button type="submit" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition">
-                                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" fill="currentColor"/></svg>
+                                                <button type="submit" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition mb-1">
+                                                    <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" fill="currentColor"/></svg>
                                                     <span>Jadikan Siswa Aktif</span>
                                                 </button>
                                             </form>
                                             @endif
 
-                                            <a href="{{ route('psb.success', $reg->id) }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                                <svg class="w-4 h-4 text-gray-500 fill-current" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
-                                                <span>Bukti Registrasi</span>
+                                            <a href="{{ route('admin.psb.print', ['ids' => $reg->id]) }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                                                <svg class="w-4 h-4 text-gray-500 fill-current" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M6 2C4.89543 2 4 2.89543 4 4V8H20V4C20 2.89543 19.1046 2 18 2H6ZM18 14V19C18 20.1046 17.1046 21 16 21H8C6.89543 21 6 20.1046 6 19V14H18ZM20 10H4C2.89543 10 2 10.8954 2 12V16C2 17.1046 2.89543 18 4 18H4.5V14C4.5 12.8954 5.39543 12 6.5 12H17.5C18.6046 12 19.5 12.8954 19.5 14V18H20C21.1046 18 22 17.1046 22 16V12C22 10.8954 21.1046 10 20 10Z" fill="currentColor"/></svg>
+                                                <span>Cetak Berkas CV & Nilai</span>
                                             </a>
 
                                             <a href="{{ route('psb.printCard', ['id' => $reg->id, 'mode' => 'ujian']) }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                                                <svg class="w-4 h-4 text-emerald-600 fill-current" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
-                                                <span>Lembar Nilai CBT</span>
+                                                <svg class="w-4 h-4 text-gray-500 fill-current" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                                <span>Cetak Kartu Ujian CBT</span>
                                             </a>
+
+                                            <a href="{{ route('psb.success', $reg->id) }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                                                <svg class="w-4 h-4 text-gray-500 fill-current" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                                                <span>Bukti Registrasi PSB</span>
+                                            </a>
+
+                                            @php
+                                                $cleanWA = preg_replace('/[^0-9]/', '', $reg->ayah_telepon ?: $reg->no_whatsapp);
+                                                if(str_starts_with($cleanWA, '0')) $cleanWA = '62' . substr($cleanWA, 1);
+                                                $waText = "Assalamu'alaikum Wr. Wb. Bpk/Ibu Wali dari ananda *{$reg->nama_lengkap}*, Panitia PSB Ponpes Hidayatullah mengonfirmasi status pendaftaran: {$reg->status}.";
+                                            @endphp
+                                            @if($cleanWA)
+                                            <a href="https://wa.me/{{ $cleanWA }}?text={{ urlencode($waText) }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition">
+                                                <svg class="w-4 h-4 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2Z"/></svg>
+                                                <span>Hubungi via WhatsApp</span>
+                                            </a>
+                                            @endif
+
+                                            @if($isLunas)
+                                            <a href="{{ route('admin.pembayaran.psb.kwitansi', $reg->id) }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition">
+                                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                                                <span>Kwitansi 200rb</span>
+                                            </a>
+                                            @endif
 
                                             <div class="my-1 border-t border-gray-100"></div>
 
@@ -490,7 +509,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-12 text-center text-gray-400">
+                            <td colspan="8" class="px-5 py-12 text-center text-gray-400">
                                 <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                                     <svg class="w-6 h-6 fill-current" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path fill-rule="evenodd" clip-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zm-1-9a1 1 0 012 0v3a1 1 0 11-2 0V7zm1 6a1 1 0 100-2 1 1 0 000 2z" fill="currentColor"/>
@@ -513,6 +532,32 @@
         @endif
     </div>
 
+    <!-- Floating Bulk Action Bar untuk Verifikasi Masal -->
+    <div id="psbBulkActionBar" class="fixed bottom-6 inset-x-0 mx-auto max-w-lg bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl p-3 sm:p-4 flex items-center justify-between gap-3 z-50 transform transition-all duration-300 translate-y-28 opacity-0 pointer-events-none border border-slate-700">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-xs" id="psbSelectedCount">0</span>
+            <div>
+                <span class="text-xs font-bold text-white block">Calon Santri Dipilih</span>
+                <span class="text-[11px] text-slate-400 block">Siap diverifikasi masal Rp 200.000</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <form id="formBulkVerifySelected" action="{{ route('admin.psb.bulkVerify') }}" method="POST" onsubmit="return confirm('Verifikasi pembayaran pendaftaran (Rp 200.000 Lunas) untuk SELURUH calon santri yang Anda pilih?')">
+                @csrf
+                <input type="hidden" name="mode" value="selected">
+                <input type="hidden" name="metode_pembayaran" value="Transfer Bank">
+                <div id="bulkVerifyHiddenInputs"></div>
+                <button type="submit" class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition inline-flex items-center gap-1.5 shadow-sm cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span>Verifikasi Masal Terpilih</span>
+                </button>
+            </form>
+            <button type="button" onclick="clearPsbSelection()" class="px-2.5 py-2 text-slate-400 hover:text-white text-xs font-medium transition cursor-pointer">
+                Batal
+            </button>
+        </div>
+    </div>
+
 </div>
 
 <!-- COMPREHENSIVE APPLICANT DETAIL & VERIFICATION MODAL -->
@@ -522,7 +567,7 @@
         <!-- Modal Header -->
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <div>
-                <span class="text-[11px] font-mono text-brand-600 font-bold uppercase tracking-wider" id="modalNoReg">PSB-25-0000</span>
+                <span class="text-[11px] font-mono text-brand-600 font-bold uppercase tracking-wider" id="modalNoReg">PSB-26-0000</span>
                 <h3 class="font-bold text-slate-800 text-base" id="modalNama">Detail Calon Santri</h3>
             </div>
             <button onclick="closeApplicantModal()" class="text-slate-400 hover:text-slate-600 p-1">
@@ -563,21 +608,24 @@
                                     <option value="Sesuai">✓ Foto Sesuai Ketentuan</option>
                                     <option value="Perlu Perbaikan">⚠ Perlu Perbaikan (Miring / Bukan Background Merah)</option>
                                 </select>
-                                <input type="text" name="foto_catatan" id="modalInputFotoCatatan" placeholder="Catatan perbaikan (misal: foto miring, belum pakai peci)" class="text-xs rounded-lg border border-slate-200 px-3 py-1.5 flex-1 min-w-[200px] outline-none">
-                                <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition">
-                                    Simpan Status
+                                <input type="text" name="foto_catatan" id="modalInputFotoCatatan" placeholder="Catatan perbaikan (opsional)" class="text-xs border border-slate-200 rounded-lg px-3 py-1.5 flex-1 min-w-[180px] bg-slate-50 outline-none">
+                                <button type="submit" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold transition">
+                                    Simpan
                                 </button>
                             </form>
                         </div>
 
-                        <!-- Hubungi Wali via WhatsApp jika Foto Bermasalah -->
-                        <div class="flex flex-wrap items-center gap-2">
-                            <a id="modalBtnWaFoto" href="#" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs">
-                                <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                                Hubungi Wali Santri via WA (Minta Kirim Ulang Foto)
+                        <!-- Direct WhatsApp Correction Link -->
+                        <div class="flex items-center gap-2">
+                            <a id="modalBtnWaFoto" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold text-xs transition">
+                                <svg class="icon-svg w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                <span>Kirim Catatan Foto via WA</span>
                             </a>
+                            <span class="text-[11px] text-slate-400 italic">Pesan otomatis berisi instruksi foto baju putih & peci latar merah.</span>
+                        </div>
 
-                            <!-- Upload Pengganti Langsung oleh Admin -->
+                        <!-- Upload Pengganti Langsung oleh Admin -->
+                        <div class="flex items-center gap-2">
                             <form id="formAdminUploadFoto" action="" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
                                 @csrf
                                 <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition">
@@ -712,6 +760,62 @@
                 </div>
                 <div id="modalCbtCatatanWrap" class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200 hidden">
                     <strong>Catatan Dewan Penguji:</strong> <span id="modalCbtCatatan">-</span>
+                </div>
+            </div>
+
+            <!-- HASIL VERIFIKASI PEMBAYARAN PENDAFTARAN (RP 200.000) & KASIR -->
+            <div class="p-4 rounded-xl border border-purple-200 bg-purple-50/40 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-900 uppercase tracking-wider block flex items-center gap-2 text-xs">
+                        <svg class="icon-svg w-4 h-4 text-purple-600" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                        Verifikasi Pembayaran Pendaftaran (Rp 200.000) &amp; Kasir
+                    </span>
+                    <span id="modalPaymentStatusBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block font-semibold text-[10px]">NOMINAL PENDAFTARAN</span>
+                        <span class="text-sm font-black text-slate-800" id="modalPaymentNominal">Rp 200.000</span>
+                    </div>
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block font-semibold text-[10px]">STATUS TRANSAKSI</span>
+                        <span class="font-bold text-slate-800" id="modalPaymentStatusText">-</span>
+                    </div>
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block font-semibold text-[10px]">METODE PEMBAYARAN</span>
+                        <span class="font-bold text-slate-800" id="modalPaymentMetode">-</span>
+                    </div>
+                    <div class="p-2.5 bg-white rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block font-semibold text-[10px]">TANGGAL BAYAR</span>
+                        <span class="font-bold text-slate-800" id="modalPaymentTanggal">-</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons in Modal -->
+                <div class="pt-2 flex flex-wrap items-center gap-2">
+                    <form id="modalFormVerifyPayment" action="" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="status" id="modalFormPaymentStatus" value="Lunas">
+                        <input type="hidden" name="nominal_pembayaran" value="200000">
+                        <button type="submit" id="modalBtnVerifyPayment" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Verifikasi Bayar Lunas (Rp 200.000)</span>
+                        </button>
+                    </form>
+
+                    <form id="modalFormCancelPayment" action="" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="status" value="Belum Bayar">
+                        <button type="submit" id="modalBtnCancelPayment" class="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition">
+                            <span>Batalkan Lunas</span>
+                        </button>
+                    </form>
+
+                    <a id="modalBtnKwitansiPsb" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-lg text-xs font-bold transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Cetak Kwitansi Pendaftaran</span>
+                    </a>
                 </div>
             </div>
 
@@ -879,81 +983,95 @@ function showApplicantModal(reg) {
         cbtCatatanWrap.classList.add('hidden');
     }
 
-    // DOKUMEN CARDS (BUKTI TRANSFER, PRESTASI, BANSOS)
+    // POPULATE VERIFIKASI PEMBAYARAN PENDAFTARAN 200RB
+    const payBadge = document.getElementById('modalPaymentStatusBadge');
+    const payStatusText = document.getElementById('modalPaymentStatusText');
+    const payNominal = document.getElementById('modalPaymentNominal');
+    const payMetode = document.getElementById('modalPaymentMetode');
+    const payTanggal = document.getElementById('modalPaymentTanggal');
+    const formVerify = document.getElementById('modalFormVerifyPayment');
+    const formCancel = document.getElementById('modalFormCancelPayment');
+    const btnKwitansi = document.getElementById('modalBtnKwitansiPsb');
+
+    const isPayLunas = (reg.status_pembayaran === 'Lunas');
+    if (isPayLunas) {
+        payBadge.textContent = '✓ Lunas & Masuk Kasir';
+        payBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        payStatusText.textContent = 'LUNAS';
+        payStatusText.className = 'font-bold text-emerald-700';
+        formVerify.classList.add('hidden');
+        formCancel.classList.remove('hidden');
+    } else {
+        payBadge.textContent = reg.status_pembayaran || 'Belum Lunas';
+        payBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300';
+        payStatusText.textContent = reg.status_pembayaran || 'Belum Lunas';
+        payStatusText.className = 'font-bold text-amber-700';
+        formVerify.classList.remove('hidden');
+        formCancel.classList.add('hidden');
+    }
+
+    payNominal.textContent = 'Rp ' + (reg.nominal_pembayaran ? Number(reg.nominal_pembayaran).toLocaleString('id-ID') : '200.000');
+    payMetode.textContent = reg.metode_pembayaran || (reg.bukti_transfer ? 'Transfer Bank' : 'Tunai');
+    payTanggal.textContent = reg.tanggal_bayar ? reg.tanggal_bayar.substring(0, 10) : '—';
+
+    formVerify.action = '/admin/pembayaran/psb/' + reg.id + '/verify';
+    formCancel.action = '/admin/pembayaran/psb/' + reg.id + '/verify';
+    btnKwitansi.href = '/admin/pembayaran/psb/' + reg.id + '/kwitansi';
+
+    // DOKUMEN CARDS (BUKTI TRANSFER, AKTA, KK, KTP, PRESTASI, BANSOS)
     const docContainer = document.getElementById('modalDokumenCards');
     docContainer.innerHTML = '';
 
+    const renderDocCard = (title, fileUrl, colorTheme, emptyText) => {
+        if (!fileUrl) {
+            return `
+                <div class="bg-white p-3 rounded-lg border border-dashed border-slate-200 text-center flex flex-col items-center justify-center min-h-[120px]">
+                    <span class="text-slate-400 text-xs">${emptyText}</span>
+                </div>
+            `;
+        }
+        const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+        const previewContent = isPdf 
+            ? `<div class="w-full h-full flex flex-col items-center justify-center bg-rose-50 text-rose-600 gap-1 p-2">
+                 <svg class="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h4"/></svg>
+                 <span class="text-[11px] font-bold uppercase tracking-wider text-rose-700">Dokumen PDF</span>
+                 <span class="text-[10px] text-rose-500 font-medium">Klik untuk Membuka</span>
+               </div>`
+            : `<img src="${fileUrl}" alt="${title}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 text-xs\\'>Gambar tidak termuat</div>';">`;
+
+        return `
+            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between space-y-2">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-${colorTheme}-700 block mb-1">${title}</span>
+                    <a href="${fileUrl}" target="_blank" class="block aspect-video rounded-md overflow-hidden bg-slate-100 border border-slate-200 relative group">
+                        ${previewContent}
+                        <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-semibold text-xs transition">Buka Dokumen</span>
+                    </a>
+                </div>
+                <a href="${fileUrl}" target="_blank" class="w-full text-center px-2 py-1 bg-${colorTheme}-50 text-${colorTheme}-700 hover:bg-${colorTheme}-100 rounded text-[11px] font-semibold transition">
+                    Lihat ${title}
+                </a>
+            </div>
+        `;
+    };
+
     // 1. Bukti Transfer Rp 200rb
-    if (reg.bukti_transfer) {
-        docContainer.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between space-y-2">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">Bukti Transfer Rp 200rb</span>
-                    <a href="${reg.bukti_transfer}" target="_blank" class="block aspect-video rounded-md overflow-hidden bg-slate-100 border border-slate-200 relative group">
-                        <img src="${reg.bukti_transfer}" alt="Bukti Transfer" class="w-full h-full object-cover">
-                        <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-semibold transition">Buka Dokumen</span>
-                    </a>
-                </div>
-                <a href="${reg.bukti_transfer}" target="_blank" class="w-full text-center px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded text-[11px] font-semibold transition">
-                    Lihat Bukti Transfer
-                </a>
-            </div>
-        `;
-    } else {
-        docContainer.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-dashed border-slate-200 text-center flex flex-col items-center justify-center min-h-[120px]">
-                <span class="text-slate-400 text-xs">Belum ada bukti transfer</span>
-            </div>
-        `;
-    }
+    docContainer.innerHTML += renderDocCard('Bukti Transfer Rp 200rb', reg.bukti_transfer, 'emerald', 'Belum ada bukti transfer');
 
-    // 2. Bukti Prestasi / Tahfidz
-    if (reg.bukti_prestasi_tahfidz) {
-        docContainer.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between space-y-2">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-1">Sertifikat Prestasi / Tahfidz</span>
-                    <a href="${reg.bukti_prestasi_tahfidz}" target="_blank" class="block aspect-video rounded-md overflow-hidden bg-slate-100 border border-slate-200 relative group">
-                        <img src="${reg.bukti_prestasi_tahfidz}" alt="Bukti Prestasi" class="w-full h-full object-cover">
-                        <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-semibold transition">Buka Dokumen</span>
-                    </a>
-                </div>
-                <a href="${reg.bukti_prestasi_tahfidz}" target="_blank" class="w-full text-center px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded text-[11px] font-semibold transition">
-                    Lihat Sertifikat
-                </a>
-            </div>
-        `;
-    } else {
-        docContainer.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-dashed border-slate-200 text-center flex flex-col items-center justify-center min-h-[120px]">
-                <span class="text-slate-400 text-xs">Tidak ada bukti prestasi</span>
-            </div>
-        `;
-    }
+    // 2. Akta Kelahiran
+    docContainer.innerHTML += renderDocCard('Akta Kelahiran', reg.file_akta_kelahiran, 'blue', 'Akta kelahiran belum diunggah');
 
-    // 3. Bukti Bansos
-    if (reg.bukti_bantuan_sosial) {
-        docContainer.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between space-y-2">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 block mb-1">Kartu Bantuan Sosial</span>
-                    <a href="${reg.bukti_bantuan_sosial}" target="_blank" class="block aspect-video rounded-md overflow-hidden bg-slate-100 border border-slate-200 relative group">
-                        <img src="${reg.bukti_bantuan_sosial}" alt="Bukti Bansos" class="w-full h-full object-cover">
-                        <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-semibold transition">Buka Dokumen</span>
-                    </a>
-                </div>
-                <a href="${reg.bukti_bantuan_sosial}" target="_blank" class="w-full text-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-[11px] font-semibold transition">
-                    Lihat Kartu Bansos
-                </a>
-            </div>
-        `;
-    } else {
-        docContainer.innerHTML += `
-            <div class="bg-white p-3 rounded-lg border border-dashed border-slate-200 text-center flex flex-col items-center justify-center min-h-[120px]">
-                <span class="text-slate-400 text-xs">Bukan penerima bansos</span>
-            </div>
-        `;
-    }
+    // 3. Kartu Keluarga (KK)
+    docContainer.innerHTML += renderDocCard('Kartu Keluarga (KK)', reg.file_kk, 'indigo', 'KK belum diunggah');
+
+    // 4. KTP Orang Tua / Wali
+    docContainer.innerHTML += renderDocCard('KTP Orang Tua / Wali', reg.file_ktp_ortu, 'purple', 'KTP orang tua belum diunggah');
+
+    // 5. Bukti Prestasi / Tahfidz
+    docContainer.innerHTML += renderDocCard('Sertifikat Prestasi / Tahfidz', reg.bukti_prestasi_tahfidz, 'amber', 'Tidak ada bukti prestasi');
+
+    // 6. Bukti Bansos
+    docContainer.innerHTML += renderDocCard('Kartu Bantuan Sosial', reg.bukti_bantuan_sosial, 'blue', 'Bukan penerima bansos');
 
     document.getElementById('applicantModal').classList.remove('hidden');
 }
@@ -972,6 +1090,52 @@ function closeModalBulkImportPsb() {
 
 function closeModalAutoSeleksi() {
     document.getElementById('modalAutoSeleksi').classList.add('hidden');
+}
+
+// Bulk Selection & Verification
+function toggleSelectAllPsb(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('.psb-row-checkbox');
+    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+    updatePsbSelection();
+}
+
+function updatePsbSelection() {
+    const checkedBoxes = document.querySelectorAll('.psb-row-checkbox:checked');
+    const count = checkedBoxes.length;
+    const bar = document.getElementById('psbBulkActionBar');
+    const countEl = document.getElementById('psbSelectedCount');
+    const hiddenInputsContainer = document.getElementById('bulkVerifyHiddenInputs');
+
+    if (countEl) countEl.textContent = count;
+    if (hiddenInputsContainer) hiddenInputsContainer.innerHTML = '';
+
+    checkedBoxes.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = cb.value;
+        if (hiddenInputsContainer) hiddenInputsContainer.appendChild(input);
+    });
+
+    if (bar) {
+        if (count > 0) {
+            bar.classList.remove('translate-y-28', 'opacity-0', 'pointer-events-none');
+            bar.classList.add('translate-y-0', 'opacity-100');
+        } else {
+            bar.classList.add('translate-y-28', 'opacity-0', 'pointer-events-none');
+            bar.classList.remove('translate-y-0', 'opacity-100');
+            const master = document.getElementById('selectAllPsb');
+            if (master) master.checked = false;
+        }
+    }
+}
+
+function clearPsbSelection() {
+    const checkboxes = document.querySelectorAll('.psb-row-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const master = document.getElementById('selectAllPsb');
+    if (master) master.checked = false;
+    updatePsbSelection();
 }
 </script>
 
@@ -993,18 +1157,18 @@ function closeModalAutoSeleksi() {
                     <label class="block font-semibold text-gray-700 uppercase tracking-wider mb-2">1. Kriteria Penerimaan (DITERIMA)</label>
                     <div class="space-y-2">
                         <label class="flex items-start gap-2.5 p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 cursor-pointer hover:bg-emerald-50 transition">
-                            <input type="radio" name="kriteria" value="nilai_cbt" checked class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                            <input type="radio" name="kriteria" value="nilai_dan_bayar" checked class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
                             <div>
-                                <span class="font-bold text-emerald-950 block">Kelulusan Nilai CBT Saja (Direkomendasikan)</span>
-                                <span class="text-gray-600 block mt-0.5">Semua santri yang nilai ujiannya memenuhi KKM (>= 70) atau dinyatakan Lulus oleh dewan penguji akan otomatis <strong>Diterima</strong>.</span>
+                                <span class="font-bold text-emerald-950 block">Nilai CBT Lulus &amp; Biaya 200rb Lunas (Direkomendasikan)</span>
+                                <span class="text-gray-600 block mt-0.5">Sesuai alur resmi pesantren: Menerima calon santri yang <strong>lulus ujian CBT (&gt;= KKM 70)</strong> dan pembayaran pendaftaran Rp 200.000 sudah <strong>terverifikasi lunas</strong>.</span>
                             </div>
                         </label>
 
                         <label class="flex items-start gap-2.5 p-3 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition">
-                            <input type="radio" name="kriteria" value="nilai_dan_bayar" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                            <input type="radio" name="kriteria" value="nilai_cbt" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
                             <div>
-                                <span class="font-bold text-gray-900 block">Nilai CBT Lulus &amp; Bukti Pembayaran Terunggah</span>
-                                <span class="text-gray-500 block mt-0.5">Hanya menerima calon santri yang lulus CBT DAN sudah mengunggah bukti transfer biaya pendaftaran.</span>
+                                <span class="font-bold text-gray-900 block">Kelulusan Nilai CBT Saja (Tanpa Cek Status Bayar)</span>
+                                <span class="text-gray-500 block mt-0.5">Menerima semua santri yang lulus KKM ujian CBT (&gt;= 70), cocok jika ada kebijakan khusus santri diizinkan ujian duluan.</span>
                             </div>
                         </label>
 

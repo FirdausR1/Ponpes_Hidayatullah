@@ -441,6 +441,10 @@
                     </tbody>
                 </table>
             </div>
+            <div style="background: #f0fdf4; border-top: 1px solid #bbf7d0; padding: 14px 20px; font-size: 12.5px; color: #14532d; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="shrink: 0; color: #15803d;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <span><strong>Catatan Daftar Ulang:</strong> Biaya pendaftaran Rp 200.000 dibayarkan di awal saat pendaftaran online. Santri yang dinyatakan diterima cukup melunasi <strong>sisa tagihan daftar ulang</strong>: <strong>MTs Mukim: Rp 3.220.000</strong> &bull; <strong>MTs Laju: Rp 2.840.000</strong> &bull; <strong>MA Mukim: Rp 3.440.000</strong> &bull; <strong>MA Laju: Rp 3.160.000</strong>.</span>
+            </div>
         </div>
 
         <!-- 2. Iuran Bulanan -->
