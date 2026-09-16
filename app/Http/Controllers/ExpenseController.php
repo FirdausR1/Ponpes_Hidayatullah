@@ -1777,40 +1777,82 @@ class ExpenseController extends Controller
                 ->orderBy('id')
                 ->get();
 
-            // Gabungkan seluruh transaksi penerimaan
-            $penerimaan = [];
-            foreach ($dbPayments as $sp) {
-                $metode = (stripos($sp->metode_pembayaran ?? '', 'Transfer') !== false || stripos($sp->metode_pembayaran ?? '', 'Bank') !== false) ? 'Transfer' : 'Tunai';
-                $keteranganPos = $sp->items->pluck('pos_biaya')->filter()->unique()->implode(', ');
-                $keterangan = 'Santri: ' . ($sp->student->nama_lengkap ?? 'Tanpa Nama') . ($keteranganPos ? " ({$keteranganPos})" : '');
+            // Gabungkan & rekapitulasi penerimaan kas berdasarkan Tanggal, Jenis Uang (Sot / Psb), dan Metode (Tunai / Transfer)
+            $groupedPenerimaan = [];
 
-                $penerimaan[] = [
-                    'raw_date' => $sp->tanggal_bayar,
-                    'tanggal' => date('d/m/Y', strtotime($sp->tanggal_bayar)),
-                    'keterangan' => $keterangan,
-                    'metode' => $metode,
-                    'jumlah' => (float) $sp->nominal,
+            // A. Rekapitulasi Pembayaran Santri (Sot)
+            foreach ($dbPayments as $sp) {
+                $rawDate = date('Y-m-d', strtotime($sp->tanggal_bayar));
+                $displayDate = date('d/m/Y', strtotime($sp->tanggal_bayar));
+                $metode = (stripos($sp->metode_pembayaran ?? '', 'Transfer') !== false || stripos($sp->metode_pembayaran ?? '', 'Bank') !== false) ? 'Transfer' : 'Tunai';
+
+                $posList = $sp->items->pluck('pos_biaya')->filter()->map(fn($v) => strtoupper(trim($v)))->toArray();
+                $keterangan = 'Sot';
+                if (in_array('INFAQ', $posList) || in_array('WAKAF', $posList)) {
+                    $keterangan = 'Infaq';
+                }
+
+                $key = "{$rawDate}_{$keterangan}_{$metode}";
+
+                if (!isset($groupedPenerimaan[$key])) {
+                    $groupedPenerimaan[$key] = [
+                        'raw_date'   => $rawDate,
+                        'tanggal'    => $displayDate,
+                        'keterangan' => $keterangan,
+                        'metode'     => $metode,
+                        'jumlah'     => 0,
+                        'count'      => 0,
+                        'details'    => [],
+                    ];
+                }
+
+                $groupedPenerimaan[$key]['jumlah'] += (float) $sp->nominal;
+                $groupedPenerimaan[$key]['count'] += 1;
+                $groupedPenerimaan[$key]['details'][] = [
+                    'nama' => $sp->student->nama_lengkap ?? 'Tanpa Nama',
+                    'nominal' => (float) $sp->nominal,
                 ];
             }
 
+            // B. Rekapitulasi Pendaftaran Santri Baru (Psb)
             foreach ($dbPsb as $psb) {
+                $rawDate = date('Y-m-d', strtotime($psb->tanggal_bayar ?: "{$tahunStr}-{$bulanStr}-01"));
+                $displayDate = date('d/m/Y', strtotime($rawDate));
                 $metode = (stripos($psb->metode_pembayaran ?? '', 'tunai') !== false) ? 'Tunai' : 'Transfer';
                 $nom = (float) ($psb->nominal_pembayaran ?: 3225000);
-                $keterangan = 'PSB Santri Baru: ' . $psb->nama_lengkap . ' (' . ($psb->no_registrasi ?? 'PSB') . ')';
+                $keterangan = 'Psb';
 
-                $penerimaan[] = [
-                    'raw_date' => $psb->tanggal_bayar ?: "{$tahunStr}-{$bulanStr}-01",
-                    'tanggal' => date('d/m/Y', strtotime($psb->tanggal_bayar ?: "{$tahunStr}-{$bulanStr}-01")),
-                    'keterangan' => $keterangan,
-                    'metode' => $metode,
-                    'jumlah' => $nom,
+                $key = "{$rawDate}_{$keterangan}_{$metode}";
+
+                if (!isset($groupedPenerimaan[$key])) {
+                    $groupedPenerimaan[$key] = [
+                        'raw_date'   => $rawDate,
+                        'tanggal'    => $displayDate,
+                        'keterangan' => $keterangan,
+                        'metode'     => $metode,
+                        'jumlah'     => 0,
+                        'count'      => 0,
+                        'details'    => [],
+                    ];
+                }
+
+                $groupedPenerimaan[$key]['jumlah'] += $nom;
+                $groupedPenerimaan[$key]['count'] += 1;
+                $groupedPenerimaan[$key]['details'][] = [
+                    'nama' => $psb->nama_lengkap,
+                    'nominal' => $nom,
                 ];
             }
 
-            // Urutkan penerimaan berdasarkan tanggal kronologis
-            usort($penerimaan, function ($a, $b) {
-                return strcmp($a['raw_date'], $b['raw_date']);
+            // Urutkan penerimaan kronologis tanggal, lalu keterangan, lalu metode (Tunai duluan)
+            uasort($groupedPenerimaan, function ($a, $b) {
+                $cmpDate = strcmp($a['raw_date'], $b['raw_date']);
+                if ($cmpDate !== 0) return $cmpDate;
+                if ($a['keterangan'] !== $b['keterangan']) return strcmp($a['keterangan'], $b['keterangan']);
+                return ($a['metode'] === 'Tunai') ? -1 : 1;
             });
+
+            $penerimaan = array_values($groupedPenerimaan);
 
             // 3. Kas Keluar Beban Operasional Pesantren
             $dbExpenses = OperationalExpense::whereYear('tanggal_keluar', $tahunStr)

@@ -206,7 +206,14 @@
                     <tr class="hover:bg-gray-50/60 transition">
                         <td class="px-4 py-2.5 text-xs text-center text-gray-400">{{ $idx + 1 }}</td>
                         <td class="px-4 py-2.5 text-xs text-center text-gray-600">{{ $p['tanggal'] }}</td>
-                        <td class="px-4 py-2.5 text-xs font-medium text-gray-800">{{ $p['keterangan'] }}</td>
+                        <td class="px-4 py-2.5 text-xs font-medium text-gray-800">
+                            <span class="font-semibold">{{ $p['keterangan'] }}</span>
+                            @if(($p['count'] ?? 1) > 1)
+                                <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-normal text-gray-400 bg-gray-100 border border-gray-200" title="{{ $p['count'] }} transaksi digabung pada tanggal ini">
+                                    {{ $p['count'] }} transaksi
+                                </span>
+                            @endif
+                        </td>
                         <td class="px-4 py-2.5 text-xs text-center">
                             @if($p['metode'] === 'Tunai')
                                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Tunai</span>
