@@ -12,7 +12,7 @@
             <p class="text-sm text-gray-500 mt-1">Laporan pertanggungjawaban keuangan berkala Pondok Pesantren Hidayatullah untuk Pimpinan Pondok Pesantren.</p>
         </div>
         <div class="flex items-center gap-2.5 flex-wrap">
-            <a href="{{ route('admin.laporanYayasan.cetak', ['bulan' => $bulanStr, 'tahun' => $tahunStr]) }}" target="_blank" class="ta-btn-primary">
+            <a href="{{ route('admin.laporanYayasan.cetak', array_merge(request()->all(), ['bulan' => $bulanStr, 'tahun' => $tahunStr])) }}" target="_blank" class="ta-btn-primary">
                 <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -64,11 +64,11 @@
 
             <div class="flex items-center gap-2 text-xs">
                 <span class="text-gray-400">Pilihan Cepat:</span>
-                <a href="{{ route('admin.laporanYayasan.index', ['bulan' => '03', 'tahun' => '2026']) }}" class="px-2.5 py-1.5 rounded-md transition {{ $bulanStr === '03' && $tahunStr === '2026' ? 'bg-brand-50 text-brand-600 font-semibold border border-brand-200' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
-                    Maret 2026 (Acuan)
+                <a href="{{ route('admin.laporanYayasan.index', ['bulan' => date('m'), 'tahun' => date('Y')]) }}" class="px-2.5 py-1.5 rounded-md transition {{ empty(request('benchmark')) && $bulanStr === date('m') && $tahunStr === date('Y') ? 'bg-brand-50 text-brand-600 font-semibold border border-brand-200' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
+                    Bulan Berjalan ({{ $namaBulanList[date('m')] ?? '' }} {{ date('Y') }})
                 </a>
-                <a href="{{ route('admin.laporanYayasan.index', ['bulan' => date('m'), 'tahun' => date('Y')]) }}" class="px-2.5 py-1.5 rounded-md transition {{ $bulanStr === date('m') && $tahunStr === date('Y') ? 'bg-brand-50 text-brand-600 font-semibold border border-brand-200' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
-                    Bulan Berjalan
+                <a href="{{ route('admin.laporanYayasan.index', ['bulan' => '03', 'tahun' => '2026', 'benchmark' => '1']) }}" class="px-2.5 py-1.5 rounded-md transition {{ request('benchmark') == '1' && $bulanStr === '03' && $tahunStr === '2026' ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-200' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
+                    Contoh Arsip Cetak (Maret 2026)
                 </a>
             </div>
         </form>
@@ -466,31 +466,10 @@
             <div class="lg:col-span-5 rounded-xl border border-gray-200 bg-gray-50/40 p-4 text-center">
                 <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Jumlah Santri yang Sudah Lunas</h4>
                 <div class="flex justify-center my-2">
-                    <svg viewBox="0 0 200 135" width="230" height="155">
-                        <defs>
-                            <filter id="shadow3dAdmin" x="-20%" y="-20%" width="140%" height="140%">
-                                <feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity="0.2"/>
-                            </filter>
-                        </defs>
-                        <g transform="translate(100, 72) scale(1, 0.58)">
-                            <path d="M 0 0 L 70 0 A 70 70 0 1 1 -70 0 Z" fill="#475569" opacity="0.25" transform="translate(0, 12)"/>
-                            <path d="M 0 0 L 70 0 A 70 70 0 0 1 12 69 Z" fill="#2563eb" filter="url(#shadow3dAdmin)"/>
-                            <path d="M 0 0 L 12 69 A 70 70 0 0 1 -63 31 Z" fill="#ea580c"/>
-                            <path d="M 0 0 L -63 31 A 70 70 0 0 1 -67 -20 Z" fill="#64748b"/>
-                            <path d="M 0 0 L -67 -20 A 70 70 0 0 1 -28 -64 Z" fill="#eab308"/>
-                            <path d="M 0 0 L -28 -64 A 70 70 0 0 1 17 -68 Z" fill="#38bdf8"/>
-                            <path d="M 0 0 L 17 -68 A 70 70 0 0 1 70 0 Z" fill="#16a34a"/>
-                        </g>
-                        <text x="145" y="48" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="middle">1 (28%)</text>
-                        <text x="135" y="112" font-size="10" font-weight="700" fill="#c2410c" text-anchor="middle">2 (22%)</text>
-                        <text x="40" y="118" font-size="10" font-weight="700" fill="#475569" text-anchor="middle">3 (20%)</text>
-                        <text x="18" y="66" font-size="10" font-weight="700" fill="#a16207" text-anchor="middle">4 (14%)</text>
-                        <text x="50" y="22" font-size="10" font-weight="700" fill="#0284c7" text-anchor="middle">5 (9%)</text>
-                        <text x="96" y="14" font-size="10" font-weight="700" fill="#15803d" text-anchor="middle">6 (7%)</text>
-                    </svg>
+                    {!! $pieChartSvg !!}
                 </div>
                 <p class="text-[11px] text-gray-400 mt-1">
-                    Distribusi rasio kelunasan santri dari total {{ $totalSantriLunas }} santri yang telah lunas.
+                    Distribusi rasio kelunasan santri dari total {{ $totalSantriLunas }} santri yang telah lunas pada periode ini.
                 </p>
             </div>
         </div>

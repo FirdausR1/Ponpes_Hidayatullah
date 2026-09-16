@@ -339,7 +339,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-xs font-bold text-gray-800 truncate group-hover:text-brand-600 transition">{{ auth()->user()->name ?? 'Administrator' }}</p>
-                        <p class="text-[11px] text-gray-500 truncate">{{ auth()->user()->jabatan ?: (auth()->user()->email ?? '') }}</p>
+                        <p class="text-[11px] text-gray-500 truncate">{{ auth()->user()?->jabatan ?: (auth()->user()?->email ?? '') }}</p>
                     </div>
                 </a>
                 <a href="{{ route('admin.profile') }}" class="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition" title="Profil & TTD Digital">

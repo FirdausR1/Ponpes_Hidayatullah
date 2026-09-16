@@ -8,6 +8,7 @@ use App\Models\CashTransfer;
 use App\Models\Student;
 use App\Models\StudentPayment;
 use App\Models\StudentPaymentItem;
+use App\Models\StudentBill;
 use App\Models\PsbRegistration;
 use App\Models\Classroom;
 use App\Models\Setting;
@@ -1554,10 +1555,10 @@ class ExpenseController extends Controller
      */
     public function laporanYayasanIndex(Request $request)
     {
-        $bulan = $request->input('bulan', '03');
-        $tahun = $request->input('tahun', '2026');
+        $bulan = $request->input('bulan', date('m'));
+        $tahun = $request->input('tahun', date('Y'));
 
-        $data = $this->getLaporanYayasanData($bulan, $tahun);
+        $data = $this->getLaporanYayasanData($bulan, $tahun, $request);
 
         return view('admin.laporan_yayasan.index', $data);
     }
@@ -1567,10 +1568,10 @@ class ExpenseController extends Controller
      */
     public function laporanYayasanCetak(Request $request)
     {
-        $bulan = $request->input('bulan', '03');
-        $tahun = $request->input('tahun', '2026');
+        $bulan = $request->input('bulan', date('m'));
+        $tahun = $request->input('tahun', date('Y'));
 
-        $data = $this->getLaporanYayasanData($bulan, $tahun);
+        $data = $this->getLaporanYayasanData($bulan, $tahun, $request);
 
         return view('admin.laporan_yayasan.cetak', $data);
     }
@@ -1584,15 +1585,15 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Helper Penyusun Data Laporan Keuangan Yayasan Per Bulan & Tahun
+     * Helper Penyusun Data Laporan Keuangan Yayasan Per Bulan & Tahun (100% Terkoneksi Data Riil)
      */
-    private function getLaporanYayasanData($bulan, $tahun)
+    private function getLaporanYayasanData($bulan, $tahun, $request = null)
     {
         $bulanStr = str_pad((int)$bulan, 2, '0', STR_PAD_LEFT);
         if ((int)$bulanStr < 1 || (int)$bulanStr > 12) {
-            $bulanStr = '03';
+            $bulanStr = date('m');
         }
-        $tahunStr = (string) $tahun ?: '2026';
+        $tahunStr = (string) $tahun ?: date('Y');
 
         $namaBulanList = [
             '01' => 'Januari',
@@ -1609,7 +1610,7 @@ class ExpenseController extends Controller
             '12' => 'Desember',
         ];
 
-        $labelBulan = $namaBulanList[$bulanStr] ?? 'Maret';
+        $labelBulan = $namaBulanList[$bulanStr] ?? 'Bulan Berjalan';
         $daysInMonth = (int) date('t', strtotime("{$tahunStr}-{$bulanStr}-01"));
         $tglAkhir = $daysInMonth;
 
@@ -1621,8 +1622,10 @@ class ExpenseController extends Controller
             'pimpinan_jabatan'=> 'Pimpinan Pondok Pesantren Hidayatullah',
         ];
 
-        // Jika Periode yang dipilih adalah MARET 2026 (Benchmark Pembukuan Valid dari User)
-        if ($bulanStr === '03' && (int)$tahunStr === 2026) {
+        $isBenchmarkMode = $request && ($request->input('benchmark') == '1' || $request->input('mode') === 'benchmark');
+
+        if ($isBenchmarkMode && $bulanStr === '03' && (int)$tahunStr === 2026) {
+            // Mode Acuan Cetak Arsip Benchmark Maret 2026 (Opsional)
             $penerimaan = [
                 ['tanggal' => '01/03/2026', 'keterangan' => 'Sot', 'metode' => 'Tunai', 'jumlah' => 1480000],
                 ['tanggal' => '01/03/2026', 'keterangan' => 'Sot', 'metode' => 'Transfer', 'jumlah' => 110000],
@@ -1748,73 +1751,118 @@ class ExpenseController extends Controller
                 'uang_masuk'    => 66900000,
                 'sudah_ditarik' => 45531802,
                 'belum_ditarik' => 21368198,
+                'tarik_ke_kas'  => 45531802,
             ];
         } else {
-            // Periode Lain: Tarik Dinamis dari Database
-            $dbPayments = StudentPayment::with(['student'])
+            // =========================================================================
+            // 100% DINAMIS: Tarik Seluruh Transaksi Riil Kas Masuk & Kas Keluar
+            // =========================================================================
+
+            // 1. Kas Masuk Pembayaran Santri Aktif
+            $dbPayments = StudentPayment::with(['student', 'items'])
                 ->whereYear('tanggal_bayar', $tahunStr)
                 ->whereMonth('tanggal_bayar', $bulanStr)
                 ->where(function ($q) {
                     $q->whereNull('status')->orWhere('status', '!=', 'Ditolak');
                 })
                 ->orderBy('tanggal_bayar')
+                ->orderBy('id')
                 ->get();
 
-            $dbExpenses = OperationalExpense::whereYear('tanggal_keluar', $tahunStr)
-                ->whereMonth('tanggal_keluar', $bulanStr)
-                ->orderBy('tanggal_keluar')
+            // 2. Kas Masuk Pendaftaran Santri Baru (PSB)
+            $dbPsb = PsbRegistration::whereYear('tanggal_bayar', $tahunStr)
+                ->whereMonth('tanggal_bayar', $bulanStr)
+                ->where('status_pembayaran', 'Lunas')
+                ->orderBy('tanggal_bayar')
+                ->orderBy('id')
                 ->get();
 
+            // Gabungkan seluruh transaksi penerimaan
             $penerimaan = [];
             foreach ($dbPayments as $sp) {
-                $metode = (stripos($sp->metode_pembayaran, 'Transfer') !== false || stripos($sp->metode_pembayaran, 'Bank') !== false) ? 'Transfer' : 'Tunai';
+                $metode = (stripos($sp->metode_pembayaran ?? '', 'Transfer') !== false || stripos($sp->metode_pembayaran ?? '', 'Bank') !== false) ? 'Transfer' : 'Tunai';
+                $keteranganPos = $sp->items->pluck('pos_biaya')->filter()->unique()->implode(', ');
+                $keterangan = 'Santri: ' . ($sp->student->nama_lengkap ?? 'Tanpa Nama') . ($keteranganPos ? " ({$keteranganPos})" : '');
+
                 $penerimaan[] = [
+                    'raw_date' => $sp->tanggal_bayar,
                     'tanggal' => date('d/m/Y', strtotime($sp->tanggal_bayar)),
-                    'keterangan' => 'Sot - ' . ($sp->student->nama_lengkap ?? 'Pembayaran Santri'),
+                    'keterangan' => $keterangan,
                     'metode' => $metode,
                     'jumlah' => (float) $sp->nominal,
                 ];
             }
 
+            foreach ($dbPsb as $psb) {
+                $metode = (stripos($psb->metode_pembayaran ?? '', 'tunai') !== false) ? 'Tunai' : 'Transfer';
+                $nom = (float) ($psb->nominal_pembayaran ?: 3225000);
+                $keterangan = 'PSB Santri Baru: ' . $psb->nama_lengkap . ' (' . ($psb->no_registrasi ?? 'PSB') . ')';
+
+                $penerimaan[] = [
+                    'raw_date' => $psb->tanggal_bayar ?: "{$tahunStr}-{$bulanStr}-01",
+                    'tanggal' => date('d/m/Y', strtotime($psb->tanggal_bayar ?: "{$tahunStr}-{$bulanStr}-01")),
+                    'keterangan' => $keterangan,
+                    'metode' => $metode,
+                    'jumlah' => $nom,
+                ];
+            }
+
+            // Urutkan penerimaan berdasarkan tanggal kronologis
+            usort($penerimaan, function ($a, $b) {
+                return strcmp($a['raw_date'], $b['raw_date']);
+            });
+
+            // 3. Kas Keluar Beban Operasional Pesantren
+            $dbExpenses = OperationalExpense::whereYear('tanggal_keluar', $tahunStr)
+                ->whereMonth('tanggal_keluar', $bulanStr)
+                ->orderBy('tanggal_keluar')
+                ->orderBy('id')
+                ->get();
+
             $pengeluaran = [];
             foreach ($dbExpenses as $exp) {
-                $metode = (stripos($exp->metode_kas, 'Transfer') !== false || stripos($exp->metode_kas, 'Bank') !== false) ? 'Transfer' : 'Tunai';
+                $metode = ($exp->metode_kas === 'Kas Tunai') ? 'Tunai' : 'Transfer';
                 $pengeluaran[] = [
+                    'raw_date' => $exp->tanggal_keluar,
                     'tanggal' => date('d/m/Y', strtotime($exp->tanggal_keluar)),
-                    'keterangan' => $exp->judul_pengeluaran,
+                    'keterangan' => $exp->judul_pengeluaran . ($exp->kategori ? " [{$exp->kategori}]" : ''),
                     'metode' => $metode,
                     'jumlah' => (float) $exp->nominal,
                 ];
             }
 
-            // Hitung Saldo Awal (cut-off setting + akumulasi transaksi sebelum bulan terpilih)
+            // 4. Saldo Awal (Cut-Off Setting + Akumulasi Transaksi Sebelum Bulan Terpilih)
             $saldoAwalTunaiSetting = (float) Setting::get('saldo_awal_kas_tunai', 0);
             $saldoAwalBankSetting = (float) Setting::get('saldo_awal_kas_bank', 0);
             $saldoAwalSetting = $saldoAwalTunaiSetting + $saldoAwalBankSetting;
 
             $startDateMonth = "{$tahunStr}-{$bulanStr}-01";
-            $priorMasuk = (float) StudentPayment::where('tanggal_bayar', '<', $startDateMonth)
+            $priorMasukSantri = (float) StudentPayment::where('tanggal_bayar', '<', $startDateMonth)
                 ->where(function ($q) {
                     $q->whereNull('status')->orWhere('status', '!=', 'Ditolak');
                 })->sum('nominal');
+
+            $priorMasukPsb = (float) PsbRegistration::where('tanggal_bayar', '<', $startDateMonth)
+                ->where('status_pembayaran', 'Lunas')
+                ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(nominal_pembayaran, 3225000)'));
+
             $priorKeluar = (float) OperationalExpense::where('tanggal_keluar', '<', $startDateMonth)->sum('nominal');
 
-            $saldoAwal = $saldoAwalSetting + ($priorMasuk - $priorKeluar);
+            $saldoAwal = $saldoAwalSetting + ($priorMasukSantri + $priorMasukPsb - $priorKeluar);
             $runningSaldo = $saldoAwal;
             $harian = [];
 
+            // 5. Buku Kas Harian (1 s/d Akhir Bulan)
             for ($d = 1; $d <= $daysInMonth; $d++) {
                 $dStr = str_pad($d, 2, '0', STR_PAD_LEFT);
                 $dateStr = "{$tahunStr}-{$bulanStr}-{$dStr}";
-                $displayTgl = "{$d}/{$bulanStr}/{$tahunStr}";
+                $displayTgl = "{$dStr}/{$bulanStr}/{$tahunStr}";
 
-                $dayMasuk = (float) $dbPayments->filter(function($p) use ($dateStr) {
-                    return date('Y-m-d', strtotime($p->tanggal_bayar)) === $dateStr;
-                })->sum('nominal');
+                $dayMasukSantri = (float) $dbPayments->filter(fn($p) => date('Y-m-d', strtotime($p->tanggal_bayar)) === $dateStr)->sum('nominal');
+                $dayMasukPsb = (float) $dbPsb->filter(fn($p) => date('Y-m-d', strtotime($p->tanggal_bayar ?: $dateStr)) === $dateStr)->sum(fn($p) => $p->nominal_pembayaran ?: 3225000);
+                $dayMasuk = $dayMasukSantri + $dayMasukPsb;
 
-                $dayKeluar = (float) $dbExpenses->filter(function($e) use ($dateStr) {
-                    return date('Y-m-d', strtotime($e->tanggal_keluar)) === $dateStr;
-                })->sum('nominal');
+                $dayKeluar = (float) $dbExpenses->filter(fn($e) => date('Y-m-d', strtotime($e->tanggal_keluar)) === $dateStr)->sum('nominal');
 
                 $saldoHarian = $dayMasuk - $dayKeluar;
                 $runningSaldo += $saldoHarian;
@@ -1829,49 +1877,91 @@ class ExpenseController extends Controller
             }
             $saldoAkhir = $runningSaldo;
 
-            // Santri Stats
-            $santriStats = [];
-            $baseTotals = [1 => 176, 2 => 158, 3 => 148, 4 => 128, 5 => 99, 6 => 109];
-            $baseLunas  = [1 => 124, 2 => 99,  3 => 88,  4 => 65,  5 => 42, 6 => 33];
+            // 6. Penagihan Santri Per Kelas (Status Lunas vs Belum Lunas)
+            $classList = Student::whereNotNull('kelas')->where('kelas', '!=', '')->distinct()->pluck('kelas')->toArray();
+            if (empty($classList)) {
+                $classList = Classroom::pluck('nama_kelas')->toArray();
+            }
+            natsort($classList);
 
-            for ($c = 1; $c <= 6; $c++) {
-                $totalInClass = Student::where('kelas', (string)$c)->orWhere('kelas', 'Kelas ' . $c)->count();
-                if ($totalInClass > 0) {
-                    $lunasCount = Student::where(function($q) use ($c) {
-                        $q->where('kelas', (string)$c)->orWhere('kelas', 'Kelas ' . $c);
-                    })->whereHas('payments', function($pq) use ($bulanStr, $tahunStr) {
-                        $pq->whereYear('tanggal_bayar', $tahunStr)->whereMonth('tanggal_bayar', $bulanStr);
-                    })->count();
-                    $tot = $totalInClass;
-                    $lun = $lunasCount;
-                    $belum = max(0, $tot - $lun);
-                    $pct = $tot > 0 ? round(($lun / $tot) * 100) : 0;
-                } else {
-                    $tot = $baseTotals[$c] ?? 100;
-                    $lun = $baseLunas[$c] ?? 50;
-                    $belum = $tot - $lun;
-                    $pct = round(($lun / $tot) * 100);
+            $santriStats = [];
+            foreach ($classList as $kelasName) {
+                $studentsInClass = Student::where('kelas', $kelasName)->get();
+                $totalSantri = $studentsInClass->count();
+                if ($totalSantri === 0) continue;
+
+                $lunasCount = 0;
+                foreach ($studentsInClass as $st) {
+                    // Cek apakah santri memiliki tagihan di bulan/tahun terpilih
+                    $billsInMonth = StudentBill::where('student_id', $st->id)
+                        ->where(function ($q) use ($labelBulan, $bulanStr, $tahunStr) {
+                            $q->where('tahun', $tahunStr)
+                              ->where(function ($qq) use ($labelBulan, $bulanStr) {
+                                  $qq->where('bulan', $labelBulan)
+                                     ->orWhere('bulan', $bulanStr)
+                                     ->orWhere('judul_tagihan', 'like', "%{$labelBulan}%");
+                              });
+                        })->get();
+
+                    if ($billsInMonth->count() > 0) {
+                        $hasUnpaid = $billsInMonth->where('status', '!=', 'Lunas')->where('sisa_tagihan', '>', 0)->count() > 0;
+                        if (!$hasUnpaid) {
+                            $lunasCount++;
+                        }
+                    } else {
+                        // Jika tidak ada tagihan khusus bulan ini, cek apakah seluruh tagihan aktifnya lunas atau pernah membayar bulan ini
+                        $hasActiveArrears = StudentBill::where('student_id', $st->id)
+                            ->where('status', '!=', 'Lunas')
+                            ->where('sisa_tagihan', '>', 0)
+                            ->where('penangguhan_wisuda', false)
+                            ->exists();
+                        $paidThisMonth = StudentPayment::where('student_id', $st->id)
+                            ->whereYear('tanggal_bayar', $tahunStr)
+                            ->whereMonth('tanggal_bayar', $bulanStr)
+                            ->exists();
+
+                        if (!$hasActiveArrears || $paidThisMonth) {
+                            $lunasCount++;
+                        }
+                    }
                 }
 
+                $belumCount = max(0, $totalSantri - $lunasCount);
+                $pct = $totalSantri > 0 ? round(($lunasCount / $totalSantri) * 100) : 0;
+
                 $santriStats[] = [
-                    'kelas' => (string)$c,
-                    'lunas' => $lun,
-                    'belum_lunas' => $belum,
-                    'total' => $tot,
+                    'kelas' => $kelasName,
+                    'lunas' => $lunasCount,
+                    'belum_lunas' => $belumCount,
+                    'total' => $totalSantri,
                     'persen_lunas' => $pct,
                 ];
             }
+
             $totalSantriLunas = array_sum(array_column($santriStats, 'lunas'));
             $totalSantriBelum = array_sum(array_column($santriStats, 'belum_lunas'));
             $grandTotalSantri = array_sum(array_column($santriStats, 'total'));
 
-            // Bank Stats
+            // 7. Rekonsiliasi Rekening Bank
             $totMasukTransfer = array_sum(array_map(fn($p) => $p['metode'] === 'Transfer' ? $p['jumlah'] : 0, $penerimaan));
             $totKeluarTransfer = array_sum(array_map(fn($k) => $k['metode'] === 'Transfer' ? $k['jumlah'] : 0, $pengeluaran));
+
+            // Mutasi penarikan dari 'Transfer Bank' ke 'Kas Tunai'
+            $tarikBankKeTunai = (float) CashTransfer::whereYear('tanggal', $tahunStr)
+                ->whereMonth('tanggal', $bulanStr)
+                ->where('dari_kas', 'Transfer Bank')
+                ->where('ke_kas', 'Kas Tunai')
+                ->sum('nominal');
+
+            $sudahDitarikBank = $tarikBankKeTunai + $totKeluarTransfer;
+            $belumDitarikBank = max(0, $totMasukTransfer - $sudahDitarikBank);
+
             $bankStats = [
-                'uang_masuk'    => $totMasukTransfer ?: 66900000,
-                'sudah_ditarik' => $totKeluarTransfer ?: 45531802,
-                'belum_ditarik' => max(0, ($totMasukTransfer ?: 66900000) - ($totKeluarTransfer ?: 45531802)),
+                'uang_masuk'    => $totMasukTransfer,
+                'sudah_ditarik' => $sudahDitarikBank,
+                'belum_ditarik' => $belumDitarikBank,
+                'tarik_ke_kas'  => $tarikBankKeTunai,
+                'beban_transfer'=> $totKeluarTransfer,
             ];
         }
 
@@ -1893,14 +1983,127 @@ class ExpenseController extends Controller
         }
         $grandTotalPengeluaran = $totPengeluaranTunai + $totPengeluaranTransfer;
 
+        // 8. Generator Diagram Pie Vektor Dinamis
+        $pieChartSvg = $this->generateLaporanPieChartSvg($santriStats, $totalSantriLunas);
+
         return compact(
             'bulan', 'bulanStr', 'tahun', 'tahunStr', 'labelBulan', 'namaBulanList',
             'daysInMonth', 'tglAkhir', 'saldoAwal', 'saldoAkhir',
             'penerimaan', 'totPenerimaanTunai', 'totPenerimaanTransfer', 'grandTotalPenerimaan',
             'pengeluaran', 'totPengeluaranTunai', 'totPengeluaranTransfer', 'grandTotalPengeluaran',
             'harian', 'santriStats', 'totalSantriLunas', 'totalSantriBelum', 'grandTotalSantri',
-            'bankStats', 'pejabat'
+            'bankStats', 'pejabat', 'pieChartSvg', 'isBenchmarkMode'
         );
+    }
+
+    /**
+     * Helper Generator Diagram Pie SVG Dinamis untuk Laporan Santri Lunas
+     */
+    private function generateLaporanPieChartSvg(array $santriStats, int $totalLunas): string
+    {
+        if ($totalLunas <= 0 || empty($santriStats)) {
+            return '<div class="py-6 text-center text-xs text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 7v5l3 3"/>
+                </svg>
+                <p class="font-medium text-gray-500">Belum Ada Santri Lunas</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">Diagram otomatis tersusun saat ada pembayaran santri yang lunas.</p>
+            </div>';
+        }
+
+        $colors = [
+            '#2563eb', // Blue
+            '#ea580c', // Orange
+            '#475569', // Slate
+            '#eab308', // Amber
+            '#0284c7', // Sky
+            '#16a34a', // Green
+            '#9333ea', // Purple
+            '#e11d48', // Rose
+            '#0d9488', // Teal
+        ];
+
+        $cx = 100;
+        $cy = 65;
+        $r = 52;
+        $startAngle = -90;
+        $paths = [];
+        $labels = [];
+        $colorIndex = 0;
+
+        foreach ($santriStats as $item) {
+            if ($item['lunas'] <= 0) continue;
+            $fraction = $item['lunas'] / $totalLunas;
+            $sweep = $fraction * 360;
+            $endAngle = $startAngle + $sweep;
+
+            if ($sweep >= 359.99) {
+                $endAngle = $startAngle + 359.99;
+            }
+
+            $radStart = deg2rad($startAngle);
+            $radEnd = deg2rad($endAngle);
+
+            $x1 = round($cx + $r * cos($radStart), 2);
+            $y1 = round($cy + $r * sin($radStart), 2);
+            $x2 = round($cx + $r * cos($radEnd), 2);
+            $y2 = round($cy + $r * sin($radEnd), 2);
+
+            $largeArc = $sweep > 180 ? 1 : 0;
+            $d = "M {$cx} {$cy} L {$x1} {$y1} A {$r} {$r} 0 {$largeArc} 1 {$x2} {$y2} Z";
+
+            $color = $colors[$colorIndex % count($colors)];
+
+            $paths[] = [
+                'd' => $d,
+                'color' => $color,
+            ];
+
+            // Posisi label di sekitar irisan pie 3D
+            $midAngle = $startAngle + ($sweep / 2);
+            $radMid = deg2rad($midAngle);
+            $labelR = $r + 17;
+            $lx = round($cx + $labelR * cos($radMid), 1);
+            $ly = round($cy + ($labelR * 0.62) * sin($radMid) + 2, 1);
+
+            $labels[] = [
+                'x' => $lx,
+                'y' => $ly,
+                'text' => $item['kelas'] . ' (' . round($fraction * 100) . '%)',
+                'color' => $color,
+            ];
+
+            $startAngle = $endAngle;
+            $colorIndex++;
+        }
+
+        $svg = '<svg viewBox="0 0 220 145" class="w-full max-w-[250px] mx-auto" style="height:auto;">';
+        $svg .= '<defs>';
+        $svg .= '<filter id="pie3dShadowDynamic" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity="0.25"/></filter>';
+        $svg .= '</defs>';
+
+        // 3D Shadow Base
+        $svg .= '<g transform="translate(10, 8) scale(1, 0.60)" opacity="0.25">';
+        foreach ($paths as $p) {
+            $svg .= '<path d="' . $p['d'] . '" fill="#334155" transform="translate(0, 10)"/>';
+        }
+        $svg .= '</g>';
+
+        // 3D Slices
+        $svg .= '<g transform="translate(10, 0) scale(1, 0.60)" filter="url(#pie3dShadowDynamic)">';
+        foreach ($paths as $p) {
+            $svg .= '<path d="' . $p['d'] . '" fill="' . $p['color'] . '" stroke="#ffffff" stroke-width="1.2"/>';
+        }
+        $svg .= '</g>';
+
+        // Labels
+        foreach ($labels as $lbl) {
+            $svg .= '<text x="' . ($lbl['x'] + 10) . '" y="' . $lbl['y'] . '" font-size="9" font-weight="700" fill="' . $lbl['color'] . '" text-anchor="middle">' . htmlspecialchars($lbl['text']) . '</text>';
+        }
+
+        $svg .= '</svg>';
+        return $svg;
     }
 }
 

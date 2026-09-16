@@ -179,7 +179,7 @@
             font-weight: 800;
             color: #0f172a;
             margin-top: 4px;
-            font-family: 'EB Garamond', Georgia, serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .exec-card .sub {
@@ -644,7 +644,7 @@
                     <td class="text-center" style="font-weight: 700;">1</td>
                     <td class="text-center">{{ $tglAkhir }} {{ $labelBulan }} {{ $tahunStr }}</td>
                     <td style="font-weight: 700; color: #0d3b1e;">Saldo Akhir Kas Operasional Bulan {{ $labelBulan }} {{ $tahunStr }}</td>
-                    <td class="text-right" style="font-size: 13px; font-weight: 800; color: #15803d; font-family: 'EB Garamond', Georgia, serif;">
+                    <td class="text-right" style="font-size: 13px; font-weight: 800; color: #15803d; font-family: 'Plus Jakarta Sans', sans-serif;">
                         Rp {{ number_format($saldoAkhir, 0, ',', '.') }}
                     </td>
                 </tr>
@@ -654,7 +654,7 @@
         <!-- 5. REKAP PEMBAYARAN SANTRI & DIAGRAM PIE LUNAS -->
         <div class="section-title page-break">
             <h3>5. Rekapitulasi Pembayaran Santri Per Kelas</h3>
-            <span class="badge">{{ $totalSantriLunas }} dari {{ $grandTotalSantri }} Santri Lunas (55%)</span>
+            <span class="badge">{{ $totalSantriLunas }} dari {{ $grandTotalSantri }} Santri Lunas ({{ round(($totalSantriLunas / max(1, $grandTotalSantri)) * 100) }}%)</span>
         </div>
 
         <div class="santri-grid">
@@ -693,46 +693,14 @@
                 </table>
             </div>
 
-            <!-- Visual Diagram Pie 3D (Seperti Gambar Lampiran User) -->
+            <!-- Visual Diagram Pie 3D -->
             <div class="chart-box">
                 <h4>JUMLAH SANTRI YANG SUDAH LUNAS</h4>
                 <div style="display: flex; justify-content: center; margin-bottom: 8px;">
-                    <!-- SVG Pie Chart Berwarna Sesuai Gambar Lampiran -->
-                    <svg viewBox="0 0 200 135" width="230" height="155">
-                        <defs>
-                            <!-- Filter Bayangan 3D -->
-                            <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
-                                <feDropShadow dx="0" dy="7" stdDeviation="4" flood-opacity="0.25"/>
-                            </filter>
-                        </defs>
-                        <!-- Efek Tebal 3D Dasar -->
-                        <g transform="translate(100, 72) scale(1, 0.58)">
-                            <!-- Sisi 3D bawah -->
-                            <path d="M 0 0 L 70 0 A 70 70 0 1 1 -70 0 Z" fill="#475569" opacity="0.3" transform="translate(0, 12)"/>
-                            <!-- Slice 1 (Kelas 1: 28% - Biru #3b82f6) -->
-                            <path d="M 0 0 L 70 0 A 70 70 0 0 1 12 69 Z" fill="#2563eb" filter="url(#shadow3d)"/>
-                            <!-- Slice 2 (Kelas 2: 22% - Oranye #f97316) -->
-                            <path d="M 0 0 L 12 69 A 70 70 0 0 1 -63 31 Z" fill="#ea580c"/>
-                            <!-- Slice 3 (Kelas 3: 20% - Abu-abu #94a3b8) -->
-                            <path d="M 0 0 L -63 31 A 70 70 0 0 1 -67 -20 Z" fill="#64748b"/>
-                            <!-- Slice 4 (Kelas 4: 14% - Kuning #eab308) -->
-                            <path d="M 0 0 L -67 -20 A 70 70 0 0 1 -28 -64 Z" fill="#eab308"/>
-                            <!-- Slice 5 (Kelas 5: 9% - Biru Muda #38bdf8) -->
-                            <path d="M 0 0 L -28 -64 A 70 70 0 0 1 17 -68 Z" fill="#38bdf8"/>
-                            <!-- Slice 6 (Kelas 6: 7% - Hijau #22c55e) -->
-                            <path d="M 0 0 L 17 -68 A 70 70 0 0 1 70 0 Z" fill="#16a34a"/>
-                        </g>
-                        <!-- Label Persentase -->
-                        <text x="145" y="48" font-size="10" font-weight="700" fill="#1d4ed8" text-anchor="middle">1 (28%)</text>
-                        <text x="135" y="112" font-size="10" font-weight="700" fill="#c2410c" text-anchor="middle">2 (22%)</text>
-                        <text x="40" y="118" font-size="10" font-weight="700" fill="#475569" text-anchor="middle">3 (20%)</text>
-                        <text x="18" y="66" font-size="10" font-weight="700" fill="#a16207" text-anchor="middle">4 (14%)</text>
-                        <text x="50" y="22" font-size="10" font-weight="700" fill="#0284c7" text-anchor="middle">5 (9%)</text>
-                        <text x="96" y="14" font-size="10" font-weight="700" fill="#15803d" text-anchor="middle">6 (7%)</text>
-                    </svg>
+                    {!! $pieChartSvg !!}
                 </div>
                 <div style="font-size: 9.5px; color: #64748b; line-height: 1.3;">
-                    Diagram persentase distribusi santri yang telah lunas administrasi per kelas (Basis: 450 santri lunas).
+                    Diagram persentase distribusi santri yang telah lunas administrasi per kelas (Basis: {{ $totalSantriLunas }} santri lunas).
                 </div>
             </div>
         </div>
@@ -752,7 +720,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr style="font-size: 13px; font-weight: 800; font-family: 'EB Garamond', Georgia, serif;">
+                <tr style="font-size: 13px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">
                     <td class="text-right" style="color: #0f172a;">Rp {{ number_format($bankStats['uang_masuk'], 0, ',', '.') }}</td>
                     <td class="text-right" style="color: #475569;">Rp {{ number_format($bankStats['sudah_ditarik'], 0, ',', '.') }}</td>
                     <td class="text-right" style="color: #0369a1; background: #f0f9ff;">Rp {{ number_format($bankStats['belum_ditarik'], 0, ',', '.') }}</td>
