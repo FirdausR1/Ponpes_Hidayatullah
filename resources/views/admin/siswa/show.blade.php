@@ -253,6 +253,10 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 Cetak Biodata
             </button>
+            <a href="{{ route('admin.siswa.mutasi.index', ['q' => $student->nis]) }}" class="ta-btn-sm-outline text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Mutasi Santri
+            </a>
             <a href="{{ route('admin.siswa.edit', $student->id) }}" class="ta-btn-sm-outline">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Edit Data Santri
@@ -709,7 +713,71 @@
                 @endif
             </div>
 
-            <!-- 7. Akun Login & Kredensial -->
+            <!-- 8. Riwayat Mutasi Santri -->
+            <div class="pt-4 border-t border-gray-100 page-break-avoid">
+                <div class="flex items-center justify-between pb-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-orange-700 print-section-title" style="margin:0;padding:0;border:none;">8. Riwayat Mutasi Santri</h4>
+                    <a href="{{ route('admin.siswa.mutasi.index', ['q' => $student->nis]) }}" class="text-xs font-semibold text-orange-600 hover:underline no-print">
+                        Buka di Menu Mutasi &rarr;
+                    </a>
+                </div>
+
+                @if($student->mutations && $student->mutations->count() > 0)
+                <div class="overflow-x-auto rounded-xl border border-gray-200">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase border-b border-gray-200">
+                            <tr>
+                                <th class="py-2.5 px-4">Tanggal</th>
+                                <th class="py-2.5 px-4">Jenis Mutasi</th>
+                                <th class="py-2.5 px-4">Kelas &amp; Asrama Asal</th>
+                                <th class="py-2.5 px-4">Alasan / Tujuan</th>
+                                <th class="py-2.5 px-4">Sekolah Asal / Tujuan</th>
+                                <th class="py-2.5 px-4">Dicatat Oleh</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($student->mutations as $m)
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-gray-700 whitespace-nowrap">{{ optional($m->tanggal_mutasi)->format('d/m/Y') }}</td>
+                                <td class="py-2.5 px-4">
+                                    @if($m->jenis_mutasi === 'Keluar')
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Mutasi Keluar</span>
+                                    @else
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Mutasi Masuk</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 text-gray-700">
+                                    <span>Kelas {{ $m->kelas_dari ?: '-' }}</span>
+                                    @if($m->kamar_dari)
+                                        <span class="block text-[11px] text-indigo-700">🛏 {{ $m->kamar_dari }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 font-medium text-gray-900">
+                                    @if($m->jenis_mutasi === 'Keluar')
+                                        {{ $m->alasan ?: '-' }}
+                                    @else
+                                        Ke Kelas {{ $m->kelas_ke ?: '-' }}
+                                        @if($m->kamar_ke)
+                                            <span class="block text-[11px] text-indigo-700">🛏 {{ $m->kamar_ke }}</span>
+                                        @endif
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-4 text-gray-700">{{ $m->sekolah_asal_tujuan ?: '-' }}</td>
+                                <td class="py-2.5 px-4 text-gray-500 font-medium text-[11px]">{{ $m->user->name ?? $m->dicatat_oleh ?? 'Admin' }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="rounded-xl border border-dashed border-gray-200 p-4 text-center text-gray-400 text-xs">
+                    Belum ada riwayat mutasi keluar/masuk untuk santri ini.
+                    <a href="{{ route('admin.siswa.mutasi.index') }}" class="text-orange-600 font-semibold hover:underline ml-1">Catat Mutasi Santri &rarr;</a>
+                </div>
+                @endif
+            </div>
+
+            <!-- 9. Akun Login & Kredensial -->
             <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs bg-gray-50 p-4 rounded-xl print-login-section">
                 <div>
                     <span class="text-gray-500">Username Login Santri:</span>

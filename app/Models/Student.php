@@ -92,7 +92,15 @@ class Student extends Authenticatable
      */
     public function mutations()
     {
-        return $this->hasMany(StudentMutation::class, 'student_id')->latest();
+        return $this->hasMany(StudentMutation::class, 'student_id')->latest('tanggal_mutasi');
+    }
+
+    /**
+     * Relasi ke catatan mutasi terakhir
+     */
+    public function latestMutation()
+    {
+        return $this->hasOne(StudentMutation::class, 'student_id')->latestOfMany('tanggal_mutasi');
     }
 
     /**

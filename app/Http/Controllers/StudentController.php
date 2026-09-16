@@ -78,7 +78,11 @@ class StudentController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'Mutasi' || $request->status === 'Mutasi Keluar') {
+                $query->whereIn('status', ['Mutasi', 'Mutasi Keluar']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         if ($request->filled('kelas')) {
@@ -2335,27 +2339,68 @@ class StudentController extends Controller
             return response()->json([]);
         }
 
-        $students = Student::where(function ($query) use ($q) {
-                        $query->where('nama_lengkap', 'like', "%{$q}%")
-                              ->orWhere('nis', 'like', "%{$q}%");
-                    })
-                    ->whereIn('status', ['Aktif', 'Tidak Aktif'])
-                    ->select('id', 'nama_lengkap', 'nis', 'kelas', 'jenjang', 'status')
-                    ->limit(10)
-                    ->get();
+        $students = Student::with(['dormitory', 'classroom', 'bills'])
+            ->where(function ($query) use ($q) {
+                $query->where('nama_lengkap', 'like', "%{$q}%")
+                      ->orWhere('nis', 'like', "%{$q}%")
+                      ->orWhere('nisn', 'like', "%{$q}%");
+            })
+            ->select('id', 'nama_lengkap', 'nis', 'kelas', 'jenjang', 'status', 'kamar_asrama', 'dormitory_id', 'nama_sekolah')
+            ->limit(15)
+            ->get();
 
-        return response()->json($students);
+        $results = $students->map(function ($s) {
+            $kamar = $s->kamar_asrama;
+            if (!$kamar && $s->dormitory) {
+                $kamar = $s->dormitory->nama_asrama . ' - ' . $s->dormitory->kamar;
+            }
+
+            return [
+                'id'              => $s->id,
+                'nama_lengkap'    => $s->nama_lengkap,
+                'nis'             => $s->nis,
+                'kelas'           => $s->kelas,
+                'jenjang'         => $s->jenjang,
+                'status'          => $s->status,
+                'kamar_asrama'    => $kamar ?: '-',
+                'nama_sekolah'    => $s->nama_sekolah ?: '-',
+                'total_tunggakan' => $s->total_tunggakan,
+            ];
+        });
+
+        return response()->json($results);
     }
 
     /**
-     * Daftar seluruh riwayat mutasi santri.
+     * Daftar seluruh riwayat mutasi santri dengan relasi lengkap.
      */
     public function mutasiIndex(Request $request)
     {
-        $query = StudentMutation::with('student')->latest('tanggal_mutasi');
+        $query = StudentMutation::with(['student.dormitory', 'user'])->latest('tanggal_mutasi')->latest('id');
 
         if ($request->filled('jenis')) {
             $query->where('jenis_mutasi', $request->jenis);
+        }
+
+        if ($request->filled('jenjang')) {
+            $jen = $request->jenjang;
+            $query->where(function ($q) use ($jen) {
+                $q->where('jenjang', 'like', "%{$jen}%")
+                  ->orWhereHas('student', function ($sq) use ($jen) {
+                      $sq->where('jenjang', 'like', "%{$jen}%");
+                  });
+            });
+        }
+
+        if ($request->filled('kelas')) {
+            $kls = $request->kelas;
+            $query->where(function ($q) use ($kls) {
+                $q->where('kelas_dari', $kls)
+                  ->orWhere('kelas_ke', $kls)
+                  ->orWhereHas('student', function ($sq) use ($kls) {
+                      $sq->where('kelas', $kls);
+                  });
+            });
         }
 
         if ($request->filled('q')) {
@@ -2363,9 +2408,14 @@ class StudentController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->whereHas('student', function ($sq) use ($search) {
                     $sq->where('nama_lengkap', 'like', "%{$search}%")
-                       ->orWhere('nis', 'like', "%{$search}%");
-                })->orWhere('alasan', 'like', "%{$search}%")
-                  ->orWhere('sekolah_asal_tujuan', 'like', "%{$search}%");
+                       ->orWhere('nis', 'like', "%{$search}%")
+                       ->orWhere('nisn', 'like', "%{$search}%");
+                })->orWhere('nama_santri', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%")
+                  ->orWhere('alasan', 'like', "%{$search}%")
+                  ->orWhere('sekolah_asal_tujuan', 'like', "%{$search}%")
+                  ->orWhere('keterangan', 'like', "%{$search}%")
+                  ->orWhere('dicatat_oleh', 'like', "%{$search}%");
             });
         }
 
@@ -2376,29 +2426,42 @@ class StudentController extends Controller
         $mutations = $query->paginate(20)->withQueryString();
 
         $stats = [
-            'total_keluar'    => StudentMutation::where('jenis_mutasi', 'Keluar')->count(),
-            'total_masuk'     => StudentMutation::where('jenis_mutasi', 'Masuk')->count(),
-            'bulan_ini'       => StudentMutation::whereMonth('tanggal_mutasi', now()->month)
-                                                ->whereYear('tanggal_mutasi', now()->year)->count(),
+            'total_keluar' => StudentMutation::where('jenis_mutasi', 'Keluar')->count(),
+            'total_masuk'  => StudentMutation::where('jenis_mutasi', 'Masuk')->count(),
+            'bulan_ini'    => StudentMutation::whereMonth('tanggal_mutasi', now()->month)
+                                             ->whereYear('tanggal_mutasi', now()->year)->count(),
         ];
 
-        $allClasses = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->pluck('nama_kelas')->toArray();
+        // Daftar kelas lengkap dari master Classrooms
+        $allClassrooms = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->get();
+        $allClasses = $allClassrooms->pluck('nama_kelas')->toArray();
         if (empty($allClasses)) {
             $allClasses = Student::select('kelas')->distinct()->whereNotNull('kelas')->pluck('kelas')->toArray();
             sort($allClasses);
         }
 
+        // Daftar kamar asrama
+        $allDormitories = Dormitory::orderBy('gender')->orderBy('nama_asrama')->orderBy('kamar')->get();
+
         $alasanOptions = StudentMutation::alasanOptions();
-        $tahunList     = StudentMutation::selectRaw('YEAR(tanggal_mutasi) as tahun')
-                            ->distinct()->orderByDesc('tahun')->pluck('tahun')->toArray();
+
+        // Ambil tahun dari riwayat mutasi + tahun masuk santri + tahun sekarang/lalu agar dropdown TIDAK KOSONG
+        $thnMutasi = StudentMutation::selectRaw('YEAR(tanggal_mutasi) as tahun')->distinct()->pluck('tahun')->toArray();
+        $thnSantri = Student::select('tahun_masuk')->distinct()->whereNotNull('tahun_masuk')->pluck('tahun_masuk')->map(fn($y) => (int)$y)->toArray();
+        $curYear = (int) date('Y');
+        $defaultYears = [$curYear, $curYear - 1, $curYear - 2, $curYear - 3];
+        $tahunList = array_values(array_unique(array_filter(array_merge($thnMutasi, $thnSantri, $defaultYears))));
+        rsort($tahunList);
+
+        $jenjangList = ['MTs Mukim', 'MTs Laju', 'MA Mukim', 'MA Laju'];
 
         return view('admin.siswa.mutasi', compact(
-            'mutations', 'stats', 'allClasses', 'alasanOptions', 'tahunList'
+            'mutations', 'stats', 'allClasses', 'allClassrooms', 'allDormitories', 'alasanOptions', 'tahunList', 'jenjangList'
         ));
     }
 
     /**
-     * Simpan catatan mutasi baru.
+     * Simpan catatan mutasi baru dan sinkronkan status santri & kamar asrama.
      */
     public function mutasiStore(Request $request)
     {
@@ -2409,58 +2472,104 @@ class StudentController extends Controller
             'alasan'             => 'required_if:jenis_mutasi,Keluar|nullable|string|max:100',
             'sekolah_asal_tujuan'=> 'nullable|string|max:200',
             'kelas_ke'           => 'nullable|string|max:50',
+            'kamar_ke'           => 'nullable|string|max:100',
             'keterangan'         => 'nullable|string|max:1000',
         ]);
 
         $student = Student::findOrFail($request->student_id);
         $statusLama = $student->status;
 
-        // Catat mutasi
+        // Catat mutasi dengan snapshot lengkap data santri
         StudentMutation::create([
             'student_id'          => $student->id,
+            'user_id'             => auth()->id(),
+            'nama_santri'         => $student->nama_lengkap,
+            'nis'                 => $student->nis,
+            'jenjang'             => $student->jenjang,
             'jenis_mutasi'        => $request->jenis_mutasi,
             'tanggal_mutasi'      => $request->tanggal_mutasi,
             'alasan'              => $request->alasan,
             'kelas_dari'          => $student->kelas,
+            'kamar_dari'          => $student->kamar_asrama,
             'sekolah_asal_tujuan' => $request->sekolah_asal_tujuan,
             'kelas_ke'            => $request->kelas_ke,
+            'kamar_ke'            => $request->kamar_ke,
             'status_sebelumnya'   => $statusLama,
             'keterangan'          => $request->keterangan,
             'dicatat_oleh'        => auth()->user()->name ?? 'Admin',
         ]);
 
-        // Update status santri
+        // Update status santri dan sinkronkan asrama/kamar
         if ($request->jenis_mutasi === 'Keluar') {
-            $student->update(['status' => 'Mutasi Keluar']);
-        } elseif ($request->jenis_mutasi === 'Masuk' && $request->filled('kelas_ke')) {
-            // Untuk santri masuk: update kelas jika diisi
+            // Status diset ke Mutasi (sesuai filter data santri)
             $student->update([
-                'kelas'  => $request->kelas_ke,
-                'status' => 'Aktif',
+                'status'        => 'Mutasi',
+                // Kosongkan kamar asrama agar kapasitas kamar di master asrama otomatis bertambah
+                'dormitory_id'  => null,
+                'kamar_asrama'  => null,
             ]);
+        } elseif ($request->jenis_mutasi === 'Masuk') {
+            $updateData = ['status' => 'Aktif'];
+            if ($request->filled('kelas_ke')) {
+                $updateData['kelas'] = $request->kelas_ke;
+            }
+            if ($request->filled('kamar_ke')) {
+                $updateData['kamar_asrama'] = $request->kamar_ke;
+                // Cari dormitory_id jika nama kamar cocok
+                $dorm = Dormitory::where('kamar', $request->kamar_ke)
+                    ->orWhereRaw("CONCAT(nama_asrama, ' - ', kamar) = ?", [$request->kamar_ke])
+                    ->first();
+                if ($dorm) {
+                    $updateData['dormitory_id'] = $dorm->id;
+                }
+            }
+            if ($request->filled('sekolah_asal_tujuan')) {
+                $updateData['nama_sekolah'] = $request->sekolah_asal_tujuan;
+            }
+            $student->update($updateData);
         }
 
         return redirect()->route('admin.siswa.mutasi.index')
-                         ->with('success', "Mutasi {$request->jenis_mutasi} santri {$student->nama_lengkap} berhasil dicatat.");
+                         ->with('success', "Mutasi {$request->jenis_mutasi} santri {$student->nama_lengkap} berhasil dicatat & data santri telah disinkronkan.");
     }
 
     /**
-     * Hapus catatan mutasi dan pulihkan status santri.
+     * Hapus catatan mutasi dan pulihkan status santri serta kamar asrama.
      */
     public function mutasiDestroy($id)
     {
         $mutation = StudentMutation::findOrFail($id);
         $student  = Student::find($mutation->student_id);
 
-        // Restore status santri ke sebelum mutasi jika masih bisa ditemukan
-        if ($student && $mutation->status_sebelumnya) {
-            $student->update(['status' => $mutation->status_sebelumnya]);
+        if ($student) {
+            // Restore status santri ke sebelum mutasi
+            $restoreData = [
+                'status' => $mutation->status_sebelumnya ?: 'Aktif',
+            ];
+
+            // Jika mutasi keluar dibatalkan dan santri belum punya kamar, pulihkan kamar asrama asalnya
+            if ($mutation->jenis_mutasi === 'Keluar' && $mutation->kamar_dari && !$student->kamar_asrama) {
+                $restoreData['kamar_asrama'] = $mutation->kamar_dari;
+                $dorm = Dormitory::where('kamar', $mutation->kamar_dari)
+                    ->orWhereRaw("CONCAT(nama_asrama, ' - ', kamar) = ?", [$mutation->kamar_dari])
+                    ->first();
+                if ($dorm) {
+                    $restoreData['dormitory_id'] = $dorm->id;
+                }
+            }
+
+            // Jika mutasi masuk dibatalkan, pulihkan kelas asalnya
+            if ($mutation->jenis_mutasi === 'Masuk' && $mutation->kelas_dari) {
+                $restoreData['kelas'] = $mutation->kelas_dari;
+            }
+
+            $student->update($restoreData);
         }
 
         $mutation->delete();
 
         return redirect()->route('admin.siswa.mutasi.index')
-                         ->with('success', 'Catatan mutasi berhasil dihapus. Status santri dipulihkan.');
+                         ->with('success', 'Catatan mutasi berhasil dibatalkan/dihapus. Status santri dan kamar asrama dipulihkan.');
     }
 }
 

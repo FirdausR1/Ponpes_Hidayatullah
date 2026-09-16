@@ -331,6 +331,11 @@
                                        class="px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-200 transition">
                                         Edit
                                     </a>
+                                    <a href="{{ route('admin.siswa.mutasi.index', ['q' => $student->nis]) }}"
+                                       class="px-2.5 py-1.5 text-[11px] font-semibold text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg border border-orange-200 transition"
+                                       title="Catat atau Lihat Riwayat Mutasi Santri">
+                                        Mutasi
+                                    </a>
                                     <form action="{{ route('admin.siswa.destroy', $student->id) }}" method="POST"
                                           onsubmit="return confirm('Hapus data santri {{ $student->nama_lengkap }}?');" class="inline">
                                         @csrf
