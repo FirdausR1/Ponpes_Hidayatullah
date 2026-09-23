@@ -553,17 +553,26 @@
                 @forelse($posPemasukanBreakdown as $pos => $nom)
                 @php
                     $pctIn = $totalKasMasuk > 0 ? round(($nom / $totalKasMasuk) * 100, 1) : 0;
+                    $isSot = (stripos($pos, 'SOT') !== false);
+                    $isSyah = (stripos($pos, 'SYAHRIYAH') !== false);
                 @endphp
-                <div>
+                <div class="{{ $isSot ? 'p-2 rounded-xl bg-amber-50/60 border border-amber-200/80 -mx-1' : ($isSyah ? 'p-1.5 rounded-lg bg-emerald-50/40 -mx-1' : '') }}">
                     <div class="flex items-center justify-between text-xs mb-1">
-                        <span class="font-semibold text-gray-800">{{ $pos }}</span>
+                        <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                            {{ $pos }}
+                            @if($isSot)
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white tracking-wide">SOT RAB</span>
+                            @elseif($isSyah)
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">SPP Bulanan</span>
+                            @endif
+                        </span>
                         <div class="text-right">
-                            <span class="font-mono font-bold text-gray-900">Rp {{ number_format($nom, 0, ',', '.') }}</span>
+                            <span class="font-mono font-bold {{ $isSot ? 'text-amber-900' : 'text-gray-900' }}">Rp {{ number_format($nom, 0, ',', '.') }}</span>
                             <span class="text-[10px] text-gray-400 font-mono ml-1">({{ $pctIn }}%)</span>
                         </div>
                     </div>
                     <div class="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
-                        <div class="h-full bg-emerald-500 rounded-full" style="width: {{ $pctIn }}%"></div>
+                        <div class="h-full {{ $isSot ? 'bg-amber-500' : 'bg-emerald-500' }} rounded-full" style="width: {{ $pctIn }}%"></div>
                     </div>
                 </div>
                 @empty
@@ -578,17 +587,24 @@
                 @forelse($posPemasukanMts as $pos => $nom)
                 @php
                     $pctMts = $totalMasukMts > 0 ? round(($nom / $totalMasukMts) * 100, 1) : 0;
+                    $isSot = (stripos($pos, 'SOT') !== false);
+                    $isSyah = (stripos($pos, 'SYAHRIYAH') !== false);
                 @endphp
-                <div>
+                <div class="{{ $isSot ? 'p-2 rounded-xl bg-amber-50/60 border border-amber-200/80 -mx-1' : ($isSyah ? 'p-1.5 rounded-lg bg-sky-50/40 -mx-1' : '') }}">
                     <div class="flex items-center justify-between text-xs mb-1">
-                        <span class="font-semibold text-gray-800">{{ $pos }}</span>
+                        <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                            {{ $pos }}
+                            @if($isSot)
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white tracking-wide">SOT MTs</span>
+                            @endif
+                        </span>
                         <div class="text-right">
                             <span class="font-mono font-bold text-sky-800">Rp {{ number_format($nom, 0, ',', '.') }}</span>
                             <span class="text-[10px] text-gray-400 font-mono ml-1">({{ $pctMts }}%)</span>
                         </div>
                     </div>
                     <div class="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
-                        <div class="h-full bg-sky-500 rounded-full" style="width: {{ $pctMts }}%"></div>
+                        <div class="h-full {{ $isSot ? 'bg-amber-500' : 'bg-sky-500' }} rounded-full" style="width: {{ $pctMts }}%"></div>
                     </div>
                 </div>
                 @empty
@@ -603,17 +619,24 @@
                 @forelse($posPemasukanMa as $pos => $nom)
                 @php
                     $pctMa = $totalMasukMa > 0 ? round(($nom / $totalMasukMa) * 100, 1) : 0;
+                    $isSot = (stripos($pos, 'SOT') !== false);
+                    $isSyah = (stripos($pos, 'SYAHRIYAH') !== false);
                 @endphp
-                <div>
+                <div class="{{ $isSot ? 'p-2 rounded-xl bg-amber-50/60 border border-amber-200/80 -mx-1' : ($isSyah ? 'p-1.5 rounded-lg bg-emerald-50/40 -mx-1' : '') }}">
                     <div class="flex items-center justify-between text-xs mb-1">
-                        <span class="font-semibold text-gray-800">{{ $pos }}</span>
+                        <span class="font-semibold text-gray-800 flex items-center gap-1.5">
+                            {{ $pos }}
+                            @if($isSot)
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white tracking-wide">SOT MA</span>
+                            @endif
+                        </span>
                         <div class="text-right">
                             <span class="font-mono font-bold text-emerald-800">Rp {{ number_format($nom, 0, ',', '.') }}</span>
                             <span class="text-[10px] text-gray-400 font-mono ml-1">({{ $pctMa }}%)</span>
                         </div>
                     </div>
                     <div class="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
-                        <div class="h-full bg-emerald-500 rounded-full" style="width: {{ $pctMa }}%"></div>
+                        <div class="h-full {{ $isSot ? 'bg-amber-500' : 'bg-emerald-500' }} rounded-full" style="width: {{ $pctMa }}%"></div>
                     </div>
                 </div>
                 @empty

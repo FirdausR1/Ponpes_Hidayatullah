@@ -569,13 +569,59 @@ class ExpenseController extends Controller
                 $j = 'MA';
             }
 
+            // Cek apakah transaksi pembayaran ini sudah memiliki pos SOT eksplisit
+            $hasExplicitSot = $sp->items->contains(function ($it) {
+                return stripos($it->pos_biaya ?? '', 'SOT') !== false;
+            });
+
             foreach ($sp->items as $it) {
-                $pos = $it->pos_biaya ?: 'LAINNYA';
-                $posPemasukanBreakdown[$pos] = ($posPemasukanBreakdown[$pos] ?? 0) + $it->nominal;
-                if ($j === 'MTs') {
-                    $posPemasukanMts[$pos] = ($posPemasukanMts[$pos] ?? 0) + $it->nominal;
-                } elseif ($j === 'MA') {
-                    $posPemasukanMa[$pos] = ($posPemasukanMa[$pos] ?? 0) + $it->nominal;
+                $pos = strtoupper(trim($it->pos_biaya ?: 'LAINNYA'));
+                $nom = (float) $it->nominal;
+
+                // Jika pos adalah SYAHRIYAH / SPP dan belum ada pos SOT terpisah di transaksi ini:
+                // Sesuai konfirmasi: Syahriyah murni = 30.000, sisanya adalah SOT (MTs: 55.000, MA: 75.000)
+                if (!$hasExplicitSot && (stripos($pos, 'SYAHRIYAH') !== false || stripos($pos, 'SPP') !== false)) {
+                    $isMa = ($j === 'MA');
+                    $sotPerMonth = $isMa ? 75000 : 55000;
+                    $syahPerMonth = 30000;
+                    $stdTotal = $sotPerMonth + $syahPerMonth; // 85k (MTs) atau 105k (MA)
+
+                    if ($nom >= $stdTotal) {
+                        $months = max(1, floor($nom / $stdTotal));
+                        $sotPart = $months * $sotPerMonth;
+                        $syahPart = $nom - $sotPart;
+                    } elseif ($nom > $syahPerMonth) {
+                        $syahPart = $syahPerMonth;
+                        $sotPart = $nom - $syahPerMonth;
+                    } else {
+                        $syahPart = $nom;
+                        $sotPart = 0;
+                    }
+
+                    if ($sotPart > 0) {
+                        $posPemasukanBreakdown['SOT'] = ($posPemasukanBreakdown['SOT'] ?? 0) + $sotPart;
+                        if ($j === 'MTs') {
+                            $posPemasukanMts['SOT'] = ($posPemasukanMts['SOT'] ?? 0) + $sotPart;
+                        } elseif ($j === 'MA') {
+                            $posPemasukanMa['SOT'] = ($posPemasukanMa['SOT'] ?? 0) + $sotPart;
+                        }
+                    }
+
+                    if ($syahPart > 0) {
+                        $posPemasukanBreakdown['SYAHRIYAH'] = ($posPemasukanBreakdown['SYAHRIYAH'] ?? 0) + $syahPart;
+                        if ($j === 'MTs') {
+                            $posPemasukanMts['SYAHRIYAH'] = ($posPemasukanMts['SYAHRIYAH'] ?? 0) + $syahPart;
+                        } elseif ($j === 'MA') {
+                            $posPemasukanMa['SYAHRIYAH'] = ($posPemasukanMa['SYAHRIYAH'] ?? 0) + $syahPart;
+                        }
+                    }
+                } else {
+                    $posPemasukanBreakdown[$pos] = ($posPemasukanBreakdown[$pos] ?? 0) + $nom;
+                    if ($j === 'MTs') {
+                        $posPemasukanMts[$pos] = ($posPemasukanMts[$pos] ?? 0) + $nom;
+                    } elseif ($j === 'MA') {
+                        $posPemasukanMa[$pos] = ($posPemasukanMa[$pos] ?? 0) + $nom;
+                    }
                 }
             }
         }
@@ -588,6 +634,26 @@ class ExpenseController extends Controller
             if ($masukPsbMa > 0) {
                 $posPemasukanMa['PSB (SANTRI BARU)'] = ($posPemasukanMa['PSB (SANTRI BARU)'] ?? 0) + $masukPsbMa;
             }
+        }
+
+        // Pastikan pos SOT dan SYAHRIYAH selalu tercantum di tampilan rincian pemasukan kas
+        if (!isset($posPemasukanBreakdown['SOT'])) {
+            $posPemasukanBreakdown['SOT'] = 0;
+        }
+        if (!isset($posPemasukanMts['SOT'])) {
+            $posPemasukanMts['SOT'] = 0;
+        }
+        if (!isset($posPemasukanMa['SOT'])) {
+            $posPemasukanMa['SOT'] = 0;
+        }
+        if (!isset($posPemasukanBreakdown['SYAHRIYAH'])) {
+            $posPemasukanBreakdown['SYAHRIYAH'] = 0;
+        }
+        if (!isset($posPemasukanMts['SYAHRIYAH'])) {
+            $posPemasukanMts['SYAHRIYAH'] = 0;
+        }
+        if (!isset($posPemasukanMa['SYAHRIYAH'])) {
+            $posPemasukanMa['SYAHRIYAH'] = 0;
         }
 
         arsort($posPemasukanBreakdown);
