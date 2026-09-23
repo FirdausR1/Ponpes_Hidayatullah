@@ -20,6 +20,12 @@ class MadrasahExam extends Model
         'semester',
         'jumlah_soal',
         'durasi_menit',
+        'max_attempts',
+        'max_violations',
+        'token_ujian',
+        'acak_soal',
+        'acak_opsi',
+        'tampilkan_nilai',
         'kkm',
         'tanggal_ujian',
         'status',
@@ -29,9 +35,19 @@ class MadrasahExam extends Model
     protected $casts = [
         'jumlah_soal' => 'integer',
         'durasi_menit' => 'integer',
+        'max_attempts' => 'integer',
+        'max_violations' => 'integer',
+        'acak_soal' => 'boolean',
+        'acak_opsi' => 'boolean',
+        'tampilkan_nilai' => 'boolean',
         'kkm' => 'decimal:2',
         'tanggal_ujian' => 'date',
     ];
+
+    public function questions()
+    {
+        return $this->hasMany(MadrasahExamQuestion::class, 'madrasah_exam_id')->orderBy('nomor_urut', 'asc');
+    }
 
     public function results()
     {

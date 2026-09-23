@@ -26,9 +26,18 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-            <a href="{{ route('admin.cbt.madrasah.cetak', $exam->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md transition" title="Buka dan Cetak Format Dokumen Resmi Hasil Ujian">
+            <a href="{{ route('admin.cbt.madrasah.monitoring', $exam->id) }}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition" title="Pantau Santri Mengerjakan Ujian Real-Time & Deteksi Pelanggaran">
+                <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Live Monitor &amp; Anti-Cheat
+            </a>
+            <a href="{{ route('admin.cbt.madrasah.soal.index', $exam->id) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition" title="Kelola Soal & Bank Pilihan Ganda">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Kelola Soal ({{ $exam->questions->count() }})
+            </a>
+            <a href="{{ route('admin.cbt.madrasah.cetak', $exam->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md transition" title="Buka dan Cetak Format Dokumen Resmi Hasil Ujian">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Cetak Laporan Resmi
+                Cetak Laporan
             </a>
             <a href="{{ route('admin.cbt.madrasah.edit', $exam->id) }}" class="ta-btn-secondary text-xs px-3.5 py-2.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -49,6 +58,31 @@
         <button type="button" onclick="this.parentElement.remove()" class="text-rose-700 font-bold">&times;</button>
     </div>
     @endif
+
+    <!-- Parameter CBT & Aturan Ujian Ringkas -->
+    <div class="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 border border-emerald-200/80 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-4 flex-wrap">
+            <div class="flex items-center gap-1.5">
+                <span class="text-gray-500 font-semibold">Batas Mengerjakan:</span>
+                <span class="px-2 py-0.5 rounded-full bg-white border border-gray-200 font-bold text-gray-800 font-mono">{{ $exam->max_attempts ?? 1 }}x Kesempatan</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="text-gray-500 font-semibold">Toleransi Pelanggaran:</span>
+                <span class="px-2 py-0.5 rounded-full bg-white border border-gray-200 font-bold text-rose-600 font-mono">Max {{ $exam->max_violations ?? 3 }}x (Anti-Cheat)</span>
+            </div>
+            @if($exam->token_ujian)
+            <div class="flex items-center gap-1.5">
+                <span class="text-gray-500 font-semibold">Token Ujian:</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold font-mono tracking-wider">{{ $exam->token_ujian }}</span>
+            </div>
+            @endif
+        </div>
+        <div class="text-[11px] text-gray-500">
+            @if($exam->acak_soal)<span class="mr-2 text-emerald-700 font-medium">✓ Acak Soal</span>@endif
+            @if($exam->acak_opsi)<span class="mr-2 text-emerald-700 font-medium">✓ Acak Opsi A-E</span>@endif
+            @if($exam->tampilkan_nilai)<span class="text-emerald-700 font-medium">✓ Nilai Tampil ke Siswa</span>@endif
+        </div>
+    </div>
 
     <!-- Kartu Statistik Ujian (Sesuai Rincian Detail Ujian di Dokumen Cetak) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -80,7 +114,7 @@
         <div class="p-3.5 bg-white border border-gray-200 rounded-2xl shadow-theme-xs">
             <span class="text-[11px] font-semibold text-sky-600 uppercase tracking-wider block">Total Peserta</span>
             <span class="text-xl font-bold font-mono text-sky-700 mt-1 block">{{ $totalPeserta }} Santri</span>
-            <span class="text-[10px] text-sky-600/70">Telah Mengikuti</span>
+            <span class="text-[10px] text-sky-600/70">Telah Terdaftar</span>
         </div>
     </div>
 
@@ -125,9 +159,10 @@
                             <th class="p-3.5 min-w-[200px]">Nama Peserta</th>
                             <th class="p-3.5 w-24 text-center">Kelas</th>
                             <th class="p-3.5 w-32 text-center">Jurusan</th>
+                            <th class="p-3.5 w-32 text-center">Status CBT</th>
                             <th class="p-3.5 w-36 text-center">Jumlah Benar (dari {{ $exam->jumlah_soal }})</th>
                             <th class="p-3.5 w-28 text-center">Nilai Akhir</th>
-                            <th class="p-3.5 w-28 text-center">Status</th>
+                            <th class="p-3.5 w-28 text-center">Kehadiran</th>
                             <th class="p-3.5 w-16 text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -135,6 +170,8 @@
                         @forelse($results as $index => $res)
                         @php
                             $isLulus = ($res->nilai >= $exam->kkm);
+                            $cbtStatus = $res->status_pengerjaan ?? 'Belum Mulai';
+                            $isLocked = ($cbtStatus === 'Terkunci' || ($res->jumlah_pelanggaran >= ($exam->max_violations ?? 3) && $cbtStatus !== 'Selesai'));
                         @endphp
                         <tr class="hover:bg-gray-50/70 transition">
                             <td class="p-3 text-center font-mono font-bold text-gray-500">
@@ -142,9 +179,14 @@
                             </td>
                             <td class="p-3 font-semibold text-gray-900">
                                 <span class="uppercase block font-bold">{{ $res->nama_peserta }}</span>
-                                @if($res->nomor_peserta)
-                                <span class="text-[10px] text-gray-400 font-mono">NIS: {{ $res->nomor_peserta }}</span>
-                                @endif
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    @if($res->nomor_peserta)
+                                    <span class="text-[10px] text-gray-400 font-mono">NIS: {{ $res->nomor_peserta }}</span>
+                                    @endif
+                                    @if($res->attempt_number > 0)
+                                    <span class="text-[10px] text-purple-600 font-semibold font-mono">Attempt {{ $res->attempt_number }}/{{ $exam->max_attempts ?? 1 }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="p-3 text-center font-mono font-semibold text-gray-700">
                                 {{ $res->kelas }}
@@ -153,6 +195,29 @@
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                                     {{ $res->jurusan }}
                                 </span>
+                            </td>
+                            <td class="p-3 text-center">
+                                @if($isLocked)
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                        🔒 Terkunci ({{ $res->jumlah_pelanggaran }}x)
+                                    </span>
+                                @elseif($cbtStatus === 'Mengerjakan')
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300 animate-pulse">
+                                        ● Mengerjakan
+                                    </span>
+                                @elseif($cbtStatus === 'Selesai')
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        ✓ Selesai
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">
+                                        Belum Mulai
+                                    </span>
+                                @endif
+
+                                @if($res->jumlah_pelanggaran > 0 && !$isLocked)
+                                    <span class="block text-[10px] text-amber-600 font-semibold mt-0.5">⚠️ {{ $res->jumlah_pelanggaran }}x Melanggar</span>
+                                @endif
                             </td>
                             <td class="p-3 text-center">
                                 <div class="inline-flex items-center gap-1.5">
@@ -188,7 +253,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="p-12 text-center text-gray-400 text-xs">
+                            <td colspan="9" class="p-12 text-center text-gray-400 text-xs">
                                 Belum ada peserta pada ujian ini. Silakan klik tombol <strong>"Tarik Santri Aktif"</strong> atau <strong>"+ Tambah Manual"</strong> di atas.
                             </td>
                         </tr>

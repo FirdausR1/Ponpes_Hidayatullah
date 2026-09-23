@@ -143,6 +143,10 @@
                 <a href="{{ route('santri.dashboard') }}" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-xs font-semibold whitespace-nowrap transition">
                     Dasbor
                 </a>
+                <a href="{{ route('santri.cbt.index') }}" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Ujian CBT
+                </a>
                 <a href="{{ route('santri.profil') }}" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-xs font-semibold whitespace-nowrap transition">
                     Biodata &amp; Berkas
                 </a>

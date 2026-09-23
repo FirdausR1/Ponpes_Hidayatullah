@@ -56,6 +56,10 @@
                 <a href="{{ route('santri.dashboard') }}" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap shadow-xs">
                     Dasbor
                 </a>
+                <a href="{{ route('santri.cbt.index') }}" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Ujian CBT
+                </a>
                 <a href="{{ route('santri.profil') }}" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-xs font-semibold whitespace-nowrap transition">
                     Biodata &amp; Berkas
                 </a>
@@ -139,6 +143,24 @@
             <div class="shrink-0">
                 <a href="{{ route('santri.pembayaran') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition">
                     Rincian Tagihan &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- CBT Exam Card -->
+        <div class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/20 text-emerald-200 uppercase tracking-wider">CBT Online</span>
+                    <h3 class="text-xs sm:text-sm font-bold text-white">Ujian Berbasis Komputer (CBT) Madrasah</h3>
+                </div>
+                <p class="text-xs text-emerald-100/80">
+                    Akses ruang ujian madrasah terjadwal dengan sistem evaluasi otomatis &amp; anti-cheat.
+                </p>
+            </div>
+            <div class="shrink-0">
+                <a href="{{ route('santri.cbt.index') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 text-xs font-bold shadow-xs transition">
+                    Buka Ujian CBT &rarr;
                 </a>
             </div>
         </div>

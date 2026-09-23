@@ -14,6 +14,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\MadrasahExamController;
+use App\Http\Controllers\StudentCbtController;
 use App\Models\Article;
 
 /*
@@ -266,6 +267,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::post('/cbt/madrasah/{id}/import-excel', [MadrasahExamController::class, 'importExcel'])->name('cbt.madrasah.importExcel');
         Route::get('/cbt/madrasah/{id}/download-template', [MadrasahExamController::class, 'downloadTemplate'])->name('cbt.madrasah.downloadTemplate');
         Route::get('/cbt/madrasah/{id}/cetak', [MadrasahExamController::class, 'cetak'])->name('cbt.madrasah.cetak');
+        Route::get('/cbt/madrasah/{id}/monitoring', [MadrasahExamController::class, 'monitoring'])->name('cbt.madrasah.monitoring');
+        Route::get('/cbt/madrasah/{id}/monitoring-data', [MadrasahExamController::class, 'monitoringData'])->name('cbt.madrasah.monitoringData');
+        Route::post('/cbt/madrasah/{id}/monitoring-action', [MadrasahExamController::class, 'monitoringAction'])->name('cbt.madrasah.monitoringAction');
+        Route::get('/cbt/madrasah/{id}/soal', [MadrasahExamController::class, 'soalIndex'])->name('cbt.madrasah.soal.index');
+        Route::post('/cbt/madrasah/{id}/soal', [MadrasahExamController::class, 'soalStore'])->name('cbt.madrasah.soal.store');
+        Route::delete('/cbt/madrasah/{id}/soal/{questionId}', [MadrasahExamController::class, 'soalDestroy'])->name('cbt.madrasah.soal.destroy');
+        Route::get('/cbt/madrasah/{id}/soal-template', [MadrasahExamController::class, 'soalDownloadTemplate'])->name('cbt.madrasah.soal.template');
+        Route::post('/cbt/madrasah/{id}/soal-import', [MadrasahExamController::class, 'soalImport'])->name('cbt.madrasah.soal.import');
 
         // Pengaturan Konten Web (CMS)
         Route::get('/pengaturan', [AdminController::class, 'settingsIndex'])->name('settings.index');
@@ -305,6 +314,13 @@ Route::middleware('auth:santri')->prefix('santri')->name('santri.')->group(funct
     Route::get('/pembayaran/kwitansi/{id}', [StudentAuthController::class, 'kwitansiSantri'])->name('pembayaran.kwitansi');
     Route::post('/ganti-password', [StudentAuthController::class, 'updatePassword'])->name('updatePassword');
     Route::post('/logout', [StudentAuthController::class, 'logout'])->name('logout');
+
+    // Ujian CBT Madrasah untuk Santri
+    Route::get('/cbt', [StudentCbtController::class, 'index'])->name('cbt.index');
+    Route::get('/cbt/{id}/ruang', [StudentCbtController::class, 'room'])->name('cbt.room');
+    Route::post('/cbt/autosave', [StudentCbtController::class, 'autosave'])->name('cbt.autosave');
+    Route::post('/cbt/pelanggaran', [StudentCbtController::class, 'logViolation'])->name('cbt.pelanggaran');
+    Route::post('/cbt/selesai', [StudentCbtController::class, 'submit'])->name('cbt.selesai');
 });
 
 
