@@ -2136,6 +2136,7 @@ class StudentController extends Controller
         $jenjangTab = $request->input('jenjang', 'all'); // 'all', 'MTs', 'MA'
         $genderFilter = $request->input('gender');
         $statusKelas = $request->input('status_kelas'); // 'all', 'belum', 'sudah'
+        $hunianFilter = $request->input('hunian', 'all'); // 'all', 'Mukim', 'Laju'
         $search = $request->input('q');
 
         // Otomatis sinkronisasi: jika ada santri PSB 'Diterima' yang belum masuk tabel students, sediakan count
@@ -2158,6 +2159,16 @@ class StudentController extends Controller
             $query->where('jenjang', 'like', '%MTs%');
         } elseif ($jenjangTab === 'MA') {
             $query->where('jenjang', 'like', '%MA%');
+        }
+
+        // Filter Tipe Hunian (Mukim Asrama vs Laju Pulang-Pergi)
+        if ($hunianFilter === 'Mukim') {
+            $query->where('jenjang', 'like', '%Mukim%')->where('jenjang', 'not like', '%Laju%');
+        } elseif ($hunianFilter === 'Laju') {
+            $query->where(function($q) {
+                $q->where('jenjang', 'like', '%Laju%')
+                  ->orWhere('jenjang', 'not like', '%Mukim%');
+            });
         }
 
         if (!empty($genderFilter)) {
@@ -2198,11 +2209,11 @@ class StudentController extends Controller
         // Beri nilai peringkat / ranking
         $mtsRank = 1;
         foreach ($mtsList as $s) {
-            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $mtsRank++ : 'â€”';
+            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $mtsRank++ : '—';
         }
         $maRank = 1;
         foreach ($maList as $s) {
-            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $maRank++ : 'â€”';
+            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $maRank++ : '—';
         }
 
         // Urutkan kembali berdasarkan skor CBT tertinggi
@@ -2254,7 +2265,10 @@ class StudentController extends Controller
         $totalSantriBaru = $allStudents->count();
         $sudahAdaKelas = $allStudents->filter(fn($s) => !empty($s->kelas) && !str_contains($s->kelas, 'Belum'))->count();
         $belumAdaKelas = $totalSantriBaru - $sudahAdaKelas;
-        $santriMukim = $allStudents->filter(fn($s) => str_contains($s->jenjang, 'Mukim'));
+        $santriMukim = $allStudents->filter(fn($s) => str_contains($s->jenjang, 'Mukim') && !str_contains($s->jenjang, 'Laju'));
+        $santriLaju = $allStudents->filter(fn($s) => str_contains($s->jenjang, 'Laju') || !str_contains($s->jenjang, 'Mukim'));
+        $totalMukim = $santriMukim->count();
+        $totalLaju = $santriLaju->count();
         $mukimBelumKamar = $santriMukim->filter(fn($s) => empty($s->dormitory_id))->count();
 
         return view('admin.siswa.penempatan_kelas', compact(
@@ -2263,6 +2277,7 @@ class StudentController extends Controller
             'jenjangTab',
             'genderFilter',
             'statusKelas',
+            'hunianFilter',
             'search',
             'unimportedPsbCount',
             'classroomsMts',
@@ -2271,6 +2286,8 @@ class StudentController extends Controller
             'dormPutra',
             'dormPutri',
             'totalSantriBaru',
+            'totalMukim',
+            'totalLaju',
             'sudahAdaKelas',
             'belumAdaKelas',
             'mukimBelumKamar'
@@ -2417,20 +2434,50 @@ class StudentController extends Controller
         $kelas = $request->kelas;
         $dormitoryId = $request->dormitory_id;
 
-        $updateData = ['kelas' => $kelas];
+        // 1. Update Rombel Kelas untuk semua santri yang dipilih (berlaku untuk Mukim maupun Laju)
+        Student::whereIn('id', $studentIds)->update(['kelas' => $kelas]);
 
-        if (!empty($dormitoryId)) {
+        $dormPlacedCount = 0;
+
+        // 2. Alokasi Kamar Asrama: HANYA berlaku untuk santri MUKIM!
+        // Santri Laju (Pulang-Pergi / Non-Asrama) otomatis dikecualikan
+        if (!empty($dormitoryId) && $dormitoryId !== 'none') {
             $dorm = Dormitory::find($dormitoryId);
             if ($dorm) {
-                $updateData['dormitory_id'] = $dorm->id;
-                $updateData['kamar_asrama'] = $dorm->full_name;
+                $dormPlacedCount = Student::whereIn('id', $studentIds)
+                    ->where('jenjang', 'like', '%Mukim%')
+                    ->where('jenjang', 'not like', '%Laju%')
+                    ->update([
+                        'dormitory_id' => $dorm->id,
+                        'kamar_asrama' => $dorm->full_name,
+                    ]);
             }
+        } elseif ($dormitoryId === 'none') {
+            // Kosongkan asrama
+            Student::whereIn('id', $studentIds)->update([
+                'dormitory_id' => null,
+                'kamar_asrama' => null,
+            ]);
         }
 
-        Student::whereIn('id', $studentIds)->update($updateData);
+        // 3. Pastikan seluruh santri LAJU selalu bersih dari alokasi kamar asrama
+        Student::whereIn('id', $studentIds)
+            ->where(function($q) {
+                $q->where('jenjang', 'like', '%Laju%')
+                  ->orWhere('jenjang', 'not like', '%Mukim%');
+            })
+            ->update([
+                'dormitory_id' => null,
+                'kamar_asrama' => null,
+            ]);
 
         $count = count($studentIds);
-        return redirect()->back()->with('success', "Alhamdulillah! Berhasil menempatkan {$count} santri ke kelas {$kelas}!");
+        $msg = "Alhamdulillah! Berhasil menempatkan {$count} santri ke kelas {$kelas}!";
+        if ($dormPlacedCount > 0) {
+            $msg .= " Serta menempatkan {$dormPlacedCount} santri mukim ke kamar asrama (santri laju otomatis tidak dialokasikan asrama).";
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 
     /**
@@ -2451,7 +2498,12 @@ class StudentController extends Controller
         }
 
         if ($request->has('dormitory_id')) {
-            if (!empty($request->dormitory_id)) {
+            // Santri Laju (Non-Asrama) tidak boleh memiliki kamar asrama
+            $isLaju = str_contains($student->jenjang ?? '', 'Laju') || !str_contains($student->jenjang ?? '', 'Mukim');
+            if ($isLaju) {
+                $student->dormitory_id = null;
+                $student->kamar_asrama = null;
+            } elseif (!empty($request->dormitory_id) && $request->dormitory_id !== 'none') {
                 $dorm = Dormitory::findOrFail($request->dormitory_id);
                 $student->dormitory_id = $dorm->id;
                 $student->kamar_asrama = $dorm->full_name;

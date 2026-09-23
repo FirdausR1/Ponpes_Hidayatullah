@@ -109,7 +109,11 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
             </div>
-            <p class="text-xs text-gray-400 mt-2">Angkatan Baru Tahun Masuk {{ $currentYear }}</p>
+            <div class="flex items-center gap-2 mt-2 text-[11px] text-gray-500">
+                <span class="text-emerald-700 font-semibold">🏠 {{ $totalMukim ?? 0 }} Mukim</span>
+                <span>•</span>
+                <span class="text-sky-700 font-semibold">🚶 {{ $totalLaju ?? 0 }} Laju</span>
+            </div>
         </div>
 
         <!-- Card 2: Sudah Ada Kelas -->
@@ -194,13 +198,19 @@
                     <option value="Perempuan" {{ $genderFilter === 'Perempuan' ? 'selected' : '' }}>Santri Putri</option>
                 </select>
 
+                <select name="hunian" onchange="this.form.submit()" class="h-10 px-3 text-xs bg-white border border-gray-300 rounded-xl outline-none cursor-pointer font-medium text-gray-700">
+                    <option value="all" {{ ($hunianFilter === 'all' || empty($hunianFilter)) ? 'selected' : '' }}>Semua Hunian (Mukim &amp; Laju)</option>
+                    <option value="Mukim" {{ $hunianFilter === 'Mukim' ? 'selected' : '' }}>🏠 Khusus Santri Mukim (Pondok)</option>
+                    <option value="Laju" {{ $hunianFilter === 'Laju' ? 'selected' : '' }}>🚶 Khusus Santri Laju (Non-Asrama)</option>
+                </select>
+
                 <select name="status_kelas" onchange="this.form.submit()" class="h-10 px-3 text-xs bg-white border border-gray-300 rounded-xl outline-none cursor-pointer">
                     <option value="all">Semua Status Kelas</option>
                     <option value="belum" {{ $statusKelas === 'belum' ? 'selected' : '' }}>Belum Masuk Kelas</option>
                     <option value="sudah" {{ $statusKelas === 'sudah' ? 'selected' : '' }}>Sudah Masuk Kelas</option>
                 </select>
 
-                @if(!empty($search) || !empty($genderFilter) || !empty($statusKelas) && $statusKelas !== 'all')
+                @if(!empty($search) || !empty($genderFilter) || (!empty($hunianFilter) && $hunianFilter !== 'all') || (!empty($statusKelas) && $statusKelas !== 'all'))
                 <a href="{{ route('admin.siswa.penempatanKelas', ['jenjang' => $jenjangTab]) }}" class="text-xs text-rose-600 hover:underline px-1">Reset</a>
                 @endif
                 <button type="submit" class="h-10 px-4 bg-gray-900 text-white rounded-xl text-xs font-semibold hover:bg-gray-800 transition">Cari</button>
@@ -355,7 +365,7 @@
 
                         <!-- Penempatan Kamar Asrama -->
                         <td class="py-3.5 px-5">
-                            @if(str_contains($st->jenjang, 'Mukim'))
+                            @if(str_contains($st->jenjang, 'Mukim') && !str_contains($st->jenjang, 'Laju'))
                             <div class="flex items-center gap-1.5">
                                 <select id="select-dorm-{{ $st->id }}"
                                         @change="quickSaveStudent({{ $st->id }}, document.getElementById('select-kelas-{{ $st->id }}').value, $event.target.value)"
@@ -376,7 +386,11 @@
                                 <span class="text-[10px] text-rose-500 font-medium mt-0.5 block">⚠️ Belum Ada Kamar</span>
                             @endif
                             @else
-                            <span class="text-[11px] text-gray-400 italic">Santri Laju (Tidak Mukim)</span>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 border border-gray-200 text-gray-600 text-xs font-semibold">
+                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                <span>Santri Laju (Non-Asrama)</span>
+                            </div>
+                            <span class="block text-[10px] text-gray-400 mt-0.5">Pulang-pergi (Tidak Memerlukan Kamar)</span>
                             @endif
                         </td>
 
@@ -573,9 +587,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Kamar Asrama (Opsional)</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Kamar Asrama (Khusus Santri Mukim)</label>
                     <select name="dormitory_id" class="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs text-gray-800">
                         <option value="">-- Jangan Ubah Kamar Asrama --</option>
+                        <option value="none">-- Kosongkan Kamar Asrama --</option>
                         <optgroup label="Asrama Putra">
                             @foreach($dormPutra as $dp)
                             <option value="{{ $dp->id }}">{{ $dp->nama_asrama }} - {{ $dp->kamar }} (Sisa {{ max(0, $dp->kapasitas - $dp->students_count) }})</option>
@@ -587,6 +602,9 @@
                             @endforeach
                         </optgroup>
                     </select>
+                    <div class="mt-2 p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-[11px] text-blue-800 leading-tight">
+                        ℹ️ <strong>Santri Laju Otomatis Non-Asrama:</strong> Santri baru yang berstatus <em>Laju (Pulang-Pergi)</em> otomatis tidak akan dimasukkan ke kamar asrama meskipun opsi asrama dipilih.
+                    </div>
                 </div>
 
                 <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-2.5">
