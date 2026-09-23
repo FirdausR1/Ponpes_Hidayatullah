@@ -423,8 +423,12 @@
                             <span><strong>Kolom M-Q (Ungu):</strong> Orang Tua &amp; Sekolah (Nama Wali/Ayah, WhatsApp, Pekerjaan, Nama Ibu, Asal Sekolah) <span class="text-gray-400">(Opsional)</span></span>
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
+                            <span class="text-teal-600 font-bold">✓</span>
+                            <span><strong>Kolom R-U (Teal):</strong> 4 Pos Bulanan Rutin Seragam Sistem (Syahriyah SPP, SOT MTs 55k / MA 75k, Uang Makan Mukim 300k, Tabungan 25k)</span>
+                        </div>
+                        <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-amber-600 font-bold">✓</span>
-                            <span><strong>Kolom R-AB (Oranye):</strong> Rincian Tagihan per Kategori (Syahriyah Rp 30.000, SOT MTs Rp 55k/MA Rp 75k, Uang Makan, Tabungan, Daftar Ulang, Gedung, Seragam, Kitab, Kegiatan, Lainnya) <span class="text-gray-400">(Isi 0 jika lunas / tidak ada)</span></span>
+                            <span><strong>Kolom V-AD (Oranye):</strong> Tagihan Tambahan / Insidental (Uang Pangkal/DU, Gedung, Infaq Pengembangan Pondok, Wisuda, Ziarah, Kitab, Kegiatan, Pos Lain &amp; Catatan Rincian) <span class="text-gray-400">(Isi 0 jika lunas / tidak ada)</span></span>
                         </div>
                     </div>
                     <div class="pt-1">

@@ -1223,7 +1223,7 @@
                                             <span>Tambah Pos Lainnya</span>
                                             <span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 font-semibold border border-blue-200">Bisa Langsung Ketik Bebas</span>
                                         </span>
-                                        <p class="text-[11px] text-gray-500 mt-0.5">Ketik nama pos apa saja (misal: INFAQ, SERAGAM, KITAB, KAS) atau pilih rekomendasi yang otomatis muncul.</p>
+                                        <p class="text-[11px] text-gray-500 mt-0.5">Ketik nama pos apa saja (misal: WISUDA, ZIARAH, PENGEMBANGAN PONDOK, KITAB, KAS) atau pilih rekomendasi yang otomatis muncul.</p>
                                     </div>
                                     <button type="button" @click="addCustomItem()" class="px-2.5 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-sm transition inline-flex items-center gap-1">
                                         <span>+ Tambah Baris</span>
@@ -1244,7 +1244,7 @@
                                                     :name="'items[custom_' + cIdx + '][pos_biaya]'" 
                                                     x-model="c.pos_biaya" 
                                                     list="posBiayaDatalist"
-                                                    placeholder="Ketik nama pos di sini (misal: INFAQ, SERAGAM, UJIAN, LAINNYA)..." 
+                                                    placeholder="Ketik nama pos di sini (misal: WISUDA, ZIARAH, PENGEMBANGAN PONDOK, KITAB, LAINNYA)..." 
                                                     class="h-9 w-full uppercase rounded-lg border border-gray-300 px-3 text-xs font-bold text-gray-800 bg-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none placeholder:font-normal placeholder:normal-case placeholder:text-gray-400">
                                             </div>
                                             <div class="flex items-center gap-2 shrink-0">
