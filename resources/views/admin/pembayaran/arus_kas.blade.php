@@ -283,6 +283,24 @@
                         </div>
                     </div>
                 </div>
+                <div class="flex justify-between items-center text-gray-700 pt-1.5 border-t border-dashed border-emerald-200">
+                    <span class="flex items-center gap-1.5 font-bold text-emerald-950"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span> Kenaikan Kelas:</span>
+                    <div class="text-right">
+                        <span class="font-mono font-black text-emerald-900">Rp {{ number_format($totalKenaikanMasuk ?? 0, 0, ',', '.') }}</span>
+                        <div class="text-[10px] text-gray-500 font-mono">
+                            MTs: Rp {{ number_format($totalKenaikanMasukMts ?? 0, 0, ',', '.') }} &bull; MA: Rp {{ number_format($totalKenaikanMasukMa ?? 0, 0, ',', '.') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-gray-700 pt-1.5 border-t border-dashed border-emerald-200">
+                    <span class="flex items-center gap-1.5 font-bold text-emerald-950"><span class="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span> Pengembangan Pondok:</span>
+                    <div class="text-right">
+                        <span class="font-mono font-black text-emerald-900">Rp {{ number_format($totalPengembanganMasuk ?? 0, 0, ',', '.') }}</span>
+                        <div class="text-[10px] text-gray-500 font-mono">
+                            MTs: Rp {{ number_format($totalPengembanganMasukMts ?? 0, 0, ',', '.') }} &bull; MA: Rp {{ number_format($totalPengembanganMasukMa ?? 0, 0, ',', '.') }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

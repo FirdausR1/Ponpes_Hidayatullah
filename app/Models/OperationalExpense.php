@@ -44,6 +44,8 @@ class OperationalExpense extends Model
         'SOT' => 'SOT (Sumbangan Operasional Tahunan)',
         'Tabungan' => 'Kas Tabungan Santri',
         'Uang Gedung' => 'Uang Gedung / Pembangunan',
+        'Pengembangan Pondok' => 'Infaq Pengembangan Pondok',
+        'Kenaikan Kelas' => 'Uang Kenaikan Kelas',
         'Uang Pangkal' => 'Uang Pangkal / Pendaftaran',
         'Kesehatan' => 'Pos Kesehatan / UKS',
         'Kegiatan' => 'Pos Kegiatan Santri & PHBI',

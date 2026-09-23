@@ -298,6 +298,12 @@ class ExpenseController extends Controller
                 case 'Uang Gedung':
                     $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%GEDUNG%')->orWhere('pos_biaya', 'like', '%BANGUNAN%'));
                     break;
+                case 'Pengembangan Pondok':
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%PENGEMBANGAN%'));
+                    break;
+                case 'Kenaikan Kelas':
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%KENAIKAN%'));
+                    break;
                 case 'Uang Pangkal':
                     $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%PANGKAL%')->orWhere('pos_biaya', 'like', '%DAFTAR%')) + $psbIncome();
                     break;
@@ -608,6 +614,46 @@ class ExpenseController extends Controller
             }
         }
 
+        // 6c. Hitung Total Kenaikan Kelas Masuk Khusus (Secara Total & per Jenjang MTs / MA)
+        $totalKenaikanMasuk = 0;
+        foreach ($posPemasukanBreakdown as $posKey => $posNom) {
+            if (stripos($posKey, 'KENAIKAN') !== false) {
+                $totalKenaikanMasuk += (float) $posNom;
+            }
+        }
+        $totalKenaikanMasukMts = 0;
+        foreach ($posPemasukanMts as $posKey => $posNom) {
+            if (stripos($posKey, 'KENAIKAN') !== false) {
+                $totalKenaikanMasukMts += (float) $posNom;
+            }
+        }
+        $totalKenaikanMasukMa = 0;
+        foreach ($posPemasukanMa as $posKey => $posNom) {
+            if (stripos($posKey, 'KENAIKAN') !== false) {
+                $totalKenaikanMasukMa += (float) $posNom;
+            }
+        }
+
+        // 6d. Hitung Total Pengembangan Pondok Masuk Khusus (Secara Total & per Jenjang MTs / MA)
+        $totalPengembanganMasuk = 0;
+        foreach ($posPemasukanBreakdown as $posKey => $posNom) {
+            if (stripos($posKey, 'PENGEMBANGAN') !== false) {
+                $totalPengembanganMasuk += (float) $posNom;
+            }
+        }
+        $totalPengembanganMasukMts = 0;
+        foreach ($posPemasukanMts as $posKey => $posNom) {
+            if (stripos($posKey, 'PENGEMBANGAN') !== false) {
+                $totalPengembanganMasukMts += (float) $posNom;
+            }
+        }
+        $totalPengembanganMasukMa = 0;
+        foreach ($posPemasukanMa as $posKey => $posNom) {
+            if (stripos($posKey, 'PENGEMBANGAN') !== false) {
+                $totalPengembanganMasukMa += (float) $posNom;
+            }
+        }
+
         // 7. Kas Masuk Periode per Metode (Tunai vs Bank/Transfer)
         $masukSantriTunai = (float) $studentPayments->filter(function($p) {
             $metode = strtolower($p->metode_pembayaran ?? 'tunai');
@@ -676,6 +722,12 @@ class ExpenseController extends Controller
             'totalSotMasuk',
             'totalSotMasukMts',
             'totalSotMasukMa',
+            'totalKenaikanMasuk',
+            'totalKenaikanMasukMts',
+            'totalKenaikanMasukMa',
+            'totalPengembanganMasuk',
+            'totalPengembanganMasukMts',
+            'totalPengembanganMasukMa',
             'totalKasKeluar',
             'keluarMts',
             'keluarMa',

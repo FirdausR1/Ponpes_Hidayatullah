@@ -1743,6 +1743,74 @@ class StudentController extends Controller
                 ]);
                 $msg = "Alhamdulillah! {$count} santri dari kelas {$kelasAsal} berhasil dinaikkan ke kelas {$kelasTujuan}. Santri yang tidak dicentang tetap di kelas {$kelasAsal} (tinggal kelas).";
             }
+
+            // Opsi: Penerbitan Tagihan Kenaikan Kelas & Infaq Pengembangan Pondok secara massal
+            $tahunSekarang = date('Y');
+            $billsCreated = 0;
+
+            if ($request->boolean('terbitkan_tagihan_kenaikan')) {
+                $nomKenaikan = (float) preg_replace('/[^0-9]/', '', (string)$request->nominal_tagihan_kenaikan);
+                if ($nomKenaikan > 0) {
+                    foreach ($studentIds as $sid) {
+                        $exist = StudentBill::where('student_id', $sid)
+                            ->where('pos_biaya', 'KENAIKAN')
+                            ->where('tahun', $tahunSekarang)
+                            ->first();
+
+                        if (!$exist) {
+                            StudentBill::create([
+                                'student_id' => $sid,
+                                'kategori' => 'tambahan',
+                                'pos_biaya' => 'KENAIKAN',
+                                'judul_tagihan' => "Biaya Kenaikan Kelas ({$kelasAsal} ke {$kelasTujuan})",
+                                'nominal' => $nomKenaikan,
+                                'nominal_asli' => $nomKenaikan,
+                                'potongan' => 0,
+                                'terbayar' => 0,
+                                'sisa' => $nomKenaikan,
+                                'status' => 'Belum Lunas',
+                                'tahun' => $tahunSekarang,
+                                'keterangan' => "Kenaikan kelas dari {$kelasAsal} ke {$kelasTujuan}",
+                            ]);
+                            $billsCreated++;
+                        }
+                    }
+                }
+            }
+
+            if ($request->boolean('terbitkan_tagihan_pengembangan')) {
+                $nomPengembangan = (float) preg_replace('/[^0-9]/', '', (string)$request->nominal_tagihan_pengembangan);
+                if ($nomPengembangan > 0) {
+                    foreach ($studentIds as $sid) {
+                        $exist = StudentBill::where('student_id', $sid)
+                            ->where('pos_biaya', 'PENGEMBANGAN PONDOK')
+                            ->where('tahun', $tahunSekarang)
+                            ->first();
+
+                        if (!$exist) {
+                            StudentBill::create([
+                                'student_id' => $sid,
+                                'kategori' => 'tambahan',
+                                'pos_biaya' => 'PENGEMBANGAN PONDOK',
+                                'judul_tagihan' => "Infaq Pengembangan Pondok TA {$tahunSekarang}",
+                                'nominal' => $nomPengembangan,
+                                'nominal_asli' => $nomPengembangan,
+                                'potongan' => 0,
+                                'terbayar' => 0,
+                                'sisa' => $nomPengembangan,
+                                'status' => 'Belum Lunas',
+                                'tahun' => $tahunSekarang,
+                                'keterangan' => "Infaq pengembangan pondok santri",
+                            ]);
+                            $billsCreated++;
+                        }
+                    }
+                }
+            }
+
+            if ($billsCreated > 0) {
+                $msg .= " Serta diterbitkan tagihan baru ({$billsCreated} item) yang langsung muncul di Kasir POS.";
+            }
         }
 
         return redirect()->route('admin.siswa.kenaikanKelas', ['kelas_asal' => $kelasAsal])->with('success', $msg);

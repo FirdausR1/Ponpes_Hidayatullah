@@ -91,6 +91,40 @@
                     </div>
                 </div>
 
+                <!-- Panel Opsi Tagihan Kenaikan & Infaq Pengembangan Pondok (Opsional) -->
+                <div id="tagihanKenaikanWrap" class="p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            Penerbitan Tagihan Kenaikan Kelas &amp; Infaq Pengembangan (Opsional)
+                        </span>
+                        <span class="text-[10px] text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">Tercatat di Uang Masuk Kas</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Centang opsi di bawah jika santri yang naik kelas ingin otomatis diterbitkan tagihan herregistrasi/pengembangan yang langsung muncul di Kasir POS &amp; Arus Kas Keuangan.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                        <div class="p-3 bg-white border border-gray-200 rounded-lg space-y-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="terbitkan_tagihan_kenaikan" value="1" onchange="document.getElementById('inputNomKenaikan').disabled = !this.checked; if(this.checked) document.getElementById('inputNomKenaikan').focus();" class="rounded text-emerald-600 focus:ring-emerald-500">
+                                <span class="font-bold text-xs text-gray-800">Biaya Kenaikan Kelas</span>
+                            </label>
+                            <div>
+                                <label class="text-[11px] text-gray-500 block mb-1">Nominal Biaya Kenaikan (Rp):</label>
+                                <input type="number" name="nominal_tagihan_kenaikan" id="inputNomKenaikan" placeholder="Contoh: 150000" disabled class="w-full text-xs font-mono rounded-lg border border-gray-300 px-3 py-1.5 focus:border-emerald-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                            </div>
+                        </div>
+                        <div class="p-3 bg-white border border-gray-200 rounded-lg space-y-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="terbitkan_tagihan_pengembangan" value="1" onchange="document.getElementById('inputNomPengembangan').disabled = !this.checked; if(this.checked) document.getElementById('inputNomPengembangan').focus();" class="rounded text-emerald-600 focus:ring-emerald-500">
+                                <span class="font-bold text-xs text-gray-800">Infaq Pengembangan Pondok</span>
+                            </label>
+                            <div>
+                                <label class="text-[11px] text-gray-500 block mb-1">Nominal Infaq Pengembangan (Rp):</label>
+                                <input type="number" name="nominal_tagihan_pengembangan" id="inputNomPengembangan" placeholder="Contoh: 500000" disabled class="w-full text-xs font-mono rounded-lg border border-gray-300 px-3 py-1.5 focus:border-emerald-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tabel Checklist Santri -->
                 <div>
                     <div class="flex items-center justify-between mb-3">
@@ -172,12 +206,15 @@
 <script>
     function toggleAksiMode(mode) {
         const wrap = document.getElementById('targetKelasWrap');
+        const billWrap = document.getElementById('tagihanKenaikanWrap');
         const sel = document.getElementById('selectKelasTujuan');
         if (mode === 'alumni') {
             wrap.classList.add('hidden');
+            if (billWrap) billWrap.classList.add('hidden');
             sel.required = false;
         } else {
             wrap.classList.remove('hidden');
+            if (billWrap) billWrap.classList.remove('hidden');
             sel.required = true;
         }
     }
