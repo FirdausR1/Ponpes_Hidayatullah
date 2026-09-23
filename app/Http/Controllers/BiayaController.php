@@ -27,7 +27,8 @@ class BiayaController extends Controller
 
         $biayaBulananData = json_decode(Setting::get('biaya_bulanan_json', 'null'), true) ?: [
             ['komponen' => 'Uang Makan 3x Sehari', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => '—', 'is_total' => false],
-            ['komponen' => 'Syahriah Pendidikan', 'mts_mukim' => 'Rp 85.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 105.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
+            ['komponen' => 'Syahriah Pendidikan', 'mts_mukim' => 'Rp 30.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 30.000', 'ma_laju' => '—', 'is_total' => false],
+            ['komponen' => 'Iuran SOT', 'mts_mukim' => 'Rp 55.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 75.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
             ['komponen' => 'Tabungan Wajib Santri', 'mts_mukim' => 'Rp 25.000', 'mts_laju' => 'Rp 25.000', 'ma_mukim' => 'Rp 25.000', 'ma_laju' => 'Rp 25.000', 'is_total' => false],
             ['komponen' => 'TOTAL IURAN BULANAN', 'mts_mukim' => 'Rp 410.000 / bln', 'mts_laju' => 'Rp 80.000 / bln', 'ma_mukim' => 'Rp 430.000 / bln', 'ma_laju' => 'Rp 100.000 / bln', 'is_total' => true],
         ];

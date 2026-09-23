@@ -74,10 +74,16 @@
 
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label for="content" class="block text-xs sm:text-sm font-medium text-gray-700">Isi Lengkap Berita <span class="text-rose-500">*</span></label>
-                        <span class="text-xs text-gray-400">Mendukung teks & HTML dasar</span>
+                        <label for="content" class="block text-xs sm:text-sm font-medium text-gray-700">Isi Lengkap Berita (Description) <span class="text-rose-500">*</span></label>
+                        <span class="text-xs text-gray-400">Editor visual lengkap &amp; otomatis paragraf</span>
                     </div>
-                    <textarea id="content" name="content" rows="12" required placeholder="Tuliskan berita lengkap di sini..." class="w-full rounded-lg border border-gray-300 bg-transparent p-4 text-xs sm:text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/10 transition leading-relaxed">{{ old('content') }}</textarea>
+
+                    <textarea id="content" name="content" rows="16" class="w-full rounded-lg border border-gray-300 bg-white p-4 text-xs sm:text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/10 transition leading-relaxed">{{ old('content') }}</textarea>
+
+                    <p class="text-[11px] text-gray-500 mt-2 flex items-center gap-1.5">
+                        <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">i</span>
+                        <span><strong>Tips Paragraf:</strong> Tekan <strong>Enter</strong> untuk membuat paragraf baru <code>&lt;p&gt;</code>, atau <strong>Shift + Enter</strong> untuk ganti baris tanpa jarak <code>&lt;br&gt;</code>.</span>
+                    </p>
                 </div>
             </div>
 
@@ -120,9 +126,21 @@
                     </div>
 
                     <div>
-                        <label for="image" class="mb-1.5 block text-xs font-medium text-gray-700">URL Gambar Eksternal</label>
-                        <input type="url" id="image" name="image" value="{{ old('image') }}" placeholder="https://images.unsplash.com/..." class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3.5 text-xs text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition shadow-theme-xs">
-                        <span class="text-xs text-gray-400 mt-1 block">Bisa gunakan link gambar Unsplash / CDN.</span>
+                        <label for="image" class="mb-1.5 block text-xs font-medium text-gray-700">URL Gambar Eksternal / Link Google Drive</label>
+                        <input type="url" id="image" name="image" value="{{ old('image') }}" placeholder="https://drive.google.com/... atau https://..." class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3.5 text-xs text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition shadow-theme-xs">
+                        
+                        <div class="mt-2.5 p-3 rounded-lg bg-blue-50/80 border border-blue-200 text-[11px] text-blue-900 space-y-1.5">
+                            <div class="font-bold flex items-center gap-1.5 text-blue-950">
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <span>Petunjuk Penggunaan Link Gambar:</span>
+                            </div>
+                            <p class="leading-relaxed">
+                                &bull; <strong>Google Drive:</strong> Bagikan file foto di Drive dengan akses <em>"Siapa saja yang memiliki link"</em>, lalu paste link share-nya di sini. Sistem akan otomatis mengonversinya menjadi gambar.
+                            </p>
+                            <p class="leading-relaxed text-amber-900 bg-amber-100/70 p-2 rounded-md border border-amber-200">
+                                ⚠️ <strong>Medsos (Instagram / Facebook):</strong> Tautan medsos (seperti <code>instagram.com/p/...</code>) adalah tautan halaman web postingan dan diblokir oleh Instagram jika dipasang langsung. Untuk foto dari Instagram, silakan <strong>simpan/screenshot foto</strong> dari Instagram, lalu gunakan tombol <strong>"Upload File Gambar"</strong> di atas.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -143,4 +161,51 @@
     </form>
 
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+<script>
+    // Konfigurasi CKEditor 4 sesuai tampilan screenshot user
+    CKEDITOR.config.versionCheck = false;
+    CKEDITOR.replace('content', {
+        language: 'id',
+        height: 420,
+        toolbar: [
+            { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+            { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll', '-', 'Scayt' ] },
+            { name: 'links', items: [ 'Link', 'Unlink', 'Anchor' ] },
+            { name: 'insert', items: [ 'Image', 'Table', 'HorizontalRule', 'SpecialChar' ] },
+            { name: 'tools', items: [ 'Maximize', 'Source' ] },
+            '/',
+            { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Strike', '-', 'RemoveFormat' ] },
+            { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote' ] },
+            { name: 'styles', items: [ 'Styles', 'Format' ] },
+            { name: 'about', items: [ 'About' ] }
+        ],
+        removePlugins: 'exportpdf',
+        format_tags: 'p;h1;h2;h3;pre',
+    });
+
+    // Validasi form saat disubmit
+    const articleForm = document.querySelector('form');
+    if (articleForm) {
+        articleForm.addEventListener('submit', function(e) {
+            for (var instance in CKEDITOR.instances) {
+                CKEDITOR.instances[instance].updateElement();
+            }
+            const contentVal = document.getElementById('content').value.trim();
+            if (!contentVal || contentVal === '<p></p>' || contentVal === '<p>&nbsp;</p>') {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Isi Berita Masih Kosong',
+                    text: 'Silakan tulis isi berita terlebih dahulu sebelum menyimpan.',
+                    confirmButtonColor: '#16a34a'
+                });
+                CKEDITOR.instances['content'].focus();
+            }
+        });
+    }
+</script>
 @endsection

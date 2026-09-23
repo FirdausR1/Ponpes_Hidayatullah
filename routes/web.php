@@ -41,6 +41,7 @@ Route::get('/pendaftaran/sukses/{id}', [PsbController::class, 'success'])->name(
 Route::get('/pendaftaran/cek-status', [PsbController::class, 'checkStatus'])->name('psb.checkStatus');
 Route::post('/pendaftaran/cek-status', [PsbController::class, 'checkStatus'])->name('psb.checkStatus.submit');
 Route::post('/pendaftaran/reupload-foto/{id}', [PsbController::class, 'reuploadFoto'])->name('psb.reuploadFoto');
+Route::post('/pendaftaran/reupload-berkas/{id}', [PsbController::class, 'reuploadBerkas'])->name('psb.reuploadBerkas');
 Route::get('/pendaftaran/cetak-kartu/{id}', [PsbController::class, 'printCard'])->name('psb.printCard');
 
 // Portal Ujian Masuk Seleksi Santri Baru (CBT Online)
@@ -198,9 +199,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/psb/{id}/status', [AdminController::class, 'psbUpdateStatus'])->name('psb.updateStatus');
         Route::patch('/psb/{id}/foto-status', [AdminController::class, 'psbUpdateFotoStatus'])->name('psb.updateFotoStatus');
         Route::post('/psb/{id}/upload-foto', [AdminController::class, 'psbUploadFoto'])->name('psb.uploadFoto');
+        Route::patch('/psb/{id}/berkas-status', [AdminController::class, 'psbUpdateBerkasStatus'])->name('psb.updateBerkasStatus');
+        Route::post('/psb/{id}/upload-berkas', [AdminController::class, 'psbAdminUploadBerkas'])->name('psb.adminUploadBerkas');
         Route::post('/psb/auto-verify', [AdminController::class, 'psbAutoVerifyAll'])->name('psb.autoVerify');
         Route::post('/psb/bulk-verify', [PaymentController::class, 'psbBulkVerify'])->name('psb.bulkVerify');
         Route::post('/psb/auto-seleksi', [AdminController::class, 'psbAutoSeleksi'])->name('psb.autoSeleksi');
+        Route::post('/psb/toggle-status', [AdminController::class, 'psbToggleStatus'])->name('psb.toggleStatus');
         Route::delete('/psb/{id}', [AdminController::class, 'psbDestroy'])->name('psb.destroy');
     });
 
@@ -275,6 +279,8 @@ Route::get('/santri/login', [StudentAuthController::class, 'loginForm'])->name('
 Route::post('/santri/login', [StudentAuthController::class, 'login'])->name('santri.login.post');
 Route::middleware('auth:santri')->prefix('santri')->name('santri.')->group(function () {
     Route::get('/dashboard', [StudentAuthController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profil', [StudentAuthController::class, 'profil'])->name('profil');
+    Route::post('/profil', [StudentAuthController::class, 'updateProfil'])->name('profil.update');
     Route::get('/pembayaran', [StudentAuthController::class, 'pembayaran'])->name('pembayaran');
     Route::post('/pembayaran/upload', [StudentAuthController::class, 'uploadBuktiBayar'])->name('pembayaran.upload');
     Route::post('/pembayaran/ajukan-keringanan', [StudentAuthController::class, 'ajukanKeringananMandiri'])->name('pembayaran.ajukanKeringanan');

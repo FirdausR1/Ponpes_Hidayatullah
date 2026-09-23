@@ -58,6 +58,9 @@ class Student extends Authenticatable
         'no_whatsapp',
         'alamat',
         'foto',
+        'file_kk',
+        'file_ktp_ortu',
+        'file_akta_kelahiran',
         'catatan',
         'password',
         'last_login_at',
@@ -214,12 +217,14 @@ class Student extends Authenticatable
                     'hunian' => 'Mukim',
                     'kategori_label' => 'MA Mukim (Asrama)',
                     'uang_makan' => 300000,
-                    'syahriah' => 105000,
+                    'syahriah' => 30000,
+                    'sot' => 75000,
                     'tabungan_wajib' => 25000,
                     'total_bulanan' => 430000,
                     'items' => [
                         ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 300000],
-                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 105000],
+                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 30000],
+                        ['nama' => 'Iuran SOT', 'nominal' => 75000],
                         ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
                     ],
                 ];
@@ -229,12 +234,13 @@ class Student extends Authenticatable
                     'hunian' => 'Laju',
                     'kategori_label' => 'MA Laju (Non-Asrama)',
                     'uang_makan' => 0,
-                    'syahriah' => 75000,
+                    'syahriah' => 0,
+                    'sot' => 75000,
                     'tabungan_wajib' => 25000,
                     'total_bulanan' => 100000,
                     'items' => [
                         ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 0, 'keterangan' => 'Santri Laju'],
-                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 75000],
+                        ['nama' => 'Iuran SOT', 'nominal' => 75000],
                         ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
                     ],
                 ];
@@ -246,12 +252,14 @@ class Student extends Authenticatable
                     'hunian' => 'Mukim',
                     'kategori_label' => 'MTs Mukim (Asrama)',
                     'uang_makan' => 300000,
-                    'syahriah' => 85000,
+                    'syahriah' => 30000,
+                    'sot' => 55000,
                     'tabungan_wajib' => 25000,
                     'total_bulanan' => 410000,
                     'items' => [
                         ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 300000],
-                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 85000],
+                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 30000],
+                        ['nama' => 'Iuran SOT', 'nominal' => 55000],
                         ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
                     ],
                 ];
@@ -261,12 +269,13 @@ class Student extends Authenticatable
                     'hunian' => 'Laju',
                     'kategori_label' => 'MTs Laju (Non-Asrama)',
                     'uang_makan' => 0,
-                    'syahriah' => 55000,
+                    'syahriah' => 0,
+                    'sot' => 55000,
                     'tabungan_wajib' => 25000,
                     'total_bulanan' => 80000,
                     'items' => [
                         ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 0, 'keterangan' => 'Santri Laju'],
-                        ['nama' => 'Syahriah Pendidikan', 'nominal' => 55000],
+                        ['nama' => 'Iuran SOT', 'nominal' => 55000],
                         ['nama' => 'Tabungan Wajib Santri', 'nominal' => 25000],
                     ],
                 ];
@@ -312,6 +321,29 @@ class Student extends Authenticatable
 
 
     /**
+     * Dapatkan format tampilan tanggal lahir yang aman (mendukung d/m/Y, Y-m-d, d-m-Y, dsb.)
+     */
+    public function getTanggalLahirFormattedAttribute(): string
+    {
+        if (empty($this->tanggal_lahir)) {
+            return '—';
+        }
+
+        try {
+            $rawTgl = trim($this->tanggal_lahir);
+            if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $rawTgl)) {
+                return Carbon::createFromFormat('d/m/Y', $rawTgl)->translatedFormat('d M Y');
+            }
+            if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $rawTgl, $m)) {
+                return Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1])->translatedFormat('d M Y');
+            }
+            return Carbon::parse($rawTgl)->translatedFormat('d M Y');
+        } catch (\Throwable $e) {
+            return explode(' ', trim($this->tanggal_lahir))[0];
+        }
+    }
+
+    /**
      * Dapatkan format tanggal lahir standar untuk password default santri (DDMMYYYY)
      */
     public function getFormattedBirthdatePassword(): string
@@ -321,13 +353,41 @@ class Student extends Authenticatable
         }
 
         try {
-            $parsed = Carbon::parse($this->tanggal_lahir);
+            $rawTgl = trim($this->tanggal_lahir);
+            if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $rawTgl)) {
+                return Carbon::createFromFormat('d/m/Y', $rawTgl)->format('dmY');
+            }
+            $parsed = Carbon::parse($rawTgl);
             return $parsed->format('dmY'); // Contoh: 15052010
         } catch (\Throwable $e) {
             // Jika format tanggal disimpan sebagai string langsung bersihkan karakter non-angka
             $clean = preg_replace('/[^0-9]/', '', $this->tanggal_lahir);
             return !empty($clean) ? $clean : 'santri123';
         }
+    }
+
+    /**
+     * Dapatkan file Kartu Keluarga (KK), fallback ke berkas PSB jika ada
+     */
+    public function getBerkasKkAttribute(): ?string
+    {
+        return $this->file_kk ?: ($this->psbRegistration?->file_kk ?? null);
+    }
+
+    /**
+     * Dapatkan file KTP Orang Tua, fallback ke berkas PSB jika ada
+     */
+    public function getBerkasKtpOrtuAttribute(): ?string
+    {
+        return $this->file_ktp_ortu ?: ($this->psbRegistration?->file_ktp_ortu ?? null);
+    }
+
+    /**
+     * Dapatkan file Akta Kelahiran, fallback ke berkas PSB jika ada
+     */
+    public function getBerkasAktaAttribute(): ?string
+    {
+        return $this->file_akta_kelahiran ?: ($this->psbRegistration?->file_akta_kelahiran ?? null);
     }
 }
 

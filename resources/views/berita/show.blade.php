@@ -134,14 +134,27 @@
             font-size: 16px; color: #273b2d;
             line-height: 1.85; margin-bottom: 40px;
         }
-        .article-content p { margin-bottom: 20px; }
+        .article-content p {
+            margin-bottom: 22px;
+            line-height: 1.85;
+            text-align: justify;
+        }
         .article-content em { font-family: 'Grenze', Georgia, serif; font-size: 18px; color: var(--green-900); }
+        .article-content strong, .article-content b { font-weight: 700; color: var(--green-950); }
         .article-content h2, .article-content h3 {
             font-family: 'Grenze', Georgia, serif; color: var(--green-950);
             margin: 32px 0 14px; font-weight: 600;
         }
         .article-content h2 { font-size: 26px; }
         .article-content h3 { font-size: 22px; }
+        .article-content ul, .article-content ol {
+            margin: 16px 0 24px 24px;
+            color: #273b2d;
+        }
+        .article-content li {
+            margin-bottom: 8px;
+            line-height: 1.75;
+        }
         .article-content blockquote {
             border-left: 3px solid var(--green-500);
             background: var(--green-50); padding: 18px 24px;
@@ -289,7 +302,7 @@
                 @endif
 
                 <div class="article-content">
-                    {!! $article->content !!}
+                    {!! $article->formatted_content !!}
                 </div>
 
                 <!-- SHARE BUTTONS -->

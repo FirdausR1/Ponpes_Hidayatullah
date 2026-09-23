@@ -10,8 +10,9 @@
     selectedStudentId: '{{ $santriId ?? '' }}',
     selectedPsbId: '',
     searchQuery: '',
-    typeFilter: 'all', // 'all', 'santri', 'psb'
+    typeFilter: 'all', // 'all', 'santri', 'alumni', 'psb'
     selectedClassFilter: '',
+    selectedAngkatanFilter: '',
 
     // Raw collections from controller
     allStudents: {{ json_encode($activeStudents) }},
@@ -24,7 +25,7 @@
     tunggakanByMonth: [],
     totalTunggakanCount: 0,
     showTunggakanModal: false,
-    standardTariffs: { MAKAN: 300000, SYAHRIYAH: 85000, SOT: 55000, TAB: 25000 },
+    standardTariffs: { MAKAN: 300000, SYAHRIYAH: 30000, SOT: 55000, TAB: 25000 },
     currentMonthName: 'September',
     currentYear: '{{ date('Y') }}',
 
@@ -40,12 +41,13 @@
 
     // Calon PSB Specific State
     psbData: null,
-    psbShowBreakdown: false,
+    psbShowBreakdown: true,
     psbStandardNominal: 3220000,
     psbTerbayar: 0,
     psbSisa: 3220000,
     psbNominalInput: 3220000,
     psbChecked: true,
+    psbItems: [],
 
     // Checkout Parameters
     metodeBayar: 'Tunai',
@@ -91,7 +93,7 @@
             let st = this.allStudents.find(s => s.id == this.selectedStudentId);
             if (st) {
                 this.selectPerson({
-                    type: 'santri',
+                    type: st.status === 'Alumni' ? 'alumni' : (st.status === 'Mutasi' ? 'mutasi' : 'santri'),
                     id: st.id,
                     nama: st.nama_lengkap,
                     nomor: st.nis,
@@ -104,6 +106,8 @@
                     asrama: st.kamar_asrama,
                     foto: st.foto,
                     saldo_tabungan: st.saldo_tabungan || 0,
+                    status: st.status || 'Aktif',
+                    angkatan: st.angkatan || (st.tahun_masuk || ''),
                     raw: st
                 });
             }
@@ -113,8 +117,9 @@
     get allPeople() {
         let list = [];
         (this.allStudents || []).forEach(s => {
+            let pType = s.status === 'Alumni' ? 'alumni' : (s.status === 'Mutasi' ? 'mutasi' : 'santri');
             list.push({
-                type: 'santri',
+                type: pType,
                 id: s.id,
                 nama: s.nama_lengkap,
                 nomor: s.nis,
@@ -127,6 +132,8 @@
                 asrama: s.kamar_asrama,
                 foto: s.foto,
                 saldo_tabungan: s.saldo_tabungan || 0,
+                status: s.status || 'Aktif',
+                angkatan: s.angkatan || (s.tahun_masuk || ''),
                 raw: s
             });
         });
@@ -142,6 +149,8 @@
                 foto: p.pas_foto,
                 status_bayar: p.status_pembayaran,
                 nominal_bayar: p.nominal_pembayaran,
+                status: 'Calon PSB',
+                angkatan: '{{ date('Y') }}',
                 raw: p
             });
         });
@@ -150,13 +159,19 @@
 
     get filteredPeople() {
         return this.allPeople.filter(p => {
-            if (this.typeFilter !== 'all' && p.type !== this.typeFilter) return false;
+            if (this.typeFilter !== 'all') {
+                if (this.typeFilter === 'santri' && (p.type !== 'santri' || p.status !== 'Aktif')) return false;
+                if (this.typeFilter === 'alumni' && p.status !== 'Alumni') return false;
+                if (this.typeFilter === 'psb' && p.type !== 'psb') return false;
+            }
             if (this.selectedClassFilter !== '' && p.kelas !== this.selectedClassFilter) return false;
+            if (this.selectedAngkatanFilter !== '' && String(p.angkatan) !== String(this.selectedAngkatanFilter)) return false;
             if (this.searchQuery.trim() !== '') {
                 let q = this.searchQuery.toLowerCase();
                 let matches = (p.nama && p.nama.toLowerCase().includes(q)) ||
                               (p.nomor && p.nomor.toLowerCase().includes(q)) ||
-                              (p.kelas && p.kelas.toLowerCase().includes(q));
+                              (p.kelas && p.kelas.toLowerCase().includes(q)) ||
+                              (String(p.angkatan).includes(q));
                 if (!matches) return false;
             }
             return true;
@@ -191,6 +206,11 @@
         this.customItems = [{ pos_biaya: '', nominal: '', custom_name: '' }];
         this.tabunganWithdrawal = '';
         this.uangDiterima = '';
+        this.psbItems = [];
+        this.psbData = null;
+        this.psbNominalInput = 0;
+        this.psbTerbayar = 0;
+        this.psbSisa = 0;
     },
 
     loadStudentData(studentId) {
@@ -237,7 +257,12 @@
                 this.psbStandardNominal = data.standard_nominal || 3220000;
                 this.psbTerbayar = data.terbayar || 0;
                 this.psbSisa = data.sisa !== undefined ? data.sisa : this.psbStandardNominal;
-                this.psbNominalInput = this.psbSisa > 0 ? this.psbSisa : this.psbStandardNominal;
+                this.psbItems = (data.items_daftar_ulang || []).map(item => ({
+                    ...item,
+                    checked: item.checked !== undefined ? item.checked : (item.sisa > 0),
+                    nominal_input: item.nominal_input !== undefined ? item.nominal_input : (item.sisa > 0 ? item.sisa : 0)
+                }));
+                this.psbNominalInput = this.calculatePsbTotal();
                 this.psbChecked = true;
                 this.loadingBills = false;
                 this.uangDiterima = this.calculateTotal();
@@ -246,6 +271,44 @@
                 console.error(err);
                 this.loadingBills = false;
             });
+    },
+
+    togglePsbItem(it) {
+        if (it.is_lunas) return;
+        it.checked = !it.checked;
+        it.nominal_input = it.checked ? it.sisa : 0;
+        this.psbNominalInput = this.calculatePsbTotal();
+        this.uangDiterima = this.calculateTotal();
+    },
+
+    psbSelectAll(all = true) {
+        if (!this.psbItems) return;
+        this.psbItems.forEach(it => {
+            if (all) {
+                if (!it.is_lunas) {
+                    it.checked = true;
+                    it.nominal_input = it.sisa;
+                }
+            } else {
+                it.checked = false;
+                it.nominal_input = 0;
+            }
+        });
+        this.psbNominalInput = this.calculatePsbTotal();
+        this.uangDiterima = this.calculateTotal();
+    },
+
+    calculatePsbTotal() {
+        if (!this.psbItems || this.psbItems.length === 0) {
+            return this.psbChecked ? (parseFloat(this.psbNominalInput) || 0) : 0;
+        }
+        let tot = 0;
+        this.psbItems.forEach(it => {
+            if (it.checked) {
+                tot += parseFloat(it.nominal_input) || 0;
+            }
+        });
+        return tot;
     },
 
     // Quick Action Toggles
@@ -371,9 +434,7 @@
     calculateTotal() {
         let total = 0;
         if (this.paymentType === 'psb') {
-            if (this.psbChecked) {
-                total += parseFloat(this.psbNominalInput) || 0;
-            }
+            total = this.calculatePsbTotal();
         } else {
             this.studentBills.forEach(b => {
                 total += parseFloat(b.nominal_input) || 0;
@@ -542,7 +603,10 @@
                                     Semua (<span x-text="allPeople.length"></span>)
                                 </button>
                                 <button type="button" @click="typeFilter = 'santri'" :class="typeFilter === 'santri' ? 'bg-emerald-600 text-white shadow-xs font-semibold' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 font-medium'" class="px-3 py-1.5 rounded-lg text-xs transition">
-                                    Santri Aktif (<span x-text="allStudents.length"></span>)
+                                    Santri Aktif (<span x-text="allPeople.filter(p => p.type === 'santri' && p.status === 'Aktif').length"></span>)
+                                </button>
+                                <button type="button" @click="typeFilter = 'alumni'" :class="typeFilter === 'alumni' ? 'bg-amber-600 text-white shadow-xs font-semibold' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 font-medium'" class="px-3 py-1.5 rounded-lg text-xs transition">
+                                    🎓 Alumni (<span x-text="allPeople.filter(p => p.status === 'Alumni').length"></span>)
                                 </button>
                                 <button type="button" @click="typeFilter = 'psb'" :class="typeFilter === 'psb' ? 'bg-blue-600 text-white shadow-xs font-semibold' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300 font-medium'" class="px-3 py-1.5 rounded-lg text-xs transition">
                                     Calon Santri PSB (<span x-text="allPsbCandidates.length"></span>)
@@ -550,12 +614,21 @@
                             </div>
 
                             <!-- Filter & Search Controls -->
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                                 <div class="sm:col-span-2 relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                     </div>
-                                    <input type="text" x-model="searchQuery" placeholder="Ketik Nama, NIS, atau No. Registrasi PSB..." class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-300 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none">
+                                    <input type="text" x-model="searchQuery" placeholder="Ketik Nama, NIS, No. Stambuk, No. Reg..." class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-300 text-xs font-medium text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none">
+                                </div>
+
+                                <div>
+                                    <select x-model="selectedAngkatanFilter" class="w-full py-2.5 px-3 rounded-xl border border-gray-300 text-xs font-medium text-gray-700 focus:border-emerald-500 bg-white outline-none">
+                                        <option value="">Semua Angkatan</option>
+                                        @foreach($angkatanList ?? [] as $akt)
+                                            <option value="{{ $akt }}">Angkatan {{ $akt }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
 
                                 <div>
@@ -574,21 +647,25 @@
                                     <div @click="selectPerson(p)" class="p-3 bg-white hover:bg-emerald-50/60 border border-gray-200/90 hover:border-emerald-300 rounded-xl cursor-pointer transition flex items-center justify-between gap-3 shadow-2xs group">
                                         <div class="flex items-center gap-3">
                                             <!-- Avatar Initial -->
-                                            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs text-white" :class="p.type === 'santri' ? 'bg-gradient-to-br from-emerald-600 to-teal-700' : 'bg-gradient-to-br from-purple-600 to-indigo-700'">
+                                            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs text-white" :class="p.type === 'psb' ? 'bg-gradient-to-br from-purple-600 to-indigo-700' : (p.status === 'Alumni' ? 'bg-gradient-to-br from-amber-500 to-amber-700' : (p.status === 'Mutasi' ? 'bg-gradient-to-br from-rose-600 to-pink-700' : 'bg-gradient-to-br from-emerald-600 to-teal-700'))">
                                                 <span x-text="p.nama ? p.nama.charAt(0) : '?'"></span>
                                             </div>
                                             <div>
                                                 <div class="font-bold text-xs text-gray-900 group-hover:text-emerald-800 transition" x-text="p.nama"></div>
                                                 <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-1.5 mt-0.5">
-                                                    <!-- Badge Tipe -->
-                                                    <span class="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider" :class="p.type === 'santri' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800'" x-text="p.type === 'santri' ? 'Santri Aktif' : 'Calon PSB'"></span>
+                                                    <!-- Badge Status/Tipe Dinamis -->
+                                                    <span class="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider" 
+                                                          :class="p.type === 'psb' ? 'bg-purple-100 text-purple-800' : (p.status === 'Alumni' ? 'bg-amber-100 text-amber-900 border border-amber-300' : (p.status === 'Mutasi' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-emerald-100 text-emerald-800'))" 
+                                                          x-text="p.type === 'psb' ? 'Calon PSB' : (p.status === 'Alumni' ? 'Alumni' : (p.status === 'Mutasi' ? 'Santri Mutasi' : 'Santri Aktif'))">
+                                                    </span>
                                                     <!-- Badge Kategori Jenjang & Hunian -->
-                                                    <span x-show="p.type === 'santri' && p.kategori_label" class="px-1.5 py-0.2 rounded text-[10px] font-extrabold border shadow-2xs" :class="p.hunian === 'Mukim' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300'" x-text="p.kategori_label"></span>
+                                                    <span x-show="p.type !== 'psb' && p.kategori_label" class="px-1.5 py-0.2 rounded text-[10px] font-extrabold border shadow-2xs" :class="p.hunian === 'Mukim' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300'" x-text="p.kategori_label"></span>
                                                     <span>&bull;</span>
-                                                    <span x-text="(p.type === 'santri' ? 'NIS: ' : 'No Reg: ') + p.nomor" class="font-mono text-gray-700 font-semibold"></span>
+                                                    <span x-text="(p.type !== 'psb' ? 'NIS: ' : 'No Reg: ') + p.nomor" class="font-mono text-gray-700 font-semibold"></span>
                                                     <span>&bull;</span>
                                                     <span class="text-gray-600" x-text="p.kelas"></span>
-                                                    <span x-show="p.type === 'santri' && p.tarif_bulanan" class="text-[10px] text-emerald-700 font-bold ml-1 font-mono" x-text="'&bull; ' + formatRupiah(p.tarif_bulanan.total_bulanan) + '/bln'"></span>
+                                                    <span x-show="p.angkatan" class="text-gray-500 text-[10px] font-mono" x-text="'&bull; Angk. ' + p.angkatan"></span>
+                                                    <span x-show="p.type !== 'psb' && p.tarif_bulanan" class="text-[10px] text-emerald-700 font-bold ml-1 font-mono" x-text="'&bull; ' + formatRupiah(p.tarif_bulanan.total_bulanan) + '/bln'"></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -602,7 +679,7 @@
                                 </template>
 
                                 <div x-show="filteredPeople.length === 0" class="text-center py-8 text-gray-400 text-xs">
-                                    Tidak ada data santri atau calon PSB yang cocok dengan kata kunci pencarian.
+                                    Tidak ada data santri, alumni, atau calon PSB yang cocok dengan filter pencarian.
                                 </div>
                             </div>
                         </div>
@@ -620,7 +697,7 @@
                                 </button>
                             </div>
 
-                            <div class="p-4 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4" :class="paymentType === 'santri' ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900' : 'bg-gradient-to-r from-purple-900 via-indigo-800 to-slate-900'">
+                            <div class="p-4 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4" :class="paymentType === 'psb' ? 'bg-gradient-to-r from-purple-900 via-indigo-800 to-slate-900' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'bg-gradient-to-r from-amber-900 via-amber-800 to-stone-900' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900' : 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900'))">
                                 <div class="flex items-center gap-3.5">
                                     <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center text-xl font-bold shrink-0">
                                         <span x-text="selectedPerson ? selectedPerson.nama.charAt(0) : '?'"></span>
@@ -628,28 +705,36 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <h3 class="text-base font-black tracking-tight" x-text="selectedPerson ? selectedPerson.nama : ''"></h3>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase" :class="paymentType === 'santri' ? 'bg-emerald-300 text-emerald-950' : 'bg-amber-300 text-purple-950'" x-text="paymentType === 'santri' ? 'Santri Aktif' : 'Calon Santri PSB'"></span>
-                                            <span x-show="paymentType === 'santri' && selectedPerson && selectedPerson.kategori_label" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow-xs" :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-blue-200 text-blue-950 border border-blue-300'" x-text="selectedPerson ? selectedPerson.kategori_label : ''"></span>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase" 
+                                                  :class="paymentType === 'psb' ? 'bg-amber-300 text-purple-950' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'bg-amber-300 text-amber-950' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'bg-rose-300 text-rose-950' : 'bg-emerald-300 text-emerald-950'))" 
+                                                  x-text="paymentType === 'psb' ? 'Calon Santri PSB' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'Alumni' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'Santri Mutasi' : 'Santri Aktif'))">
+                                            </span>
+                                            <span x-show="paymentType !== 'psb' && selectedPerson && selectedPerson.kategori_label" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow-xs" :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-blue-200 text-blue-950 border border-blue-300'" x-text="selectedPerson ? selectedPerson.kategori_label : ''"></span>
                                         </div>
                                         <div class="text-xs text-emerald-200 flex flex-wrap items-center gap-2 mt-0.5">
-                                            <span x-text="(paymentType === 'santri' ? 'NIS: ' : 'No Reg: ') + (selectedPerson ? selectedPerson.nomor : '')" class="font-mono text-white font-bold"></span>
+                                            <span x-text="(paymentType !== 'psb' ? 'NIS: ' : 'No Reg: ') + (selectedPerson ? selectedPerson.nomor : '')" class="font-mono text-white font-bold"></span>
                                             <span>&bull;</span>
                                             <span class="px-2 py-0.5 rounded-md bg-white/20 text-white font-semibold" x-text="selectedPerson ? selectedPerson.kelas : ''"></span>
+                                            <span x-show="selectedPerson && selectedPerson.angkatan" class="text-white/80 font-mono" x-text="'&bull; Angkatan ' + selectedPerson.angkatan"></span>
                                             <span x-show="selectedPerson && selectedPerson.asrama" class="text-emerald-100" x-text="'&bull; ' + (selectedPerson ? selectedPerson.asrama : '')"></span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="text-right shrink-0 bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
-                                    <span class="text-[10px] uppercase font-bold text-emerald-200 block" x-text="paymentType === 'santri' ? 'Total Tunggakan Santri' : 'Sisa Biaya Masuk PSB'"></span>
-                                    <span class="text-base sm:text-lg font-black font-mono text-amber-300" x-text="formatRupiah(paymentType === 'santri' ? (studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0)) : psbSisa)"></span>
+                                    <span class="text-[10px] uppercase font-bold text-emerald-200 block" x-text="paymentType !== 'psb' ? 'Total Tunggakan Santri' : 'Sisa Biaya Masuk PSB'"></span>
+                                    <span class="text-base sm:text-lg font-black font-mono text-amber-300" x-text="formatRupiah(paymentType !== 'psb' ? (studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0)) : psbSisa)"></span>
 
-                                    <!-- Tombol Buka Rincian Tunggakan Per Bulan -->
-                                    <div class="mt-2" x-show="paymentType === 'santri' && tunggakanByMonth.length > 0">
-                                        <button type="button" @click="showTunggakanModal = true" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 text-[11px] font-black transition shadow-xs">
+                                    <!-- Tombol Rincian Tunggakan & Input Keringanan Pimpinan -->
+                                    <div class="mt-2 flex flex-wrap items-center justify-end gap-1.5" x-show="paymentType !== 'psb'">
+                                        <button type="button" @click="showTunggakanModal = true" x-show="tunggakanByMonth.length > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 text-[11px] font-black transition shadow-xs">
                                             <svg class="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                             <span>Rincian Tunggakan (<span x-text="tunggakanByMonth.length"></span> Periode)</span>
                                         </button>
+                                        <a :href="'{{ route('admin.pembayaran.potongan.index') }}'" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold transition shadow-xs" title="Kelola Keringanan & Potongan Biaya (SKTM / Kebijakan Pimpinan)">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span>⚡ Keringanan Pimpinan</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -707,84 +792,129 @@
                         <!-- JALUR A: TAGIHAN CALON SANTRI BARU (PSB)                  -->
                         <!-- ========================================================= -->
                         <div x-show="paymentType === 'psb'" class="space-y-4">
-                            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
                                         <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold">2</span>
                                         Rincian Biaya Administrasi &amp; Daftar Ulang PSB
                                     </h3>
-                                    <p class="text-xs text-gray-500">Calon santri baru dapat membayar lunas atau mencicil biaya masuk pesantren</p>
+                                    <p class="text-xs text-gray-500">Pilih item komponen biaya yang akan dibayarkan (bisa bayar total sekaligus atau per item)</p>
                                 </div>
-                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">PSB 2026/2027</span>
+                                <div class="flex items-center gap-2">
+                                    <span x-show="psbData && psbData.jenjang_label" class="px-2.5 py-1 rounded-full text-[11px] font-extrabold shadow-2xs" :class="psbData && psbData.hunian === 'Mukim' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-blue-100 text-blue-900 border border-blue-300'" x-text="psbData ? psbData.jenjang_label : ''"></span>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">PSB 2026/2027</span>
+                                </div>
                             </div>
 
-                            <div class="p-4 rounded-2xl border transition" :class="psbNominalInput > 0 ? 'bg-purple-50/40 border-purple-300' : 'bg-white border-gray-200'">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div class="flex items-start gap-3">
-                                        <input type="checkbox" x-model="psbChecked" @change="psbNominalInput = psbChecked ? (psbSisa > 0 ? psbSisa : psbStandardNominal) : 0" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300 mt-1 cursor-pointer">
-                                        <div>
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <span class="px-2 py-0.5 rounded-md font-mono font-black text-[10px] bg-purple-200 text-purple-900 tracking-wide">DAFTAR ULANG</span>
-                                                <span class="font-bold text-xs text-gray-900">Pendaftaran &amp; Daftar Ulang PSB</span>
-                                                <!-- Badge Jenjang & Tipe Hunian (Mukim / Laju) -->
-                                                <span x-show="psbData && psbData.jenjang_label" class="px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold shadow-2xs" :class="psbData && psbData.hunian === 'Mukim' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-blue-100 text-blue-900 border border-blue-300'" x-text="psbData ? psbData.jenjang_label : ''"></span>
-                                            </div>
-                                            
-                                            <!-- Rincian Biaya Awal -->
-                                            <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-1.5">
-                                                <span>Total Biaya Masuk: <strong class="text-gray-800 font-mono font-bold" x-text="formatRupiah(psbData ? psbData.total_biaya_masuk : psbStandardNominal)"></strong></span>
-                                                <span>&bull;</span>
-                                                <span>Biaya Pendaftaran: <strong :class="psbData && psbData.pendaftaran_lunas ? 'text-emerald-700' : 'text-amber-700'" x-text="psbData && psbData.pendaftaran_lunas ? 'Rp 200.000 (✓ Lunas)' : 'Rp 200.000 (Belum Lunas)'"></strong></span>
-                                                <span>&bull;</span>
-                                                <span>Sisa Tagihan Daftar Ulang: <strong class="text-rose-600 font-mono font-bold" x-text="formatRupiah(psbSisa)"></strong></span>
-                                                <span>&bull;</span>
-                                                <span>Terbayar: <strong class="text-emerald-700" x-text="formatRupiah(psbTerbayar)"></strong></span>
+                            <!-- Ringkasan Status Biaya Masuk (4 Kartu) -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-2xl bg-purple-50/50 border border-purple-100 text-xs">
+                                <div class="bg-white p-2.5 rounded-xl border border-purple-100">
+                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Total Biaya Masuk</span>
+                                    <span class="text-xs font-black font-mono text-gray-800" x-text="formatRupiah(psbData ? psbData.total_biaya_masuk : psbStandardNominal)"></span>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-purple-100">
+                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Biaya Formulir</span>
+                                    <span class="text-xs font-bold font-mono" :class="psbData && psbData.pendaftaran_lunas ? 'text-emerald-700' : 'text-amber-700'" x-text="psbData && psbData.pendaftaran_lunas ? 'Rp 200.000 (✓ Lunas)' : 'Rp 200.000 (Belum)'"></span>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-purple-100">
+                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Sudah Terbayar</span>
+                                    <span class="text-xs font-black font-mono text-emerald-700" x-text="formatRupiah(psbTerbayar)"></span>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-purple-100">
+                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Sisa Tagihan</span>
+                                    <span class="text-xs font-black font-mono text-rose-600" x-text="formatRupiah(psbSisa)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Action Bar: Tombol Quick Action -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+                                <div class="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                                    <span>Pilih Item yang Mau Dibayar:</span>
+                                    <span class="text-[11px] font-normal text-gray-500">(Bisa bayar penuh atau cicilan per item)</span>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" @click="psbSelectAll(true)" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-xs transition active:scale-95">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        <span>Bayar Semua / Lunasi Total</span>
+                                    </button>
+                                    <button type="button" @click="psbSelectAll(false)" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-gray-100 text-gray-700 text-xs font-semibold transition border border-gray-300 active:scale-95" title="Kosongkan pilihan agar bisa pilih item yang mana dulu">
+                                        Kosongkan
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- List Komponen Biaya Per-Item -->
+                            <div class="space-y-2">
+                                <template x-for="(item, idx) in (psbItems || [])" :key="idx">
+                                    <div class="p-3.5 rounded-xl border transition"
+                                         :class="item.is_lunas ? 'bg-emerald-50/50 border-emerald-200 opacity-90' : (item.checked && item.nominal_input > 0 ? 'bg-purple-50/60 border-purple-300 shadow-2xs' : 'bg-white border-gray-200 hover:border-gray-300')">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div class="flex items-start gap-3">
+                                                <input type="checkbox"
+                                                       :checked="item.checked"
+                                                       :disabled="item.is_lunas"
+                                                       @change="togglePsbItem(item)"
+                                                       class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300 mt-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                                                <div>
+                                                    <div class="flex flex-wrap items-center gap-1.5">
+                                                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono tracking-wide"
+                                                              :class="item.is_lunas ? 'bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-purple-100 text-purple-900 border border-purple-200'"
+                                                              x-text="item.pos_biaya"></span>
+                                                        <span class="font-bold text-xs text-gray-900" x-text="item.nama"></span>
+                                                        <span x-show="item.keterangan" class="text-[10px] text-gray-500 font-normal italic" x-text="'(' + item.keterangan + ')'"></span>
+                                                        <span x-show="item.is_lunas" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ LUNAS</span>
+                                                    </div>
+                                                    <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-1">
+                                                        <span>Tarif Resmi: <strong class="text-gray-800 font-mono" x-text="formatRupiah(item.nominal)"></strong></span>
+                                                        <span>&bull;</span>
+                                                        <span>Terbayar: <strong class="text-emerald-700 font-mono" x-text="formatRupiah(item.terbayar)"></strong></span>
+                                                        <span>&bull;</span>
+                                                        <span>Sisa Tagihan: <strong class="font-mono font-bold" :class="item.sisa > 0 ? 'text-rose-600' : 'text-gray-400'" x-text="formatRupiah(item.sisa)"></strong></span>
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <!-- Toggle Lihat Rincian 9 Item -->
-                                            <div class="mt-2">
-                                                <button type="button" @click="psbShowBreakdown = !psbShowBreakdown" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-100/70 hover:bg-purple-100 px-2.5 py-1 rounded-md transition">
-                                                    <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                                    <span x-text="psbShowBreakdown ? 'Sembunyikan Rincian 9 Item Biaya' : 'Lihat Rincian 9 Item Komponen Biaya Resmi'"></span>
-                                                    <span x-text="psbShowBreakdown ? '▲' : '▼'" class="text-[9px]"></span>
+                                            <!-- Input Nominal Bayar per Pos -->
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                                <input type="hidden" :name="'psb_items[' + idx + '][pos_biaya]'" :value="item.pos_biaya">
+                                                <input type="hidden" :name="'psb_items[' + idx + '][nama]'" :value="item.nama">
+                                                <div class="relative">
+                                                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 text-xs font-bold pointer-events-none">Rp</span>
+                                                    <input type="number"
+                                                           :name="'psb_items[' + idx + '][nominal]'"
+                                                           x-model="item.nominal_input"
+                                                           min="0"
+                                                           :max="item.sisa"
+                                                           :disabled="item.is_lunas"
+                                                           @input="item.checked = (parseFloat(item.nominal_input) > 0); psbNominalInput = calculatePsbTotal(); uangDiterima = calculateTotal();"
+                                                           placeholder="0"
+                                                           class="w-28 sm:w-32 pl-8 pr-2 py-1.5 rounded-lg border border-gray-300 text-xs font-mono font-bold text-gray-900 text-right focus:border-purple-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                                                </div>
+                                                <button type="button"
+                                                        x-show="!item.is_lunas"
+                                                        @click="item.nominal_input = item.sisa; item.checked = true; psbNominalInput = calculatePsbTotal(); uangDiterima = calculateTotal();"
+                                                        class="px-2 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 text-[11px] font-bold transition"
+                                                        title="Lunasi Sisa Pos Ini">
+                                                    Pas
+                                                </button>
+                                                <button type="button"
+                                                        x-show="!item.is_lunas"
+                                                        @click="item.nominal_input = Math.round(item.sisa / 2); item.checked = true; psbNominalInput = calculatePsbTotal(); uangDiterima = calculateTotal();"
+                                                        class="px-2 py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 text-[11px] font-bold transition"
+                                                        title="Cicil Setengah Pos Ini">
+                                                    ½
+                                                </button>
+                                                <button type="button"
+                                                        x-show="!item.is_lunas"
+                                                        @click="item.nominal_input = 0; item.checked = false; psbNominalInput = calculatePsbTotal(); uangDiterima = calculateTotal();"
+                                                        class="px-2 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-semibold transition"
+                                                        title="Kosongkan Pos Ini">
+                                                    0
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <!-- Input Nominal Pembayaran PSB -->
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <div class="relative">
-                                            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 text-xs font-bold pointer-events-none">Rp</span>
-                                            <input type="number" x-model="psbNominalInput" min="0" :max="psbStandardNominal" placeholder="0" class="w-36 pl-8 pr-2 py-1.5 rounded-xl border border-gray-300 text-xs font-black text-purple-900 text-right focus:border-purple-500 outline-none">
-                                        </div>
-                                        <button type="button" @click="psbNominalInput = (psbSisa > 0 ? psbSisa : psbStandardNominal); psbChecked = true" class="px-2 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 text-[11px] font-bold transition" title="Lunasi Sisa">
-                                            Pas
-                                        </button>
-                                        <button type="button" @click="psbNominalInput = Math.round((psbSisa > 0 ? psbSisa : psbStandardNominal) / 2); psbChecked = true" class="px-2 py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 text-[11px] font-bold transition" title="Cicil Setengah">
-                                            ½
-                                        </button>
-                                        <button type="button" @click="psbNominalInput = 0; psbChecked = false" class="px-2 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-semibold transition">
-                                            0
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Accordion Rincian 9 Item Biaya Resmi -->
-                                <div x-show="psbShowBreakdown" x-transition class="mt-4 pt-3 border-t border-purple-200 text-xs">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="font-bold text-gray-800 uppercase tracking-wider text-[10px]">Rincian Komponen Biaya Resmi Sesuai Brosur SK Pondok</span>
-                                        <span class="text-[10px] text-gray-500 font-semibold" x-text="'Kategori: ' + (psbData ? psbData.jenjang_label : '')"></span>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        <template x-for="(item, idx) in (psbData ? psbData.items_daftar_ulang : [])" :key="idx">
-                                            <div class="flex items-center justify-between px-3 py-1.5 bg-white rounded-lg border border-purple-100 text-[11px]">
-                                                <span class="text-gray-700 font-medium" x-text="item.nama"></span>
-                                                <span class="font-bold text-gray-900 font-mono" x-text="formatRupiah(item.nominal)"></span>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
+                                </template>
                             </div>
                         </div>
 
@@ -1207,13 +1337,26 @@
                             <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider block mb-1">Rincian Pos yang Dibayar:</span>
 
                             <!-- If PSB -->
-                            <template x-if="paymentType === 'psb' && psbChecked && psbNominalInput > 0">
-                                <div class="flex items-center justify-between text-gray-800 py-1">
-                                    <div>
-                                        <strong class="font-mono text-purple-800">PENDAFTARAN PSB</strong>
-                                        <span class="text-[11px] text-gray-500 block">Daftar Ulang / Pendaftaran PSB</span>
-                                    </div>
-                                    <span class="font-mono font-bold text-gray-900" x-text="formatRupiah(psbNominalInput)"></span>
+                            <template x-if="paymentType === 'psb'">
+                                <div class="space-y-1">
+                                    <template x-for="(it, idx) in (psbItems || []).filter(x => x.checked && x.nominal_input > 0)" :key="'psb_struk_' + idx">
+                                        <div class="flex items-center justify-between text-gray-800 py-1 border-b border-gray-100 last:border-0">
+                                            <div>
+                                                <strong class="font-mono text-purple-800" x-text="it.pos_biaya"></strong>
+                                                <span class="text-[11px] text-gray-500 block truncate max-w-[170px]" x-text="it.nama"></span>
+                                            </div>
+                                            <span class="font-mono font-bold text-gray-900" x-text="formatRupiah(it.nominal_input)"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="(!psbItems || psbItems.length === 0) && psbChecked && psbNominalInput > 0">
+                                        <div class="flex items-center justify-between text-gray-800 py-1">
+                                            <div>
+                                                <strong class="font-mono text-purple-800">DAFTAR ULANG</strong>
+                                                <span class="text-[11px] text-gray-500 block">Daftar Ulang PSB</span>
+                                            </div>
+                                            <span class="font-mono font-bold text-gray-900" x-text="formatRupiah(psbNominalInput)"></span>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
 

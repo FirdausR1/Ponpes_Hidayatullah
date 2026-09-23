@@ -128,7 +128,7 @@ class PaymentController extends Controller
             })->sum('nominal');
         $totalTunggakan = StudentBill::where('status', '!=', 'Lunas')
             ->where('penangguhan_wisuda', false)
-            ->whereHas('student', fn($q) => $q->where('status', 'Aktif'))
+            ->whereHas('student', fn($q) => $q->whereIn('status', ['Aktif', 'Alumni']))
             ->sum('sisa_tagihan');
         $psbPendingVerify = PsbRegistration::whereNotNull('bukti_transfer')
             ->where($eligiblePsbScope)
@@ -188,18 +188,31 @@ class PaymentController extends Controller
         }
         $studentPayments = $santriQuery->paginate(15, ['*'], 'page_santri')->withQueryString();
 
-        // Santri aktif untuk kasir
-        $activeStudents = Student::where('status', 'Aktif')
+        // Santri aktif, alumni, dan santri mutasi bertagihan untuk kasir POS
+        $activeStudents = Student::where(function($q) {
+                $q->where('status', 'Aktif')
+                  ->orWhere('status', 'Alumni')
+                  ->orWhere('status', 'Mutasi')
+                  ->orWhereHas('bills', fn($b) => $b->where('status', '!=', 'Lunas'));
+            })
             ->orderBy('nama_lengkap')
-            ->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang', 'kamar_asrama', 'foto', 'dormitory_id'])
+            ->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang', 'kamar_asrama', 'foto', 'dormitory_id', 'status', 'tahun_masuk'])
             ->map(function ($s) {
                 $s->saldo_tabungan = $s->saldo_tabungan; // Append property dynamically
                 $s->hunian = $s->hunian;
                 $s->jenjang_short = $s->jenjang_short;
-                $s->kategori_label = $s->kategori_label;
+                $s->kategori_label = ($s->status === 'Alumni') ? 'Alumni' : (($s->status === 'Mutasi') ? 'Santri Mutasi' : $s->kategori_label);
                 $s->tarif_bulanan = $s->tarif_bulanan;
+                $s->angkatan = $s->tahun_masuk ?: date('Y');
                 return $s;
             });
+
+        $angkatanList = Student::select('tahun_masuk')->distinct()->whereNotNull('tahun_masuk')->pluck('tahun_masuk')->map(fn($y) => (int)$y)->filter()->unique()->values()->toArray();
+        if (empty($angkatanList)) {
+            $curY = (int) date('Y');
+            $angkatanList = [$curY, $curY - 1, $curY - 2, $curY - 3];
+        }
+        rsort($angkatanList);
 
         // Calon Santri Baru (PSB) yang berhak bayar (bisa dicari di Kasir POS)
         $psbCandidates = PsbRegistration::whereNull('status')->orWhere('status', '!=', 'Ditolak')
@@ -229,7 +242,8 @@ class PaymentController extends Controller
             'classrooms',
             'posBiayaList',
             'kkm',
-            'filterKelulusan'
+            'filterKelulusan',
+            'angkatanList'
         ));
     }
 
@@ -260,7 +274,7 @@ class PaymentController extends Controller
         $isMA = strtoupper($student->jenjang ?? '') === 'MA' || str_contains(strtoupper($student->jenjang ?? ''), 'MA');
 
         $tarifMakan = $isMukim ? 300000 : 0;
-        $tarifSyahriyah = $isMA ? ($isMukim ? 105000 : 75000) : ($isMukim ? 85000 : 55000);
+        $tarifSyahriyah = $isMukim ? 30000 : 0;
         $tarifTabungan = 25000;
         $tarifSot = $isMA ? 75000 : 55000;
 
@@ -376,7 +390,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * AJAX: Ambil data calon santri baru PSB untuk Kasir POS (Sesuai Struktur Tarif Resmi).
+     * AJAX: Ambil data calon santri baru PSB untuk Kasir POS (Sesuai Struktur Tarif Resmi & Terinci Per Item).
      */
     public function getPsbBillsAjax($psbId)
     {
@@ -386,17 +400,107 @@ class PaymentController extends Controller
         $biayaPendaftaran = $tarif['biaya_pendaftaran'];
         $pendaftaranLunas = ($psb->status_pembayaran === 'Lunas');
 
-        // Total biaya masuk dan sisa tagihan daftar ulang
+        // Total biaya masuk dan standar tagihan daftar ulang
         $totalMasuk = $tarif['total_biaya_masuk'];
         $standardDaftarUlang = $tarif['sisa_daftar_ulang'];
 
-        // Cek pembayaran daftar ulang yang sudah tercatat di StudentPayment (di luar pendaftaran 200rb)
-        $payments = StudentPayment::where('psb_registration_id', $psb->id)
-            ->where('status', 'Lunas')
-            ->get();
+        $student = Student::where('psb_registration_id', $psb->id)->first();
+
+        // Cek pembayaran daftar ulang yang sudah tercatat di StudentPayment
+        $payments = StudentPayment::where(function ($q) use ($psb, $student) {
+            $q->where('psb_registration_id', $psb->id);
+            if ($student) {
+                $q->orWhere('student_id', $student->id);
+            }
+        })
+        ->where('status', 'Lunas')
+        ->get();
         
         $terbayarDaftarUlang = (float) $payments->where('jenis_pembayaran', '!=', 'BIAYA PENDAFTARAN PSB')->sum('nominal');
         $sisaDaftarUlang = max(0, $standardDaftarUlang - $terbayarDaftarUlang);
+
+        // Ambil riwayat StudentPaymentItem untuk memetakan pembayaran yang sudah masuk per pos
+        $paymentItems = StudentPaymentItem::whereIn('payment_id', $payments->pluck('id'))->get();
+        $studentBills = $student ? StudentBill::where('student_id', $student->id)->get() : collect();
+
+        $enrichedItems = [];
+
+        foreach ($tarif['items_daftar_ulang'] as $it) {
+            $nama = $it['nama'];
+            $pos = $it['pos_biaya'] ?? PsbRegistration::mapItemToPosBiaya($nama);
+            $nominal = (float) $it['nominal'];
+
+            // Jika komponen adalah Biaya Pendaftaran PSB
+            if (stripos($nama, 'pendaftaran') !== false) {
+                $enrichedItems[] = [
+                    'nama' => $nama,
+                    'pos_biaya' => $pos,
+                    'keterangan' => 'Biaya Registrasi Formulir Awal',
+                    'nominal' => $nominal,
+                    'terbayar' => $pendaftaranLunas ? $nominal : 0,
+                    'sisa' => $pendaftaranLunas ? 0 : $nominal,
+                    'is_lunas' => $pendaftaranLunas,
+                    'is_pendaftaran_awal' => true,
+                    'checked' => !$pendaftaranLunas,
+                    'nominal_input' => $pendaftaranLunas ? 0 : $nominal,
+                ];
+                continue;
+            }
+
+            if ($nominal <= 0) {
+                continue;
+            }
+
+            // Hitung nominal yang telah dibayar khusus pos/item ini
+            $paidForItem = (float) $paymentItems->filter(function ($pi) use ($pos, $nama) {
+                return strtoupper($pi->pos_biaya) === strtoupper($pos) 
+                    || stripos($pi->pos_biaya, $pos) !== false 
+                    || stripos($pi->keterangan ?? '', $nama) !== false;
+            })->sum('nominal');
+
+            // Cek juga dari data StudentBill jika santri sudah aktif
+            $matchingBill = $studentBills->first(function ($sb) use ($pos, $nama) {
+                return strtoupper($sb->pos_biaya) === strtoupper($pos) || stripos($sb->judul_tagihan, $nama) !== false;
+            });
+            if ($matchingBill && $matchingBill->nominal_bayar > $paidForItem) {
+                $paidForItem = (float) $matchingBill->nominal_bayar;
+            }
+
+            $sisaItem = max(0, $nominal - $paidForItem);
+
+            $enrichedItems[] = [
+                'nama' => $nama,
+                'pos_biaya' => $pos,
+                'keterangan' => $it['keterangan'] ?? null,
+                'nominal' => $nominal,
+                'terbayar' => $paidForItem,
+                'sisa' => $sisaItem,
+                'is_lunas' => $sisaItem <= 0,
+                'is_pendaftaran_awal' => false,
+                'checked' => $sisaItem > 0,
+                'nominal_input' => $sisaItem > 0 ? $sisaItem : 0,
+            ];
+        }
+
+        // Alokasikan pembayaran lama gelondongan jika ada pembayaran yang belum tercatat per pos
+        $totalItemPaid = collect($enrichedItems)->where('is_pendaftaran_awal', false)->sum('terbayar');
+        if ($terbayarDaftarUlang > $totalItemPaid) {
+            $unallocated = $terbayarDaftarUlang - $totalItemPaid;
+            foreach ($enrichedItems as &$eItem) {
+                if ($eItem['is_pendaftaran_awal']) continue;
+                if ($unallocated <= 0) break;
+                if ($eItem['sisa'] > 0) {
+                    $alloc = min($unallocated, $eItem['sisa']);
+                    $eItem['terbayar'] += $alloc;
+                    $eItem['sisa'] = max(0, $eItem['nominal'] - $eItem['terbayar']);
+                    $eItem['is_lunas'] = $eItem['sisa'] <= 0;
+                    $eItem['checked'] = $eItem['sisa'] > 0;
+                    $eItem['nominal_input'] = $eItem['sisa'] > 0 ? $eItem['sisa'] : 0;
+                    $unallocated -= $alloc;
+                }
+            }
+            unset($eItem);
+        }
 
         return response()->json([
             'psb' => $psb,
@@ -411,7 +515,7 @@ class PaymentController extends Controller
             'terbayar' => $terbayarDaftarUlang,
             'sisa' => $sisaDaftarUlang,
             'status_pembayaran' => $sisaDaftarUlang <= 0 ? 'Lunas' : ($terbayarDaftarUlang > 0 ? 'Cicilan' : 'Belum Bayar'),
-            'items_daftar_ulang' => $tarif['items_daftar_ulang'],
+            'items_daftar_ulang' => $enrichedItems,
             'items_bulanan' => $tarif['items_bulanan'],
         ]);
     }
@@ -431,6 +535,7 @@ class PaymentController extends Controller
             'keterangan_periode' => 'nullable|string|max:100',
             'bukti_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'items' => 'nullable|array',
+            'psb_items' => 'nullable|array',
             'single_pos' => 'nullable|string',
             'single_nominal' => 'nullable|numeric|min:1000',
             'psb_nominal' => 'nullable|numeric|min:1000',
@@ -452,10 +557,33 @@ class PaymentController extends Controller
             $reg = PsbRegistration::findOrFail($request->psb_id);
             $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
             $standardPsb = $tarif['sisa_daftar_ulang'];
-            $nominalBayar = floatval($request->input('psb_nominal', $request->input('single_nominal', $standardPsb)));
+
+            // Kumpulkan item-item yang dibayar dari psb_items
+            $itemsToPay = [];
+            $totalFromItems = 0;
+
+            if ($request->has('psb_items') && is_array($request->psb_items)) {
+                foreach ($request->psb_items as $pItem) {
+                    $itemNom = floatval($pItem['nominal'] ?? 0);
+                    if ($itemNom > 0) {
+                        $pNama = trim($pItem['nama'] ?? '');
+                        $pPos = trim($pItem['pos_biaya'] ?? '') ?: PsbRegistration::mapItemToPosBiaya($pNama);
+                        $itemsToPay[] = [
+                            'pos_biaya' => $pPos,
+                            'nama' => $pNama ?: $pPos,
+                            'nominal' => $itemNom,
+                        ];
+                        $totalFromItems += $itemNom;
+                    }
+                }
+            }
+
+            $nominalBayar = $totalFromItems > 0 
+                ? $totalFromItems 
+                : floatval($request->input('psb_nominal', $request->input('single_nominal', $standardPsb)));
 
             if ($nominalBayar <= 0) {
-                return redirect()->back()->with('error', 'Masukkan nominal pembayaran PSB yang valid!');
+                return redirect()->back()->with('error', 'Masukkan nominal pembayaran atau pilih minimal satu item komponen biaya yang valid!');
             }
 
             // Hitung total terbayar daftar ulang
@@ -499,30 +627,61 @@ class PaymentController extends Controller
                 'penerima_nama' => auth()->user()->name ?? 'Bendahara Pesantren',
             ]);
 
-            $item = StudentPaymentItem::create([
-                'payment_id' => $payment->id,
-                'pos_biaya' => 'DAFTAR ULANG',
-                'nominal' => $nominalBayar,
-                'keterangan' => "PSB: {$reg->no_registrasi} - {$reg->nama_lengkap} ({$tarif['kategori_label']})",
-            ]);
+            // Simpan masing-masing item transaksi per pos
+            if (!empty($itemsToPay)) {
+                foreach ($itemsToPay as $it) {
+                    $matchingBillId = null;
+                    if ($student) {
+                        $bill = StudentBill::where('student_id', $student->id)
+                            ->where(function ($q) use ($it) {
+                                $q->where('pos_biaya', $it['pos_biaya'])
+                                  ->orWhere('judul_tagihan', 'like', '%' . $it['nama'] . '%');
+                            })
+                            ->first();
 
-            // Jika santri sudah aktif, sinkronkan ke StudentBill miliknya
-            if ($student) {
-                $bill = StudentBill::where('student_id', $student->id)
-                    ->where(function ($q) {
-                        $q->where('pos_biaya', 'DAFTAR ULANG')
-                          ->orWhere('pos_biaya', 'like', '%DAFTAR ULANG%')
-                          ->orWhere('kategori', 'daftar_ulang');
-                    })
-                    ->first();
+                        if ($bill) {
+                            $bill->nominal_bayar += $it['nominal'];
+                            $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $bill->nominal_bayar);
+                            $bill->status = $bill->sisa_tagihan <= 0 ? 'Lunas' : 'Cicilan';
+                            $bill->save();
+                            $matchingBillId = $bill->id;
+                        }
+                    }
 
-                if ($bill) {
-                    $bill->nominal_bayar += $nominalBayar;
-                    $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $bill->nominal_bayar);
-                    $bill->status = $bill->sisa_tagihan <= 0 ? 'Lunas' : 'Cicilan';
-                    $bill->save();
+                    StudentPaymentItem::create([
+                        'payment_id' => $payment->id,
+                        'student_bill_id' => $matchingBillId,
+                        'pos_biaya' => $it['pos_biaya'],
+                        'nominal' => $it['nominal'],
+                        'keterangan' => "PSB: {$reg->no_registrasi} - {$reg->nama_lengkap} ({$it['nama']})",
+                    ]);
+                }
+            } else {
+                // Fallback jika pembayaran gelondongan tanpa rincian item
+                $item = StudentPaymentItem::create([
+                    'payment_id' => $payment->id,
+                    'pos_biaya' => 'DAFTAR ULANG',
+                    'nominal' => $nominalBayar,
+                    'keterangan' => "PSB: {$reg->no_registrasi} - {$reg->nama_lengkap} ({$tarif['kategori_label']})",
+                ]);
 
-                    $item->update(['student_bill_id' => $bill->id]);
+                if ($student) {
+                    $bill = StudentBill::where('student_id', $student->id)
+                        ->where(function ($q) {
+                            $q->where('pos_biaya', 'DAFTAR ULANG')
+                              ->orWhere('pos_biaya', 'like', '%DAFTAR ULANG%')
+                              ->orWhere('kategori', 'daftar_ulang');
+                        })
+                        ->first();
+
+                    if ($bill) {
+                        $bill->nominal_bayar += $nominalBayar;
+                        $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $bill->nominal_bayar);
+                        $bill->status = $bill->sisa_tagihan <= 0 ? 'Lunas' : 'Cicilan';
+                        $bill->save();
+
+                        $item->update(['student_bill_id' => $bill->id]);
+                    }
                 }
             }
 
@@ -794,7 +953,7 @@ class PaymentController extends Controller
             ->count('student_id');
 
         $classrooms = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->get();
-        $activeStudents = Student::where('status', 'Aktif')->orderBy('nama_lengkap')->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang']);
+        $activeStudents = Student::whereIn('status', ['Aktif', 'Alumni'])->orderBy('nama_lengkap')->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang', 'status']);
         $posBiayaList = self::POS_BIAYA_LIST;
 
         return view('admin.pembayaran.tagihan', compact(
@@ -817,14 +976,16 @@ class PaymentController extends Controller
     }
 
     /**
-     * Terbitkan Tagihan Rutin Bulanan (Otomatis Sesuai Setting & Potongan SKTM/Beasiswa).
+     * Terbitkan Tagihan Bulanan (Massal / Per Kelas / Perorangan Satu Santri)
      */
     public function terbitkanTagihanBulanan(Request $request)
     {
         $validated = $request->validate([
             'bulan' => 'required|string|max:30', // Januari s.d. Desember
             'tahun' => 'required|string|max:10',
-            'target_jenjang' => 'required|string|in:all,MTs,MA',
+            'target_jenjang' => 'required|string|in:all,MTs,MA,kelas,santri',
+            'target_santri_id' => 'nullable|exists:students,id',
+            'target_kelas' => 'nullable|string',
             'pos_bulanan' => 'nullable|array',
             'pos_bulanan.*' => 'string|in:MAKAN,SYAHRIYAH,SOT,TAB',
             'jatuh_tempo' => 'nullable|date',
@@ -838,14 +999,24 @@ class PaymentController extends Controller
             $selectedPos = ['MAKAN', 'SYAHRIYAH', 'SOT', 'TAB'];
         }
 
-        $query = Student::where('status', 'Aktif');
-        if ($validated['target_jenjang'] !== 'all') {
-            $query->where('jenjang', 'like', '%' . $validated['target_jenjang'] . '%');
+        if ($validated['target_jenjang'] === 'santri') {
+            $students = Student::whereIn('status', ['Aktif', 'Alumni'])
+                ->where('id', $request->input('target_santri_id'))
+                ->get();
+        } elseif ($validated['target_jenjang'] === 'kelas') {
+            $students = Student::where('status', 'Aktif')
+                ->where('kelas', $request->input('target_kelas'))
+                ->get();
+        } elseif ($validated['target_jenjang'] === 'MTs' || $validated['target_jenjang'] === 'MA') {
+            $students = Student::where('status', 'Aktif')
+                ->where('jenjang', 'like', '%' . $validated['target_jenjang'] . '%')
+                ->get();
+        } else {
+            $students = Student::where('status', 'Aktif')->get();
         }
-        $students = $query->get();
 
         if ($students->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada santri aktif yang ditemukan untuk jenjang tersebut.');
+            return redirect()->back()->with('error', 'Tidak ada data santri yang sesuai dengan sasaran target tersebut.');
         }
 
         // Ambil tarif bulanan dinamis dari Pengaturan Master Tarif
@@ -859,7 +1030,7 @@ class PaymentController extends Controller
             $fieldKey = ($isMA ? 'ma_' : 'mts_') . ($isMukim ? 'mukim' : 'laju');
 
             $tarifMakan = $isMukim ? 300000 : 0;
-            $tarifSyahriyah = $isMA ? ($isMukim ? 105000 : 75000) : ($isMukim ? 85000 : 55000);
+            $tarifSyahriyah = $isMukim ? 30000 : 0;
             $tarifTabungan = 25000;
             $tarifSot = $isMA ? 75000 : 55000;
 
@@ -1052,8 +1223,8 @@ class PaymentController extends Controller
                     // Tabungan wajib standar
                     $nominalSantri = 25000;
                 } elseif ($pos === 'SYAHRIYAH') {
-                    // Syahriyah: MA Mukim 105k, MA Laju 75k, MTs Mukim 85k, MTs Laju 55k
-                    $nominalSantri = $isMA ? ($isMukim ? 105000 : 75000) : ($isMukim ? 85000 : 55000);
+                    // Syahriyah murni: Rp 30.000 untuk santri mukim
+                    $nominalSantri = $isMukim ? 30000 : 0;
                 } else {
                     $nominalSantri = $inputNominal;
                 }
@@ -3050,7 +3221,8 @@ class PaymentController extends Controller
 
         $defaultBiayaBulanan = [
             ['komponen' => 'Uang Makan 3x Sehari', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => '—', 'is_total' => false],
-            ['komponen' => 'Syahriyah Pendidikan', 'mts_mukim' => 'Rp 85.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 105.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
+            ['komponen' => 'Syahriyah Pendidikan', 'mts_mukim' => 'Rp 30.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 30.000', 'ma_laju' => '—', 'is_total' => false],
+            ['komponen' => 'Iuran SOT', 'mts_mukim' => 'Rp 55.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 75.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
             ['komponen' => 'Tabungan Wajib Santri', 'mts_mukim' => 'Rp 25.000', 'mts_laju' => 'Rp 25.000', 'ma_mukim' => 'Rp 25.000', 'ma_laju' => 'Rp 25.000', 'is_total' => false],
             ['komponen' => 'TOTAL IURAN BULANAN', 'mts_mukim' => 'Rp 410.000 / bln', 'mts_laju' => 'Rp 80.000 / bln', 'ma_mukim' => 'Rp 430.000 / bln', 'ma_laju' => 'Rp 100.000 / bln', 'is_total' => true],
         ];
@@ -3116,7 +3288,26 @@ class PaymentController extends Controller
             Setting::set('biaya_bulanan_json', json_encode($biayaBulananList, JSON_PRETTY_PRINT), 'biaya');
         }
 
-        return redirect()->route('admin.pembayaran.tarif.index')->with('success', 'Master Tarif & Biaya Pendidikan berhasil diperbarui! Perubahan nominal langsung aktif di landing page /biaya, pendaftaran PSB online, perhitungan kasir, dan penagihan santri.');
+        // 3. Simpan Pratinjau Ringkasan Biaya di Halaman Depan (Landing Page)
+        if ($request->has('biaya_preview_title')) {
+            Setting::set('biaya_preview_title', $request->input('biaya_preview_title', 'Transparansi Biaya Pendidikan Santri Baru MTs & MA'), 'biaya');
+            Setting::set('biaya_preview_desc', $request->input('biaya_preview_desc', 'Seluruh rincian pembiayaan awal (uang pangkal, seragam, kasur/kamar santri mukim) serta syahriyah bulanan disajikan secara rinci, transparan, dan dapat diunduh pada halaman khusus biaya kami.'), 'biaya');
+            Setting::set('biaya_preview_btn_text', $request->input('biaya_preview_btn_text', 'Lihat Rincian Biaya Lengkap'), 'biaya');
+
+            for ($c = 1; $c <= 4; $c++) {
+                if ($request->has("biaya_card{$c}_label")) {
+                    Setting::set("biaya_card{$c}_label", $request->input("biaya_card{$c}_label"), 'biaya');
+                }
+                if ($request->has("biaya_card{$c}_value")) {
+                    Setting::set("biaya_card{$c}_value", $request->input("biaya_card{$c}_value"), 'biaya');
+                }
+                if ($request->has("biaya_card{$c}_sub")) {
+                    Setting::set("biaya_card{$c}_sub", $request->input("biaya_card{$c}_sub"), 'biaya');
+                }
+            }
+        }
+
+        return redirect()->route('admin.pembayaran.tarif.index')->with('success', 'Master Tarif & Biaya Pendidikan serta Tampilan Landing Page berhasil diperbarui!');
     }
 }
 

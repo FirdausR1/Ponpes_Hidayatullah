@@ -51,4 +51,33 @@ class Article extends Model
     {
         return $query->where('status', 'published');
     }
+
+    /**
+     * Otomatis mengonversi teks ber-Enter ganda menjadi paragraf <p> jika belum ada tag block HTML.
+     */
+    public function getFormattedContentAttribute(): string
+    {
+        $content = $this->content ?? '';
+        if (trim($content) === '') {
+            return '';
+        }
+
+        // Jika sudah mengandung tag block HTML
+        if (preg_match('/<\s*(p|div|ul|ol|h[1-6]|blockquote|table)\b[^>]*>/i', $content)) {
+            return $content;
+        }
+
+        // Pisahkan teks berdasarkan Enter ganda / kosong
+        $paragraphs = array_filter(array_map('trim', preg_split('/\r\n\r\n|\n\n|\r\r/', $content)));
+        if (empty($paragraphs)) {
+            return '<p>' . nl2br($content) . '</p>';
+        }
+
+        $formatted = '';
+        foreach ($paragraphs as $paragraph) {
+            $formatted .= '<p>' . nl2br($paragraph) . '</p>' . "\n";
+        }
+
+        return $formatted;
+    }
 }

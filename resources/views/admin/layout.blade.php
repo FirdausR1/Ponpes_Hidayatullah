@@ -82,10 +82,11 @@
         .ta-table tbody td{ padding:14px 16px;color:#374151;border-bottom:1px solid #f3f4f6; }
         .ta-table tbody tr:hover{ background:#f9fafb; }
         /* Modal */
-        .ta-modal-backdrop{ position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(17,24,39,.7);backdrop-filter:blur(4px);padding:16px; }
-        .ta-modal{ position:relative;background:#fff;border-radius:16px;box-shadow:0 20px 24px -4px rgba(16,24,40,.08);width:100%;max-width:512px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden; }
+        .ta-modal-backdrop{ position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(17,24,39,.7);backdrop-filter:blur(4px);padding:16px;overflow-y:auto; }
+        .ta-modal{ position:relative;background:#fff;border-radius:16px;box-shadow:0 20px 24px -4px rgba(16,24,40,.08);width:100%;max-width:512px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;margin:auto; }
+        .ta-modal form{ display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden; }
         .ta-modal-header{ display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #f3f4f6;flex-shrink:0; }
-        .ta-modal-body{ padding:20px 24px;overflow-y:auto;flex:1; }
+        .ta-modal-body{ padding:20px 24px;overflow-y:auto;flex:1;min-height:0; }
         .ta-modal-footer{ display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid #f3f4f6;flex-shrink:0; }
         /* Input */
         .ta-input{ width:100%;border-radius:8px;border:1px solid #d1d5db;padding:10px 14px;font-size:.875rem;color:#111827;outline:none;transition:border-color .15s,box-shadow .15s; }

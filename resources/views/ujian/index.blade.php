@@ -684,7 +684,11 @@
 
         <!-- Footer -->
         <div class="portal-footer">
-            <p>Belum memiliki nomor pendaftaran? <a href="{{ route('psb.register') }}">Daftar Santri Baru</a></p>
+            @if(\App\Models\Setting::isPsbOpen())
+                <p>Belum memiliki nomor pendaftaran? <a href="{{ route('psb.register') }}">Daftar Santri Baru</a></p>
+            @else
+                <p>Pendaftaran santri baru saat ini {{ \App\Models\Setting::getPsbSchedule()['badge'] }}. <a href="{{ route('psb.register') }}">Lihat Jadwal &amp; Pengumuman</a></p>
+            @endif
             <p style="margin-top: 6px;"><a href="{{ route('home') }}">&larr; Kembali ke Beranda Utama</a> • <a href="{{ route('psb.checkStatus') }}">Cek Status Berkas</a></p>
         </div>
     </div>

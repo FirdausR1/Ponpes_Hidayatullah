@@ -101,9 +101,14 @@
             <!-- Title & Hero Banner -->
             <div class="bg-gradient-to-br from-pondok-900 to-pondok-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
                 <div class="relative z-10 space-y-2">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs text-xs font-semibold text-gold-300 border border-white/20">
-                        <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
-                        TAHUN AJARAN {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs text-xs font-semibold text-gold-300 border border-white/20">
+                            <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
+                            TAHUN AJARAN {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
+                        </div>
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-xs text-xs font-bold text-emerald-200 border border-emerald-400/30">
+                            <span>🌊 {{ $gelombang ?? \App\Models\Setting::get('psb_gelombang_aktif', 'Gelombang 1') }}</span>
+                        </div>
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight">Formulir Pendaftaran Santri Baru</h1>
                     <p class="text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
@@ -148,14 +153,27 @@
             </div>
 
             <!-- MAIN FORM WRAPPER -->
-            <form id="psbForm" action="{{ route('psb.store') }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+            <form id="psbForm" action="{{ route('psb.store') }}" method="POST" enctype="multipart/form-data" onsubmit="return validateAllDocumentsBeforeSubmit(event)" class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
                 @csrf
+                <input type="hidden" name="gelombang" value="{{ $gelombang ?? \App\Models\Setting::get('psb_gelombang_aktif', 'Gelombang 1') }}">
 
                 <!-- ==================== STEP 1: JALUR & JENJANG PENDIDIKAN ==================== -->
                 <div id="step1" class="step-pane active p-6 sm:p-8 space-y-6">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">PILIHAN JALUR & JENJANG PENDIDIKAN</h2>
                         <p class="text-xs text-slate-500">Pilih program pendidikan dan jalur penerimaan santri baru sesuai kualifikasi.</p>
+                    </div>
+
+                    <!-- Gelombang Info Badge Card -->
+                    <div class="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">🌊</span>
+                            <div>
+                                <span class="text-xs font-bold text-emerald-950 block">Gelombang Pendaftaran Aktif: {{ $gelombang ?? \App\Models\Setting::get('psb_gelombang_aktif', 'Gelombang 1') }}</span>
+                                <span class="text-[11px] text-emerald-700">Formulir pendaftaran Anda akan otomatis diproses pada {{ $gelombang ?? \App\Models\Setting::get('psb_gelombang_aktif', 'Gelombang 1') }}.</span>
+                            </div>
+                        </div>
+                        <span class="hidden sm:inline-block px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold tracking-wider uppercase">Aktif</span>
                     </div>
 
                     <!-- Pilihan Jalur & Jenjang -->
@@ -588,7 +606,7 @@
                     </div>
 
                     <!-- DOKUMEN 1: UNGGAH BUKTI INFAQ PENDAFTARAN -->
-                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 transition" id="card_doc_transfer">
                         <div class="flex items-center justify-between">
                             <label for="bukti_transfer" class="block text-sm font-bold text-slate-800">
                                 1. Unggah Bukti Infaq Pendaftaran (Rp 200.000) <span class="text-rose-500">*</span>
@@ -598,11 +616,27 @@
                         <p class="text-xs text-slate-500">
                             Upload struk transfer Bank BRI/BCA atau nota kwitansi pembayaran tunai. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
                         </p>
-                        <input type="file" id="bukti_transfer" name="bukti_transfer" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                        <input type="file" id="bukti_transfer" name="bukti_transfer" accept="image/*,application/pdf" required onchange="previewAndVerifyDoc(event, 'transfer')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <!-- Preview & Status Bukti Transfer -->
+                        <div id="preview_transfer_box" class="hidden rounded-xl border border-slate-200 bg-white p-3 flex flex-col sm:flex-row items-center gap-3 shadow-xs">
+                            <div class="w-20 h-24 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative shadow-xs">
+                                <img id="preview_transfer_img" src="" alt="Preview Bukti Transfer" class="hidden w-full h-full object-cover">
+                                <div id="preview_transfer_pdf" class="hidden flex flex-col items-center justify-center text-rose-600">
+                                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                    <span class="text-[9px] font-bold uppercase mt-0.5">PDF</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 space-y-1 w-full text-left">
+                                <div id="status_transfer_badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold"></div>
+                                <p id="status_transfer_text" class="text-xs leading-relaxed text-slate-600"></p>
+                                <span id="status_transfer_info" class="text-[10px] text-slate-400 block font-mono"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- DOKUMEN 2: UNGGAH PAS FOTO 3X4 CALON SANTRI -->
-                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 transition" id="card_doc_foto">
                         <div class="flex items-center justify-between">
                             <label for="pas_foto" class="block text-sm font-bold text-slate-800">
                                 2. Unggah Pas Foto 3x4 Calon Santri <span class="text-rose-500">*</span>
@@ -623,55 +657,125 @@
 
                         <div class="flex flex-col sm:flex-row items-start gap-4 pt-1">
                             <div class="flex-1 w-full">
-                                <input type="file" id="pas_foto" name="pas_foto" accept="image/*" required onchange="previewFoto(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                                <input type="file" id="pas_foto" name="pas_foto" accept="image/*" required onchange="previewAndVerifyDoc(event, 'foto')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
                                 <span class="text-[11px] text-slate-400 block mt-1">Format gambar didukung: JPG, PNG, WEBP. Maks 10 MB.</span>
                             </div>
-                            <div id="fotoPreviewBox" class="hidden w-20 h-26 bg-red-600 rounded-lg overflow-hidden border-2 border-red-500 shadow-sm shrink-0 text-center">
-                                <img id="fotoPreviewImg" src="" alt="Preview 3x4" class="w-full h-full object-cover">
+                            <div id="preview_foto_box" class="hidden w-20 h-26 bg-red-600 rounded-lg overflow-hidden border-2 border-red-500 shadow-sm shrink-0 text-center">
+                                <img id="preview_foto_img" src="" alt="Preview 3x4" class="w-full h-full object-cover">
                             </div>
+                        </div>
+
+                        <!-- Status Badge Pas Foto -->
+                        <div id="preview_foto_status_box" class="hidden rounded-xl border border-slate-200 bg-white p-2.5 space-y-1">
+                            <div id="status_foto_badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold"></div>
+                            <p id="status_foto_text" class="text-xs text-slate-600 leading-relaxed"></p>
+                            <span id="status_foto_info" class="text-[10px] text-slate-400 block font-mono"></span>
                         </div>
                     </div>
 
                     <!-- DOKUMEN 3: UNGGAH SCAN / FOTO AKTA KELAHIRAN -->
-                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 transition" id="card_doc_akta">
                         <div class="flex items-center justify-between">
                             <label for="file_akta_kelahiran" class="block text-sm font-bold text-slate-800">
                                 3. Unggah Scan / Foto Akta Kelahiran Calon Santri <span class="text-rose-500">*</span>
                             </label>
                             <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Wajib Upload</span>
                         </div>
-                        <p class="text-xs text-slate-500">
-                            Upload foto asli atau fotokopi Akta Kelahiran calon santri yang jelas dan terbaca. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
-                        </p>
-                        <input type="file" id="file_akta_kelahiran" name="file_akta_kelahiran" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2">
+                            <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div class="text-[11px] leading-relaxed text-emerald-800">
+                                <strong>Ketentuan Akta Kelahiran:</strong> Foto/scan asli lembaran Akta Kelahiran posisi <strong>tegak (portrait)</strong>. Pastikan nama santri, tanggal lahir, dan nama orang tua terbaca jelas.
+                            </div>
+                        </div>
+
+                        <input type="file" id="file_akta_kelahiran" name="file_akta_kelahiran" accept="image/*,application/pdf" required onchange="previewAndVerifyDoc(event, 'akta')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <!-- Preview & Status Akta -->
+                        <div id="preview_akta_box" class="hidden rounded-xl border border-slate-200 bg-white p-3 flex flex-col sm:flex-row items-center gap-3 shadow-xs">
+                            <div class="w-20 h-26 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative shadow-xs">
+                                <img id="preview_akta_img" src="" alt="Preview Akta" class="hidden w-full h-full object-cover">
+                                <div id="preview_akta_pdf" class="hidden flex flex-col items-center justify-center text-rose-600">
+                                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                    <span class="text-[9px] font-bold uppercase mt-0.5">PDF</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 space-y-1 w-full text-left">
+                                <div id="status_akta_badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold"></div>
+                                <p id="status_akta_text" class="text-xs leading-relaxed text-slate-600"></p>
+                                <span id="status_akta_info" class="text-[10px] text-slate-400 block font-mono"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- DOKUMEN 4: UNGGAH SCAN / FOTO KARTU KELUARGA (KK) -->
-                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 transition" id="card_doc_kk">
                         <div class="flex items-center justify-between">
                             <label for="file_kk" class="block text-sm font-bold text-slate-800">
                                 4. Unggah Scan / Foto Kartu Keluarga (KK) <span class="text-rose-500">*</span>
                             </label>
                             <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Wajib Upload</span>
                         </div>
-                        <p class="text-xs text-slate-500">
-                            Upload scan atau foto Kartu Keluarga (KK) terbaru yang memuat data calon santri. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
-                        </p>
-                        <input type="file" id="file_kk" name="file_kk" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-start gap-2">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div class="text-[11px] leading-relaxed text-blue-800">
+                                <strong>Ketentuan Kartu Keluarga:</strong> Foto/scan seluruh lembaran KK secara <strong>mendatar (landscape)</strong>. Pastikan Nomor KK dan data baris anggota keluarga terbaca jelas (tidak buram/terpotong).
+                            </div>
+                        </div>
+
+                        <input type="file" id="file_kk" name="file_kk" accept="image/*,application/pdf" required onchange="previewAndVerifyDoc(event, 'kk')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <!-- Preview & Status KK -->
+                        <div id="preview_kk_box" class="hidden rounded-xl border border-slate-200 bg-white p-3 flex flex-col sm:flex-row items-center gap-3 shadow-xs">
+                            <div class="w-28 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative shadow-xs">
+                                <img id="preview_kk_img" src="" alt="Preview KK" class="hidden w-full h-full object-cover">
+                                <div id="preview_kk_pdf" class="hidden flex flex-col items-center justify-center text-rose-600">
+                                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                    <span class="text-[9px] font-bold uppercase mt-0.5">PDF</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 space-y-1 w-full text-left">
+                                <div id="status_kk_badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold"></div>
+                                <p id="status_kk_text" class="text-xs leading-relaxed text-slate-600"></p>
+                                <span id="status_kk_info" class="text-[10px] text-slate-400 block font-mono"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- DOKUMEN 5: UNGGAH SCAN / FOTO KTP ORANG TUA / WALI -->
-                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 transition" id="card_doc_ktp">
                         <div class="flex items-center justify-between">
                             <label for="file_ktp_ortu" class="block text-sm font-bold text-slate-800">
                                 5. Unggah Scan / Foto KTP Orang Tua (Ayah / Ibu / Wali) <span class="text-rose-500">*</span>
                             </label>
                             <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Wajib Upload</span>
                         </div>
-                        <p class="text-xs text-slate-500">
-                            Upload scan atau foto e-KTP Ayah, Ibu, atau Wali yang masih berlaku. Format gambar (JPG, PNG, WEBP) atau PDF maks 10 MB.
-                        </p>
-                        <input type="file" id="file_ktp_ortu" name="file_ktp_ortu" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <div class="p-2.5 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-900 flex items-start gap-2">
+                            <svg class="w-4 h-4 text-purple-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div class="text-[11px] leading-relaxed text-purple-800">
+                                <strong>Ketentuan Foto KTP:</strong> Foto fisik e-KTP secara <strong>mendatar / landscape</strong> (bukan foto selfie/tegak). Pastikan NIK, nama, dan foto terlihat jelas tanpa pantulan silau lampu.
+                            </div>
+                        </div>
+
+                        <input type="file" id="file_ktp_ortu" name="file_ktp_ortu" accept="image/*,application/pdf" required onchange="previewAndVerifyDoc(event, 'ktp')" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pondok-600 file:text-white hover:file:bg-pondok-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+
+                        <!-- Preview & Status KTP -->
+                        <div id="preview_ktp_box" class="hidden rounded-xl border border-slate-200 bg-white p-3 flex flex-col sm:flex-row items-center gap-3 shadow-xs">
+                            <div class="w-28 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative shadow-xs">
+                                <img id="preview_ktp_img" src="" alt="Preview KTP" class="hidden w-full h-full object-cover">
+                                <div id="preview_ktp_pdf" class="hidden flex flex-col items-center justify-center text-rose-600">
+                                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                    <span class="text-[9px] font-bold uppercase mt-0.5">PDF</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 space-y-1 w-full text-left">
+                                <div id="status_ktp_badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold"></div>
+                                <p id="status_ktp_text" class="text-xs leading-relaxed text-slate-600"></p>
+                                <span id="status_ktp_info" class="text-[10px] text-slate-400 block font-mono"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- DOKUMEN 6: KONDISIONAL BERKAS JALUR PRESTASI / TAHFIDZ -->
@@ -807,16 +911,332 @@
             }
         }
 
-        function previewFoto(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('fotoPreviewImg').src = e.target.result;
-                    document.getElementById('fotoPreviewBox').classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
+        // Tracking status verifikasi tiap dokumen
+        const docVerificationState = {
+            transfer: { valid: false, message: 'Belum ada file bukti transfer dipilih' },
+            foto: { valid: false, message: 'Belum ada file pas foto dipilih' },
+            akta: { valid: false, message: 'Belum ada file akta kelahiran dipilih' },
+            kk: { valid: false, message: 'Belum ada file kartu keluarga dipilih' },
+            ktp: { valid: false, message: 'Belum ada file KTP orang tua dipilih' }
+        };
+
+        function previewAndVerifyDoc(event, type) {
+            const input = event.target;
+            const file = input.files ? input.files[0] : null;
+
+            const box = document.getElementById(`preview_${type}_box`);
+            const imgEl = document.getElementById(`preview_${type}_img`);
+            const pdfEl = document.getElementById(`preview_${type}_pdf`);
+            const badgeEl = document.getElementById(`status_${type}_badge`);
+            const textEl = document.getElementById(`status_${type}_text`);
+            const infoEl = document.getElementById(`status_${type}_info`);
+            const cardEl = document.getElementById(`card_doc_${type}`);
+
+            // Khusus foto ada status box tersendiri
+            const fotoStatusBox = document.getElementById('preview_foto_status_box');
+            if (type === 'foto' && fotoStatusBox) {
+                fotoStatusBox.classList.remove('hidden');
             }
+
+            if (!file) {
+                if (box) box.classList.add('hidden');
+                if (fotoStatusBox) fotoStatusBox.classList.add('hidden');
+                docVerificationState[type] = { valid: false, message: 'File belum dipilih' };
+                return;
+            }
+
+            if (box) box.classList.remove('hidden');
+
+            const fileSizeKB = (file.size / 1024).toFixed(1);
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+            // 1. Validasi Ukuran Minimal (Mencegah file dummy kosong / corrupt < 25 KB)
+            if (file.size < 25000) {
+                setDocStatus(type, false, 
+                    `Ukuran file terlalu kecil (${fileSizeKB} KB). File terindikasi kosong, buram, atau tidak terbaca. Harap gunakan foto/scan dokumen asli yang jelas.`,
+                    `Ukuran: ${fileSizeKB} KB (Minimal 25 KB)`
+                );
+                return;
+            }
+
+            // 2. Jika Dokumen PDF
+            if (isPdf) {
+                if (imgEl) imgEl.classList.add('hidden');
+                if (pdfEl) pdfEl.classList.remove('hidden');
+
+                if (type === 'foto') {
+                    // Pas foto WAJIB format gambar
+                    setDocStatus(type, false, 
+                        'Pas foto santri wajib berformat gambar (JPG, PNG, WEBP), tidak boleh berformat PDF.',
+                        `Format: PDF (${fileSizeKB} KB)`
+                    );
+                    return;
+                }
+
+                setDocStatus(type, true, 
+                    `Dokumen PDF siap diunggah (${fileSizeKB} KB).`,
+                    `Format: Dokumen PDF | Ukuran: ${fileSizeKB} KB`
+                );
+                return;
+            }
+
+            // 3. Jika Dokumen Gambar (JPG, PNG, WEBP)
+            if (pdfEl) pdfEl.classList.add('hidden');
+            if (imgEl) imgEl.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                if (imgEl) imgEl.src = dataUrl;
+
+                const tempImg = new Image();
+                tempImg.onload = function() {
+                    const width = tempImg.naturalWidth || tempImg.width;
+                    const height = tempImg.naturalHeight || tempImg.height;
+                    const ratio = width / height;
+
+                    const issues = [];
+
+                    // 1. Cek Apakah Malah Mengunggah Pas Foto Berlatar Merah ke Kolom Dokumen (KK/KTP/Akta/Transfer)
+                    if (type !== 'foto') {
+                        const isRed = checkCanvasRedBackground(tempImg);
+                        if (isRed) {
+                            issues.push('Terdeteksi Pas Foto santri (background merah)! Kolom ini untuk dokumen fisik asli, dilarang mengunggah pas foto santri.');
+                        }
+                    }
+
+                    // 2. Cek Apakah File Ini Sama dengan File Dokumen Lain (Mencegah upload pas foto berkali-kali)
+                    const otherDocCheck = [
+                        { key: 'foto', name: 'Pas Foto 3x4', id: 'pas_foto' },
+                        { key: 'transfer', name: 'Bukti Transfer', id: 'bukti_transfer' },
+                        { key: 'akta', name: 'Akta Kelahiran', id: 'file_akta_kelahiran' },
+                        { key: 'kk', name: 'Kartu Keluarga (KK)', id: 'file_kk' },
+                        { key: 'ktp', name: 'KTP Orang Tua', id: 'file_ktp_ortu' }
+                    ];
+                    for (const od of otherDocCheck) {
+                        if (od.key !== type) {
+                            const oel = document.getElementById(od.id);
+                            if (oel && oel.files && oel.files[0]) {
+                                if (oel.files[0].size === file.size && oel.files[0].name === file.name) {
+                                    issues.push(`File ini SAMA PERSIS dengan yang diunggah di ${od.name}. Dilarang mengunggah file pas foto yang sama untuk dokumen berbeda!`);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Aturan Spesifik Tiap Dokumen
+                    if (type === 'foto') {
+                        // Pas Foto: Rasio 3x4 portrait (0.60 s/d 0.88)
+                        if (ratio >= 0.95) {
+                            issues.push('Foto terdeteksi miring / mendatar (landscape). Wajib tegak lurus 3x4.');
+                        } else if (ratio < 0.55 || ratio > 0.90) {
+                            issues.push('Proporsi foto tidak sesuai rasio 3x4.');
+                        }
+
+                        // Background Merah Check
+                        const isRed = checkCanvasRedBackground(tempImg);
+                        if (!isRed) {
+                            issues.push('Latar belakang (background) belum berwarna MERAH sesuai ketentuan.');
+                        }
+                    } else if (type === 'ktp') {
+                        // KTP: Kartu e-KTP Indonesia wajib LANDSCAPE (mendatar)
+                        if (ratio < 0.95) {
+                            issues.push('Foto KTP terdeteksi tegak / foto selfie! Harap foto fisik kartu e-KTP secara mendatar (landscape).');
+                        }
+                        if (width < 350 || height < 200) {
+                            issues.push(`Resolusi terlalu kecil (${width}x${height} px). NIK dan nama rawan tidak terbaca.`);
+                        }
+                    } else if (type === 'kk') {
+                        // Kartu Keluarga: Lembaran lebar wajib resolusi cukup
+                        if (width < 450 || height < 300) {
+                            issues.push(`Resolusi terlalu kecil (${width}x${height} px). Tabel baris anggota keluarga rawan buram.`);
+                        }
+                    } else if (type === 'akta') {
+                        // Akta Kelahiran
+                        if (width < 300 || height < 400) {
+                            issues.push(`Resolusi terlalu kecil (${width}x${height} px). Teks kutipan akta rawan tidak terbaca.`);
+                        }
+                    } else if (type === 'transfer') {
+                        if (width < 250 || height < 250) {
+                            issues.push(`Resolusi bukti transfer terlalu kecil (${width}x${height} px).`);
+                        }
+                    }
+
+                    // Cek Kegelapan / Gambar Polos Kosong
+                    const lumCheck = checkCanvasLuminance(tempImg);
+                    if (lumCheck.isTooDark) {
+                        issues.push('Foto terdeteksi terlalu gelap / hitam pekat. Dokumen tidak terlihat jelas.');
+                    } else if (lumCheck.isTooBlank) {
+                        issues.push('Foto terdeteksi polos / kosong.');
+                    }
+
+                    if (issues.length === 0) {
+                        let successMsg = `Dokumen terverifikasi tajam (${width}x${height} px) dan orientasi sesuai.`;
+                        if (type === 'foto') successMsg = `Pas foto terverifikasi: Posisi tegak (3x4) dan background merah terdeteksi.`;
+                        setDocStatus(type, true, successMsg, `Resolusi: ${width}x${height} px | Ukuran: ${fileSizeKB} KB`);
+                    } else {
+                        setDocStatus(type, false, issues.join(' '), `Resolusi: ${width}x${height} px | Ukuran: ${fileSizeKB} KB`);
+                    }
+                };
+                tempImg.src = dataUrl;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Helper update badge UI
+        function setDocStatus(type, isValid, message, info) {
+            docVerificationState[type] = { valid: isValid, message: message };
+
+            const badgeEl = document.getElementById(`status_${type}_badge`);
+            const textEl = document.getElementById(`status_${type}_text`);
+            const infoEl = document.getElementById(`status_${type}_info`);
+            const cardEl = document.getElementById(`card_doc_${type}`);
+
+            if (badgeEl) {
+                if (isValid) {
+                    badgeEl.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                    badgeEl.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> Dokumen Terverifikasi`;
+                } else {
+                    badgeEl.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse';
+                    badgeEl.innerHTML = `<svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> Perlu Perbaikan`;
+                }
+            }
+
+            if (textEl) {
+                textEl.textContent = message;
+                textEl.className = isValid ? 'text-xs text-emerald-800 font-medium' : 'text-xs text-rose-700 font-semibold';
+            }
+
+            if (infoEl) {
+                infoEl.textContent = info || '';
+            }
+
+            if (cardEl) {
+                if (isValid) {
+                    cardEl.classList.remove('border-rose-300', 'bg-rose-50/40');
+                    cardEl.classList.add('border-emerald-300', 'bg-emerald-50/30');
+                } else {
+                    cardEl.classList.remove('border-emerald-300', 'bg-emerald-50/30');
+                    cardEl.classList.add('border-rose-300', 'bg-rose-50/40');
+                }
+            }
+        }
+
+        // Sampling Canvas untuk Background Merah (Pas Foto)
+        function checkCanvasRedBackground(img) {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 100;
+                canvas.height = 133;
+                ctx.drawImage(img, 0, 0, 100, 133);
+
+                // Sample titik di sudut atas kiri & kanan
+                const samplePoints = [
+                    [8, 8], [15, 8], [8, 16], [15, 16],
+                    [85, 8], [92, 8], [85, 16], [92, 16],
+                    [20, 12], [80, 12]
+                ];
+                let redCount = 0;
+                for (const [x, y] of samplePoints) {
+                    const pixel = ctx.getImageData(x, y, 1, 1).data;
+                    const r = pixel[0], g = pixel[1], b = pixel[2];
+                    if (r >= 95 && r > (g * 1.28) && r > (b * 1.28)) {
+                        redCount++;
+                    }
+                }
+                return (redCount / samplePoints.length) >= 0.40;
+            } catch (e) {
+                return true; // fallback jika canvas dibatasi browser
+            }
+        }
+
+        // Sampling Canvas untuk Luminance / Kecerahan
+        function checkCanvasLuminance(img) {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 30;
+                canvas.height = 30;
+                ctx.drawImage(img, 0, 0, 30, 30);
+
+                const imgData = ctx.getImageData(0, 0, 30, 30).data;
+                let totalLum = 0;
+                let minLum = 255;
+                let maxLum = 0;
+                const totalPixels = 30 * 30;
+
+                for (let i = 0; i < imgData.length; i += 4) {
+                    const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+                    const lum = (0.299 * r) + (0.587 * g) + (0.114 * b);
+                    totalLum += lum;
+                    if (lum < minLum) minLum = lum;
+                    if (lum > maxLum) maxLum = lum;
+                }
+
+                const avgLum = totalLum / totalPixels;
+                const variance = maxLum - minLum;
+
+                return {
+                    isTooDark: avgLum < 22,
+                    isTooBlank: (avgLum > 250 && variance < 15)
+                };
+            } catch (e) {
+                return { isTooDark: false, isTooBlank: false };
+            }
+        }
+
+        // Validasi Seluruh Dokumen Sebelum Submit Form
+        function validateAllDocumentsBeforeSubmit(e) {
+            const requiredDocs = [
+                { key: 'transfer', name: '1. Bukti Infaq Pendaftaran', id: 'bukti_transfer' },
+                { key: 'foto', name: '2. Pas Foto 3x4 Santri', id: 'pas_foto' },
+                { key: 'akta', name: '3. Scan/Foto Akta Kelahiran', id: 'file_akta_kelahiran' },
+                { key: 'kk', name: '4. Scan/Foto Kartu Keluarga (KK)', id: 'file_kk' },
+                { key: 'ktp', name: '5. Scan/Foto KTP Orang Tua', id: 'file_ktp_ortu' }
+            ];
+
+            const errors = [];
+
+            // Cek file duplikat antar dokumen (mencegah pas foto diupload ke semua berkas)
+            const seenFileSignatures = {};
+            for (const doc of requiredDocs) {
+                const input = document.getElementById(doc.id);
+                if (input && input.files && input.files[0]) {
+                    const f = input.files[0];
+                    const sig = `${f.name}_${f.size}`;
+                    if (seenFileSignatures[sig]) {
+                        errors.push(`File "${f.name}" diunggah ganda pada "${seenFileSignatures[sig]}" dan "${doc.name}". Dilarang mengunggah pas foto / file yang sama untuk dokumen berbeda!`);
+                    } else {
+                        seenFileSignatures[sig] = doc.name;
+                    }
+                }
+            }
+
+            for (const doc of requiredDocs) {
+                const input = document.getElementById(doc.id);
+                if (!input || !input.files || input.files.length === 0) {
+                    errors.push(`${doc.name}: Belum ada file yang diunggah.`);
+                } else if (docVerificationState[doc.key] && !docVerificationState[doc.key].valid) {
+                    errors.push(`${doc.name}: ${docVerificationState[doc.key].message}`);
+                }
+            }
+
+            if (errors.length > 0) {
+                e.preventDefault();
+                alert("MOHON PERIKSA KELENGKAPAN & KUALITAS DOKUMEN ANDA:\n\nBeberapa dokumen belum memenuhi syarat atau terindikasi tidak valid:\n\n• " + errors.join("\n• ") + "\n\nSilakan perbaiki file yang bertanda merah sebelum mengirim formulir.");
+                goToStep(4);
+                return false;
+            }
+
+            // Tampilkan loading button jika semua valid
+            const btnSubmit = document.getElementById('btnSubmitForm');
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memverifikasi & Menyimpan Berkas...`;
+            }
+            return true;
         }
 
         function copyRek(text, btn) {

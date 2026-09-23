@@ -217,8 +217,8 @@ if (request('ids')) {
         @endif
 
         <!-- TABEL DETAIL REGISTER KWITANSI -->
-        <div class="border border-slate-300 rounded-xl overflow-hidden mb-6">
-            <table class="w-full text-left border-collapse text-xs">
+        <div class="border border-slate-300 rounded-xl overflow-x-auto mb-6">
+            <table class="w-full min-w-[800px] text-left border-collapse text-xs">
                 <thead>
                     <tr class="bg-[#208075] text-white font-bold uppercase text-[10px] tracking-wider">
                         <th class="py-2.5 px-3 text-center w-10">No</th>

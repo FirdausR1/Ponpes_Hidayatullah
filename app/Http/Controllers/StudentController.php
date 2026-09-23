@@ -12,6 +12,7 @@ use App\Models\StudentMutation;
 use App\Models\Dormitory;
 use App\Models\User;
 use App\Models\StudentBill;
+use App\Models\StudentPaymentItem;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -21,6 +22,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\File;
 
 class StudentController extends Controller
 {
@@ -211,6 +214,9 @@ class StudentController extends Controller
             'alamat' => 'nullable|string',
             'catatan' => 'nullable|string',
             'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'file_kk' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_ktp_ortu' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_akta_kelahiran' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
         ]);
 
         $fotoPath = null;
@@ -222,6 +228,39 @@ class StudentController extends Controller
         }
 
         $validated['foto'] = $fotoPath;
+
+        // Upload Berkas Dokumen (KK, KTP Orang Tua, Akte Kelahiran)
+        $docsDir = public_path('uploads/santri_dokumen');
+        if (!File::isDirectory($docsDir)) {
+            File::makeDirectory($docsDir, 0755, true, true);
+        }
+
+        if ($request->hasFile('file_kk')) {
+            $file = $request->file('file_kk');
+            $filename = time() . '_kk_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_kk')) {
+                $validated['file_kk'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if ($request->hasFile('file_ktp_ortu')) {
+            $file = $request->file('file_ktp_ortu');
+            $filename = time() . '_ktp_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_ktp_ortu')) {
+                $validated['file_ktp_ortu'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if ($request->hasFile('file_akta_kelahiran')) {
+            $file = $request->file('file_akta_kelahiran');
+            $filename = time() . '_akta_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_akta_kelahiran')) {
+                $validated['file_akta_kelahiran'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
 
         // Tentukan password default: tanggal lahir (DDMMYYYY) atau santri123
         $defaultPassword = 'santri123';
@@ -338,6 +377,9 @@ class StudentController extends Controller
             'catatan' => 'nullable|string',
             'password_baru' => 'nullable|string|min:6',
             'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'file_kk' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_ktp_ortu' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_akta_kelahiran' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
         ]);
 
         if ($request->hasFile('foto_file')) {
@@ -345,6 +387,39 @@ class StudentController extends Controller
             $filename = time() . '_siswa_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/siswa'), $filename);
             $validated['foto'] = '/uploads/siswa/' . $filename;
+        }
+
+        // Upload Berkas Dokumen (KK, KTP Orang Tua, Akte Kelahiran)
+        $docsDir = public_path('uploads/santri_dokumen');
+        if (!File::isDirectory($docsDir)) {
+            File::makeDirectory($docsDir, 0755, true, true);
+        }
+
+        if ($request->hasFile('file_kk')) {
+            $file = $request->file('file_kk');
+            $filename = time() . '_kk_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_kk')) {
+                $validated['file_kk'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if ($request->hasFile('file_ktp_ortu')) {
+            $file = $request->file('file_ktp_ortu');
+            $filename = time() . '_ktp_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_ktp_ortu')) {
+                $validated['file_ktp_ortu'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if ($request->hasFile('file_akta_kelahiran')) {
+            $file = $request->file('file_akta_kelahiran');
+            $filename = time() . '_akta_' . Str::slug($request->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_akta_kelahiran')) {
+                $validated['file_akta_kelahiran'] = '/uploads/santri_dokumen/' . $filename;
+            }
         }
 
         if (!empty($request->password_baru)) {
@@ -524,23 +599,14 @@ class StudentController extends Controller
     }
 
     /**
-     * Sinkronisasi otomatis penerbitan / update tagihan sisa daftar ulang PSB santri baru ke StudentBill.
+     * Sinkronisasi otomatis penerbitan / update tagihan sisa daftar ulang PSB santri baru ke StudentBill per item komponen biaya resmi.
      */
     public function syncPsbDaftarUlangBill(Student $student, PsbRegistration $reg): StudentBill
     {
         $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
         $standardDaftarUlang = (float) $tarif['sisa_daftar_ulang'];
 
-        // Cek apakah santri sudah memiliki tagihan daftar ulang
-        $bill = StudentBill::where('student_id', $student->id)
-            ->where(function ($q) {
-                $q->where('pos_biaya', 'DAFTAR ULANG')
-                  ->orWhere('pos_biaya', 'like', '%DAFTAR ULANG%')
-                  ->orWhere('kategori', 'daftar_ulang');
-            })
-            ->first();
-
-        // Hitung total cicilan/pembayaran daftar ulang yang sudah dibayar (di luar pendaftaran 200rb)
+        // Ambil riwayat pembayaran daftar ulang santri ini
         $payments = StudentPayment::where(function ($q) use ($reg, $student) {
             $q->where('psb_registration_id', $reg->id)
               ->orWhere('student_id', $student->id);
@@ -549,46 +615,124 @@ class StudentController extends Controller
         ->where('jenis_pembayaran', '!=', 'BIAYA PENDAFTARAN PSB')
         ->get();
 
-        $terbayar = (float) $payments->sum('nominal');
-        $sisa = max(0, $standardDaftarUlang - $terbayar);
-        $status = $sisa <= 0 ? 'Lunas' : ($terbayar > 0 ? 'Cicilan' : 'Belum Bayar');
+        $totalTerbayar = (float) $payments->sum('nominal');
+        $paymentItems = StudentPaymentItem::whereIn('payment_id', $payments->pluck('id'))->get();
 
-        if (!$bill) {
-            $bill = StudentBill::create([
-                'student_id' => $student->id,
-                'kategori' => 'daftar_ulang',
-                'pos_biaya' => 'DAFTAR ULANG',
-                'judul_tagihan' => "Biaya Daftar Ulang PSB ({$tarif['kategori_label']})",
-                'bulan' => 'Juli',
-                'tahun' => $student->tahun_masuk ?: date('Y'),
-                'nominal_asli' => $standardDaftarUlang,
-                'nominal_potongan' => 0,
-                'nominal_tagihan' => $standardDaftarUlang,
-                'nominal_bayar' => $terbayar,
-                'sisa_tagihan' => $sisa,
-                'status' => $status,
-                'jatuh_tempo' => Carbon::now()->addMonths(1),
-                'created_by' => auth()->user()->name ?? 'Sistem PSB',
-            ]);
-        } else {
-            if ($bill->status !== 'Lunas') {
-                $bill->nominal_asli = $standardDaftarUlang;
-                $bill->nominal_tagihan = max(0, $standardDaftarUlang - $bill->nominal_potongan);
-                $bill->nominal_bayar = $terbayar;
-                $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $terbayar);
-                $bill->status = $bill->sisa_tagihan <= 0 ? 'Lunas' : ($terbayar > 0 ? 'Cicilan' : 'Belum Bayar');
-                $bill->save();
+        // Cek jika ada tagihan gelondongan lama 'DAFTAR ULANG'
+        $oldLumpBill = StudentBill::where('student_id', $student->id)
+            ->where(function ($q) {
+                $q->where('pos_biaya', 'DAFTAR ULANG')
+                  ->orWhere('pos_biaya', 'like', '%DAFTAR ULANG%');
+            })
+            ->first();
+
+        $createdBills = [];
+
+        foreach ($tarif['items_daftar_ulang'] as $it) {
+            $nama = $it['nama'];
+            $nominal = (float) $it['nominal'];
+            $pos = $it['pos_biaya'] ?? PsbRegistration::mapItemToPosBiaya($nama);
+
+            // Lewati biaya pendaftaran PSB (dibayar saat awal formulir)
+            if (stripos($nama, 'pendaftaran') !== false) {
+                continue;
+            }
+            if ($nominal <= 0) {
+                continue;
+            }
+
+            // Cari apakah sudah ada tagihan untuk pos ini
+            $bill = StudentBill::where('student_id', $student->id)
+                ->where(function ($q) use ($pos, $nama) {
+                    $q->where('pos_biaya', $pos)
+                      ->orWhere('judul_tagihan', $nama);
+                })
+                ->first();
+
+            // Cek pembayaran spesifik untuk pos ini
+            $itemPaid = (float) $paymentItems->filter(function ($pi) use ($pos, $nama) {
+                return strtoupper($pi->pos_biaya) === strtoupper($pos) 
+                    || stripos($pi->pos_biaya, $pos) !== false 
+                    || stripos($pi->keterangan ?? '', $nama) !== false;
+            })->sum('nominal');
+
+            if (!$bill) {
+                $bill = StudentBill::create([
+                    'student_id' => $student->id,
+                    'kategori' => 'daftar_ulang',
+                    'pos_biaya' => $pos,
+                    'judul_tagihan' => $nama,
+                    'bulan' => (stripos($nama, 'juli') !== false ? 'Juli' : null),
+                    'tahun' => $student->tahun_masuk ?: date('Y'),
+                    'nominal_asli' => $nominal,
+                    'nominal_potongan' => 0,
+                    'nominal_tagihan' => $nominal,
+                    'nominal_bayar' => $itemPaid,
+                    'sisa_tagihan' => max(0, $nominal - $itemPaid),
+                    'status' => (max(0, $nominal - $itemPaid) <= 0 ? 'Lunas' : ($itemPaid > 0 ? 'Cicilan' : 'Belum Bayar')),
+                    'jatuh_tempo' => Carbon::now()->addMonths(1),
+                    'created_by' => auth()->user()->name ?? 'Sistem PSB',
+                ]);
+            } else {
+                if ($bill->status !== 'Lunas') {
+                    $bill->nominal_asli = $nominal;
+                    $bill->nominal_tagihan = max(0, $nominal - $bill->nominal_potongan);
+                    $bill->nominal_bayar = max($bill->nominal_bayar, $itemPaid);
+                    $bill->sisa_tagihan = max(0, $bill->nominal_tagihan - $bill->nominal_bayar);
+                    $bill->status = $bill->sisa_tagihan <= 0 ? 'Lunas' : ($bill->nominal_bayar > 0 ? 'Cicilan' : 'Belum Bayar');
+                    $bill->save();
+                }
+            }
+
+            $createdBills[] = $bill;
+        }
+
+        // Alokasikan pembayaran gelondongan lama ke item-item komponen yang masih bersisa
+        $allocatedSoFar = collect($createdBills)->sum('nominal_bayar');
+        if ($totalTerbayar > $allocatedSoFar) {
+            $rem = $totalTerbayar - $allocatedSoFar;
+            foreach ($createdBills as $cb) {
+                if ($rem <= 0) break;
+                if ($cb->sisa_tagihan > 0) {
+                    $alloc = min($rem, $cb->sisa_tagihan);
+                    $cb->nominal_bayar += $alloc;
+                    $cb->sisa_tagihan = max(0, $cb->nominal_tagihan - $cb->nominal_bayar);
+                    $cb->status = $cb->sisa_tagihan <= 0 ? 'Lunas' : 'Cicilan';
+                    $cb->save();
+                    $rem -= $alloc;
+                }
             }
         }
 
-        // Hubungkan payment items ke bill jika ada payment yang belum terhubung
-        foreach ($payments as $payment) {
-            \App\Models\StudentPaymentItem::where('payment_id', $payment->id)
-                ->whereNull('student_bill_id')
-                ->update(['student_bill_id' => $bill->id]);
+        // Jika tagihan gelondongan lama 'DAFTAR ULANG' masih ada, re-assign itemnya lalu hapus bill lama
+        if ($oldLumpBill) {
+            foreach ($paymentItems as $pi) {
+                if ($pi->student_bill_id == $oldLumpBill->id) {
+                    $matchingBill = collect($createdBills)->first(function($b) use ($pi) {
+                        return strtoupper($b->pos_biaya) === strtoupper($pi->pos_biaya);
+                    });
+                    $pi->update(['student_bill_id' => $matchingBill?->id]);
+                }
+            }
+            $oldLumpBill->delete();
         }
 
-        return $bill;
+        // Hubungkan payment item yang belum terhubung ke bill
+        foreach ($createdBills as $b) {
+            \App\Models\StudentPaymentItem::whereIn('payment_id', $payments->pluck('id'))
+                ->where(function($q) use ($b) {
+                    $q->where('pos_biaya', $b->pos_biaya)
+                      ->orWhere('keterangan', 'like', '%' . $b->judul_tagihan . '%');
+                })
+                ->whereNull('student_bill_id')
+                ->update(['student_bill_id' => $b->id]);
+        }
+
+        $firstBill = collect($createdBills)->firstWhere('status', '!=', 'Lunas') ?? ($createdBills[0] ?? new StudentBill());
+        $totalSisaDaftarUlang = collect($createdBills)->sum('sisa_tagihan');
+        $firstBill->sisa_tagihan = $totalSisaDaftarUlang;
+
+        return $firstBill;
     }
 
     /**
@@ -747,214 +891,261 @@ class StudentController extends Controller
     public function downloadTemplate()
     {
         $spreadsheet = new Spreadsheet();
-        
-        // Sheet 1: Data Santri & Tunggakan
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Data Santri & Tunggakan');
 
-        // Header Kolom Ringkas & Efisien Sesuai Kebutuhan Riil Bendahara (Hanya 10 Kolom)
-        $columns = [
-            'A' => ['title' => 'nama_lengkap', 'label' => 'Nama Lengkap Santri (Wajib)'],
-            'B' => ['title' => 'nis', 'label' => 'NIS (Kosongkan jika santri baru)'],
-            'C' => ['title' => 'jenis_kelamin', 'label' => 'L/P (Laki-laki / Perempuan)'],
-            'D' => ['title' => 'tanggal_lahir', 'label' => 'Tanggal Lahir (DD/MM/YYYY)'],
-            'E' => ['title' => 'kelas', 'label' => 'Kelas (VII-A, VII-B, X-A, dll)'],
-            'F' => ['title' => 'nama_wali', 'label' => 'Nama Orang Tua / Wali'],
-            'G' => ['title' => 'no_whatsapp', 'label' => 'No. WhatsApp Wali'],
-            // Kolom Finansial Tunggakan Masa Lalu
-            'H' => ['title' => 'tunggakan_daftar_ulang', 'label' => 'Sisa Uang Pangkal / Daftar Ulang (Rp)'],
-            'I' => ['title' => 'tunggakan_spp_bulanan', 'label' => 'Tunggakan SPP Bulanan (Rp)'],
-            'J' => ['title' => 'keterangan_tunggakan', 'label' => 'Keterangan Tunggakan Lalu'],
+        // ============================================================
+        // SHEET 1: DATA SANTRI & TAGIHAN (Lengkap dengan Biodata & Alamat)
+        // ============================================================
+        $sheet1 = $spreadsheet->getActiveSheet();
+        $sheet1->setTitle('Data Santri & Tagihan');
+
+        $colsSheet1 = [
+            // A - F: DATA POKOK & AKADEMIK (WAJIB)
+            'A' => ['title' => 'nama_lengkap',          'label' => 'Nama Lengkap Santri (WAJIB)'],
+            'B' => ['title' => 'nis',                    'label' => 'NIS — kosongkan jika baru / isi NIS lama jika santri lama/alumni (Opsional)'],
+            'C' => ['title' => 'jenis_kelamin',          'label' => 'L / P (WAJIB)'],
+            'D' => ['title' => 'tanggal_lahir',          'label' => 'Tgl Lahir YYYY-MM-DD, misal: 2012-05-15 (WAJIB — otomatis password login)'],
+            'E' => ['title' => 'tahun_masuk',            'label' => 'Tahun Masuk Pesantren, misal: 2026 (WAJIB)'],
+            'F' => ['title' => 'kelas',                  'label' => 'Kelas, misal: VII-A, X-B (WAJIB)'],
+
+            // G - L: BIODATA & ALAMAT SANTRI (OPSIONAL)
+            'G' => ['title' => 'tempat_lahir',          'label' => 'Tempat Lahir, misal: Temanggung (Opsional)'],
+            'H' => ['title' => 'nik',                   'label' => 'NIK Santri 16 Digit KK (Opsional)'],
+            'I' => ['title' => 'nisn',                  'label' => 'Nomor Stambuk / NISN Kemdikbud (Opsional)'],
+            'J' => ['title' => 'golongan_darah',        'label' => 'Gol. Darah: A / B / AB / O (Opsional)'],
+            'K' => ['title' => 'alamat_lengkap',        'label' => 'Alamat Lengkap: RT/RW, Desa, Kec, Kab (Opsional)'],
+            'L' => ['title' => 'kamar_asrama',          'label' => 'Kamar / Asrama, misal: Al-Khawarizmi (Opsional)'],
+
+            // M - Q: DATA ORANG TUA / WALI & SEKOLAH ASAL (OPSIONAL)
+            'M' => ['title' => 'nama_wali',             'label' => 'Nama Ayah / Wali (Opsional)'],
+            'N' => ['title' => 'no_whatsapp',           'label' => 'No. WhatsApp Wali, misal: 081234567890 (Opsional)'],
+            'O' => ['title' => 'pekerjaan_wali',        'label' => 'Pekerjaan Ayah / Wali (Opsional)'],
+            'P' => ['title' => 'nama_ibu',              'label' => 'Nama Ibu Kandung (Opsional)'],
+            'Q' => ['title' => 'nama_sekolah',          'label' => 'Nama Sekolah Asal SD/MI (Opsional)'],
+
+            // R - AB: RINCIAN TAGIHAN & TUNGGAKAN PER KATEGORI (0 JIKA LUNAS / TIDAK ADA)
+            'R'  => ['title' => 'tunggakan_syahriyah',     'label' => 'Syahriyah Pendidikan (Rp) — Rp 30.000/bln (isi 0 jika lunas)'],
+            'S'  => ['title' => 'tunggakan_sot',           'label' => 'Iuran SOT (Rp) — MTs Rp 55.000 / MA Rp 75.000 (isi 0 jika lunas)'],
+            'T'  => ['title' => 'tunggakan_uang_makan',    'label' => 'Uang Makan (Rp) — Rp 300.000/bln (isi 0 jika lunas/laju)'],
+            'U'  => ['title' => 'tunggakan_tabungan',      'label' => 'Tabungan Wajib Santri (Rp) — Rp 25.000/bln (isi 0 jika lunas)'],
+            'V'  => ['title' => 'tunggakan_daftar_ulang',  'label' => 'Sisa Uang Pangkal / Daftar Ulang (Rp) — isi 0 jika lunas'],
+            'W'  => ['title' => 'tunggakan_uang_gedung',   'label' => 'Uang Gedung (Rp) — isi 0 jika lunas'],
+            'X'  => ['title' => 'tunggakan_seragam',       'label' => 'Biaya Seragam (Rp) — isi 0 jika lunas'],
+            'Y'  => ['title' => 'tunggakan_kitab',         'label' => 'Kitab & Buku Pelajaran (Rp) — isi 0 jika lunas'],
+            'Z'  => ['title' => 'tunggakan_kegiatan',      'label' => 'Iuran Kegiatan Tahunan (Rp) — isi 0 jika lunas'],
+            'AA' => ['title' => 'tunggakan_lainnya',      'label' => 'Tagihan Pos Lainnya (Rp) — isi 0 jika tidak ada'],
+            'AB' => ['title' => 'keterangan_tunggakan',   'label' => 'Keterangan Rincian Bulan/Tagihan, misal: Syahriyah & SOT bln Mei-Juni (Opsional)'],
         ];
 
-        foreach ($columns as $col => $info) {
-            $sheet->setCellValueExplicit($col . '1', $info['title'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        foreach ($colsSheet1 as $col => $info) {
+            $sheet1->setCellValueExplicit($col . '1', $info['title'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet1->setCellValueExplicit($col . '2', $info['label'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         }
 
-        // Styling Header A1:G1 (Emerald Green) - Identitas Pokok Santri
-        $sheet->getStyle('A1:G1')->applyFromArray([
-            'font' => [
-                'name' => 'Calibri',
-                'bold' => true,
-                'color' => ['argb' => 'FFFFFFFF'],
-                'size' => 11,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FF059669'], // Emerald Green
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['argb' => 'FFD1D5DB'],
-                ],
-            ],
+        // Section A-F: HIJAU EMERALD (Data Pokok - WAJIB)
+        $sheet1->getStyle('A1:F1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF059669']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
 
-        // Styling Header H1:J1 (Warm Amber) - Tagihan & Tunggakan Masa Lalu
-        $sheet->getStyle('H1:J1')->applyFromArray([
-            'font' => [
-                'name' => 'Calibri',
-                'bold' => true,
-                'color' => ['argb' => 'FFFFFFFF'],
-                'size' => 11,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFD97706'], // Warm Amber
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['argb' => 'FFD1D5DB'],
-                ],
-            ],
+        // Section G-L: BIRU (Biodata Santri & Alamat - OPSIONAL)
+        $sheet1->getStyle('G1:L1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF2563EB']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
-        $sheet->getRowDimension(1)->setRowHeight(28);
 
-        // Contoh Data 1 (Santri Lama Ada Tunggakan Uang Pangkal & SPP)
-        $sampleRow1 = [
-            'Ahmad Fauzan Hidayat',
-            '20250012',
-            'L',
-            '15/05/2012',
-            'VIII-A',
-            'H. Budi Santoso',
-            '081234567890',
-            '1250000',
-            '410000',
-            'Sisa Uang Pangkal 2025 & SPP Juni 2025',
+        // Section M-Q: UNGU (Data Orang Tua / Asal Sekolah - OPSIONAL)
+        $sheet1->getStyle('M1:Q1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF7C3AED']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        // Section R-AB: ORANYE (Tagihan & Tunggakan per Kategori - OPSIONAL / 0 JIKA LUNAS)
+        $sheet1->getStyle('R1:AB1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD97706']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        $sheet1->getRowDimension(1)->setRowHeight(28);
+
+        $sheet1->getStyle('A2:AB2')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'italic' => true, 'size' => 9, 'color' => ['argb' => 'FF374151']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF3F4F6']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE5E7EB']]],
+        ]);
+        $sheet1->getRowDimension(2)->setRowHeight(34);
+
+        // Contoh Data Nyata (Sample Rows)
+        $samplesSheet1 = [
+            ['Ahmad Fauzan Hidayat',   '',          'L', '2012-05-15', '2026', 'VII-A', 'Temanggung', '3302012345678901', '0089765432', 'B',  'Jl. Melati No.12 RT 02/04 Ds. Ngadipuro Kec. Wonoboyo Temanggung', 'Al-Khawarizmi', 'H. Budi Santoso',  '081234567890', 'Wiraswasta', 'Siti Aminah',   'MI Al-Hidayah Ngadipuro', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', ''],
+            ['Nurul Aisyah Zahra',     '',          'P', '2009-08-20', '2026', 'X-A',   'Magelang',   '3302019876543210', '0098765431', 'A',  'Jl. Anggrek No.5 RT 01/02 Ds. Kalisari Kec. Salaman Magelang',    'Khadijah',      'Drs. Subhan',      '085678901234', 'PNS Guru',   'Rr. Wulandari', 'SDN Salaman 1',           '0', '0', '0', '0', '1250000', '0', '150000', '0', '0', '0', 'Sisa Uang Pangkal & Seragam'],
+            ['Muhammad Rizky Pratama', '20250012',  'L', '2011-11-10', '2025', 'VIII-A','Wonosobo',   '',                 '',           'O',  'Kec. Garung Kab. Wonosobo',                                        'Ibnu Sina',     'Ahmad Syarifudin', '081398765432', 'Petani',     'Maimunah',      'MI Maarif Garung',        '60000', '110000', '600000', '50000', '0', '0', '0', '0', '0', '0', 'Tunggakan Bulanan Mei-Juni (2 Bulan)'],
+            ['Siti Rahmawati',         '20220008',  'P', '2007-03-25', '2022', 'XII-A', 'Semarang',   '',                 '',           '',   'Jl. Pemuda No. 8 Semarang',                                        'Aisyah',        'Mahmud Effendi',   '082233445566', 'Wiraswasta', 'Khadijah',      'SMP N 1 Semarang',        '0', '0', '0', '0', '0', '0', '0', '500000', '0', '0', 'Sisa Kitab Diniyah (Alumni Khidmah)'],
         ];
+        $this->_writeExcelSamples($sheet1, $samplesSheet1, 3, 'AB');
 
-        // Contoh Data 2 (Santri Baru Murni Tanpa Tunggakan)
-        $sampleRow2 = [
-            'Nurul Aisyah Zahra',
-            '',
-            'P',
-            '20/08/2009',
-            'X-A',
-            'Drs. Subhan',
-            '085678901234',
-            '0',
-            '0',
-            'Lunas / Tanpa Tunggakan',
-        ];
-
-        // Contoh Data 3 (Santri dengan Tunggakan SPP Saja)
-        $sampleRow3 = [
-            'Muhammad Rizky Pratama',
-            '',
-            'L',
-            '10/11/2011',
-            'VII-A',
-            'Ahmad Syarifudin',
-            '081398765432',
-            '0',
-            '820000',
-            'SPP Mei-Juni 2025 (2 Bulan)',
-        ];
-
-        $samples = [$sampleRow1, $sampleRow2, $sampleRow3];
-        $rowIdx = 2;
-        foreach ($samples as $sample) {
-            $colLetter = 'A';
-            foreach ($sample as $val) {
-                $sheet->setCellValueExplicit($colLetter . $rowIdx, (string)$val, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-                $colLetter++;
-            }
-            $sheet->getStyle("A{$rowIdx}:J{$rowIdx}")->applyFromArray([
-                'font' => ['name' => 'Calibri', 'size' => 10],
-                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['argb' => 'FFE5E7EB'],
-                    ],
-                ],
-            ]);
-            $sheet->getRowDimension($rowIdx)->setRowHeight(22);
-            $rowIdx++;
+        foreach (array_keys($colsSheet1) as $col) {
+            $sheet1->getColumnDimension($col)->setAutoSize(true);
         }
+        $sheet1->getColumnDimension('D')->setWidth(26);
+        $sheet1->getColumnDimension('K')->setWidth(45);
+        $sheet1->getColumnDimension('AB')->setWidth(35);
+        $sheet1->freezePane('A3');
 
-        // Auto column width
-        foreach (array_keys($columns) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
+        // ============================================================
+        // SHEET 2: PETUNJUK LENGKAP PENGISIAN
+        // ============================================================
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Petunjuk Pengisian');
 
-        // Sheet 2: Petunjuk Praktis Bendahara
-        $guideSheet = $spreadsheet->createSheet();
-        $guideSheet->setTitle('Petunjuk Singkat');
-
-        $guideSheet->setCellValue('A1', 'PETUNJUK PENGISIAN DATA SANTRI & TUNGGAKAN (HANYA 10 KOLOM)');
-        $guideSheet->getStyle('A1')->applyFromArray([
+        $sheet2->setCellValue('A1', 'PETUNJUK PENGISIAN TEMPLATE IMPORT MASSAL SANTRI — PONPES HIDAYATULLAH TUKSONGO');
+        $sheet2->getStyle('A1')->applyFromArray([
             'font' => ['name' => 'Calibri', 'bold' => true, 'size' => 13, 'color' => ['argb' => 'FF059669']]
         ]);
+        $sheet2->getRowDimension(1)->setRowHeight(24);
+
+        $sheet2->setCellValue('A2', '⚠️ PENTING: Baris 1 = Nama Kolom Sistem (JANGAN DIUBAH). Baris 2 = Label Bantuan (JANGAN DIHAPUS). Data santri dimulai dari BARIS 3 ke bawah.');
+        $sheet2->getStyle('A2')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'size' => 10, 'color' => ['argb' => 'FFB45309']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFEF9C3']],
+        ]);
+        $sheet2->getRowDimension(2)->setRowHeight(22);
 
         $guideData = [
-            ['Nama Kolom', 'Wajib / Opsional', 'Penjelasan & Contoh Pengisian'],
-            ['nama_lengkap', 'Wajib', 'Nama lengkap santri sesuai berkas resmi.'],
-            ['nis', 'Opsional', 'Nomor Induk Santri. Kosongkan jika santri baru (otomatis digenerate sistem). Isi NIS jika santri lama sudah ada di sistem agar tunggakan langsung tersambung.'],
-            ['jenis_kelamin', 'Wajib', 'Ketik "L" untuk Laki-laki atau "P" untuk Perempuan.'],
-            ['tanggal_lahir', 'Wajib', 'Format DD/MM/YYYY (contoh: 15/05/2012). Tanggal ini otomatis menjadi password login santri (contoh: 15052012).'],
-            ['kelas', 'Wajib', 'Nama kelas santri, contoh: VII-A, VII-B, VIII-A, X-A, XI-A. (Jenjang MTs/MA otomatis terdeteksi dari nama kelas).'],
-            ['nama_wali', 'Opsional', 'Nama ayah / ibu / wali santri.'],
-            ['no_whatsapp', 'Opsional', 'Nomor WhatsApp wali untuk pengiriman tagihan & bukti pembayaran (contoh: 081234567890).'],
-            ['tunggakan_daftar_ulang', 'Opsional', 'Nominal sisa Uang Pangkal / Daftar Ulang yang belum lunas. Ketik angka saja tanpa titik (contoh: 1250000). Isi 0 jika lunas.'],
-            ['tunggakan_spp_bulanan', 'Opsional', 'Total sisa tunggakan SPP / syahriyah bulanan masa lalu (contoh: 410000). Isi 0 jika lunas.'],
-            ['keterangan_tunggakan', 'Opsional', 'Rincian tunggakan agar wali paham (contoh: "Sisa Uang Pangkal 2025 & SPP Juni 2025").'],
+            ['BAGIAN 1: DATA POKOK & AKADEMIK (HIJAU)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['nama_lengkap',          'WAJIB',    'Nama lengkap santri sesuai dokumen resmi / akta kelahiran.'],
+            ['nis',                   'Opsional', 'Nomor Induk Santri. Kosongkan untuk santri baru (otomatis digenerate sistem). Jika santri lama atau alumni berikan NIS lamanya agar tagihan tersambung tanpa membuat akun ganda.'],
+            ['jenis_kelamin',         'WAJIB',    'L = Laki-laki, P = Perempuan.'],
+            ['tanggal_lahir',         'WAJIB',    'Format YYYY-MM-DD. Contoh: 2012-05-15. Otomatis menjadi PASSWORD DEFAULT login akun santri (format DDMMYYYY, misal: 15052012).'],
+            ['tahun_masuk',           'WAJIB',    'Tahun masuk santri ke pesantren, misal: 2026. Digunakan untuk nomor induk dan angkatan.'],
+            ['kelas',                 'WAJIB',    'VII-A, VII-B, VIII-A, X-A, XI-B, XII-A. Jenjang MTs / MA otomatis terdeteksi dari nama kelas.'],
+            ['', '', ''],
+            ['BAGIAN 2: BIODATA SANTRI & ASRAMA (BIRU)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['tempat_lahir',          'Opsional', 'Kota / Kabupaten tempat lahir santri. Contoh: Temanggung.'],
+            ['nik',                   'Opsional', 'Nomor Induk Kependudukan santri (16 digit) sesuai Kartu Keluarga.'],
+            ['nisn',                  'Opsional', 'Nomor Stambuk / NISN Kemdikbud santri.'],
+            ['golongan_darah',        'Opsional', 'Golongan darah: A, B, AB, atau O.'],
+            ['alamat_lengkap',        'Opsional', 'Alamat domisili lengkap: RT/RW, Dusun, Desa/Kelurahan, Kecamatan, Kabupaten/Kota.'],
+            ['kamar_asrama',          'Opsional', 'Nama kamar asrama mukim. Contoh: Al-Khawarizmi, Khadijah. Jika kamar belum ada di sistem, otomatis didaftarkan ke master asrama.'],
+            ['', '', ''],
+            ['BAGIAN 3: DATA ORANG TUA / WALI & ASAL SEKOLAH (UNGU)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['nama_wali',             'Opsional', 'Nama lengkap Ayah / Ibu / Wali santri.'],
+            ['no_whatsapp',           'Opsional', 'Nomor WhatsApp wali untuk informasi tagihan & kabar santri. Contoh: 081234567890.'],
+            ['pekerjaan_wali',        'Opsional', 'Pekerjaan Ayah / Wali. Contoh: Wiraswasta, PNS, Petani, Karyawan Swasta.'],
+            ['nama_ibu',              'Opsional', 'Nama lengkap Ibu kandung santri.'],
+            ['nama_sekolah',          'Opsional', 'Nama sekolah asal sebelum masuk pesantren (SD / MI). Contoh: MI Al-Hidayah.'],
+            ['', '', ''],
+            ['BAGIAN 4: RINCIAN TAGIHAN & TUNGGAKAN PER KATEGORI (ORANYE)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['tunggakan_syahriyah',   'Opsional', 'Tunggakan Syahriyah Pendidikan (Rp 30.000/bln). Tulis angka tanpa titik (contoh: 60000 untuk 2 bulan). Jika lunas / tidak ada, isi 0.'],
+            ['tunggakan_sot',         'Opsional', 'Tunggakan Iuran SOT (MTs Rp 55.000 / MA Rp 75.000 per bulan). Contoh: 110000. Jika lunas, isi 0.'],
+            ['tunggakan_uang_makan',  'Opsional', 'Tunggakan Uang Makan (Rp 300.000/bln). Contoh: 600000. Jika lunas atau santri laju, isi 0.'],
+            ['tunggakan_tabungan',    'Opsional', 'Tunggakan Tabungan Wajib Santri (Rp 25.000/bln). Contoh: 50000. Jika lunas, isi 0.'],
+            ['tunggakan_daftar_ulang','Opsional', 'Sisa tunggakan Uang Pangkal / Daftar Ulang. Contoh: 1250000. Jika lunas, isi 0.'],
+            ['tunggakan_uang_gedung', 'Opsional', 'Sisa tunggakan Uang Gedung. Contoh: 500000. Jika lunas, isi 0.'],
+            ['tunggakan_seragam',     'Opsional', 'Sisa tunggakan Biaya Seragam Santri. Contoh: 150000. Jika lunas, isi 0.'],
+            ['tunggakan_kitab',       'Opsional', 'Sisa tunggakan Kitab & Buku Pelajaran. Contoh: 200000. Jika lunas, isi 0.'],
+            ['tunggakan_kegiatan',    'Opsional', 'Sisa tunggakan Iuran Kegiatan Tahunan santri. Contoh: 300000. Jika lunas, isi 0.'],
+            ['tunggakan_lainnya',     'Opsional', 'Tagihan pos lainnya di luar pos di atas. Contoh: 100000. Jika tidak ada, isi 0.'],
+            ['keterangan_tunggakan',  'Opsional', 'Catatan rincian tagihan atau bulan yang menunggak. Contoh: "Syahriyah & SOT bln Mei-Juni".'],
+            ['', '', ''],
+            ['CATATAN KASUS ALUMNI DENGAN TAGIHAN', '', ''],
+            ['Alumni Bertagihan',    'Informasi', 'Untuk santri yang sudah lulus (Alumni) namun masih tinggal/mengabdi di pondok dan memiliki sisa tagihan, cukup masukkan nama & NIS lamanya di template ini beserta nominal tunggakannya. Di sistem, santri ini akan tetap tercatat dan tagihannya langsung muncul di Kasir POS (dengan label Alumni) untuk pelunasan.'],
         ];
 
-        $gRow = 3;
-        foreach ($guideData as $idx => $gItem) {
-            $guideSheet->setCellValue('A' . $gRow, $gItem[0]);
-            $guideSheet->setCellValue('B' . $gRow, $gItem[1]);
-            $guideSheet->setCellValue('C' . $gRow, $gItem[2]);
+        $gRow = 4;
+        foreach ($guideData as $gItem) {
+            $sheet2->setCellValue('A' . $gRow, $gItem[0]);
+            $sheet2->setCellValue('B' . $gRow, $gItem[1]);
+            $sheet2->setCellValue('C' . $gRow, $gItem[2]);
 
-            if ($idx === 0) {
-                $guideSheet->getStyle("A{$gRow}:C{$gRow}")->applyFromArray([
-                    'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            $isSection = !empty($gItem[0]) && empty($gItem[1]) && empty($gItem[2]);
+            $isHeader  = ($gItem[0] === 'Nama Kolom');
+            $isWajib   = str_starts_with(strtoupper($gItem[1] ?? ''), 'WAJIB');
+
+            if ($isSection) {
+                $sheet2->mergeCells("A{$gRow}:C{$gRow}");
+                $sheet2->getStyle("A{$gRow}:C{$gRow}")->applyFromArray([
+                    'font' => ['name' => 'Calibri', 'bold' => true, 'size' => 11, 'color' => ['argb' => 'FFFFFFFF']],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1F2937']],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
                 ]);
-            } else {
-                $guideSheet->getStyle("A{$gRow}:C{$gRow}")->applyFromArray([
-                    'font' => ['name' => 'Calibri', 'size' => 10],
+                $sheet2->getRowDimension($gRow)->setRowHeight(24);
+            } elseif ($isHeader) {
+                $sheet2->getStyle("A{$gRow}:C{$gRow}")->applyFromArray([
+                    'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FF374151']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE5E7EB']],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+                ]);
+                $sheet2->getRowDimension($gRow)->setRowHeight(22);
+            } elseif (!empty($gItem[0])) {
+                $sheet2->getStyle("A{$gRow}:C{$gRow}")->applyFromArray([
+                    'font' => ['name' => 'Calibri', 'size' => 10, 'bold' => $isWajib],
+                    'fill' => $isWajib ? ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFECFDF5']] : [],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE5E7EB']]],
                 ]);
+                $sheet2->getRowDimension($gRow)->setRowHeight(28);
+            } else {
+                $sheet2->getRowDimension($gRow)->setRowHeight(8);
             }
-            $guideSheet->getRowDimension($gRow)->setRowHeight(22);
             $gRow++;
         }
 
-        $guideSheet->getColumnDimension('A')->setWidth(26);
-        $guideSheet->getColumnDimension('B')->setWidth(20);
-        $guideSheet->getColumnDimension('C')->setWidth(85);
+        $sheet2->getColumnDimension('A')->setWidth(26);
+        $sheet2->getColumnDimension('B')->setWidth(18);
+        $sheet2->getColumnDimension('C')->setWidth(85);
 
-        // Kembalikan active sheet ke Sheet 0
+        // Aktifkan sheet 1 sebagai default tampilan saat dibuka di Excel
         $spreadsheet->setActiveSheetIndex(0);
 
         $writer = new Xlsx($spreadsheet);
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
-        }, 'Format_Import_Santri_Dan_Tunggakan_Hidayatullah.xlsx', [
+        }, 'Template_Import_Santri_Ponpes_Hidayatullah.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Cache-Control' => 'max-age=0',
         ]);
+    }
+
+    /**
+     * Helper: tulis data contoh (sample rows) ke dalam sheet Excel.
+     */
+    private function _writeExcelSamples($sheet, array $samples, int $startRow, string $lastCol): void
+    {
+        $rowIdx = $startRow;
+        foreach ($samples as $sample) {
+            $colLetter = 'A';
+            foreach ($sample as $val) {
+                $sheet->setCellValueExplicit($colLetter . $rowIdx, (string)$val, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                $colLetter++;
+            }
+            $sheet->getStyle("A{$rowIdx}:{$lastCol}{$rowIdx}")->applyFromArray([
+                'font' => ['name' => 'Calibri', 'size' => 10],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE5E7EB']]],
+            ]);
+            $sheet->getRowDimension($rowIdx)->setRowHeight(22);
+            $rowIdx++;
+        }
     }
 
     /**
      * Import santri massal melalui file format Excel (.xlsx / .xls) beserta tagihan tunggakan lalu.
      */
+
     public function importExcel(Request $request)
     {
         $request->validate([
@@ -1083,11 +1274,17 @@ class StudentController extends Controller
                     continue;
                 }
 
+                // Lewati baris bantuan / header kedua template
+                if (str_contains(strtolower($nama), 'wajib') || str_contains(strtolower($nama), 'contoh') || strtolower($nama) === 'nama lengkap' || strtolower($nama) === 'nama_lengkap') {
+                    continue;
+                }
+
                 $tahunMasuk = $findValue($data, ['tahun_masuk', 'angkatan']) ?: date('Y');
                 $nisInput = $findValue($data, ['nis', 'no_induk', 'nomor_induk']);
                 $usernameInput = $findValue($data, ['username', 'user_id']);
-                $nisnInput = $findValue($data, ['nisn']);
+                $nisnInput = $findValue($data, ['nisn', 'no_nisn']);
                 $jkRaw = $findValue($data, ['jenis_kelamin', 'jk', 'gender']) ?: '';
+                $tglLahirRaw = $findValue($data, ['tanggal_lahir', 'tgl_lahir', 'tgl_lahir_yyyy_mm_dd', 'birth_date']);
                 $kelasInput = $findValue($data, ['kelas', 'rombel']) ?: 'VII-A';
                 $jenjangInput = $findValue($data, ['jenjang', 'tingkat']);
                 if (empty($jenjangInput)) {
@@ -1099,20 +1296,42 @@ class StudentController extends Controller
                         $jenjangInput = 'MTs Pondok Mukim';
                     }
                 }
+
+                // Biodata Tambahan Santri & Alamat
+                $tempatLahir = $findValue($data, ['tempat_lahir', 'tmp_lahir', 'kota_lahir']);
+                $nikInput = $findValue($data, ['nik', 'no_nik', 'nik_santri']);
+                $golDarah = $findValue($data, ['golongan_darah', 'gol_darah', 'goldar']);
+                $alamatLengkap = $findValue($data, ['alamat_lengkap', 'alamat', 'domisili', 'alamat_santri']);
                 $kamarInput = $findValue($data, ['kamar_asrama', 'kamar', 'asrama']);
-                $namaWali = $findValue($data, ['nama_wali', 'wali', 'orang_tua', 'nama_ortu']);
-                $noWhatsapp = $findValue($data, ['no_whatsapp', 'whatsapp', 'no_wa', 'no_hp', 'telepon']);
-                $alamat = $findValue($data, ['alamat', 'domisili']);
+                $namaWali = $findValue($data, ['nama_wali', 'wali', 'orang_tua', 'nama_ortu', 'ayah_nama']);
+                $noWhatsapp = $findValue($data, ['no_whatsapp', 'whatsapp', 'no_wa', 'no_hp', 'telepon', 'ayah_telepon']);
+                $pekerjaanWali = $findValue($data, ['pekerjaan_wali', 'ayah_pekerjaan', 'pekerjaan_ayah', 'wali_pekerjaan']);
+                $namaIbu = $findValue($data, ['nama_ibu', 'ibu_nama']);
+                $teleponIbu = $findValue($data, ['telepon_ibu', 'ibu_telepon', 'no_hp_ibu']);
+                $namaSekolah = $findValue($data, ['nama_sekolah', 'sekolah_asal', 'asal_sekolah']);
+                $tahunLulus = $findValue($data, ['tahun_lulus', 'thn_lulus']);
                 $catatan = $findValue($data, ['catatan', 'keterangan_santri']);
 
-                // Parsing Data Tagihan / Tunggakan Masa Lalu
-                $du = $cleanNominal($findValue($data, ['tunggakan_daftar_ulang', 'sisa_daftar_ulang', 'tunggakan_pangkal', 'uang_pangkal_lalu', 'daftar_ulang']));
-                $spp = $cleanNominal($findValue($data, ['tunggakan_spp_bulanan', 'tunggakan_spp', 'tunggakan_syahriyah', 'spp_lalu', 'sisa_spp', 'spp']));
-                $lain = $cleanNominal($findValue($data, ['tunggakan_lainnya', 'tunggakan_lain', 'tunggakan_pos_lain', 'biaya_lainnya', 'tagihan_lain']));
-                $totalLalu = $cleanNominal($findValue($data, ['total_tunggakan_lalu', 'total_tunggakan', 'tunggakan_lalu', 'total_piutang']));
+                // Parsing Data Tagihan / Tunggakan Masa Lalu Terinci per Kategori
+                $syahriyahVal = $cleanNominal($findValue($data, ['tunggakan_syahriyah', 'syahriyah', 'syahriah', 'tunggakan_syahriah']));
+                $sotVal       = $cleanNominal($findValue($data, ['tunggakan_sot', 'sot', 'iuran_sot']));
+                $makanVal     = $cleanNominal($findValue($data, ['tunggakan_uang_makan', 'uang_makan', 'tunggakan_makan', 'makan']));
+                $tabunganVal  = $cleanNominal($findValue($data, ['tunggakan_tabungan', 'tabungan_wajib', 'tunggakan_tab', 'tabungan']));
+
+                $duVal        = $cleanNominal($findValue($data, ['tunggakan_daftar_ulang', 'sisa_daftar_ulang', 'tunggakan_pangkal', 'uang_pangkal_lalu', 'daftar_ulang', 'uang_pangkal']));
+                $gedungVal    = $cleanNominal($findValue($data, ['tunggakan_uang_gedung', 'uang_gedung', 'gedung', 'tunggakan_gedung']));
+                $seragamVal   = $cleanNominal($findValue($data, ['tunggakan_seragam', 'seragam', 'biaya_seragam', 'tunggakan_biaya_seragam']));
+                $kitabVal     = $cleanNominal($findValue($data, ['tunggakan_kitab', 'kitab', 'buku', 'kitab_buku', 'tunggakan_buku']));
+                $kegiatanVal  = $cleanNominal($findValue($data, ['tunggakan_kegiatan', 'kegiatan', 'iuran_kegiatan', 'tunggakan_iuran_kegiatan']));
+                $lainVal      = $cleanNominal($findValue($data, ['tunggakan_lainnya', 'tunggakan_lain', 'tunggakan_pos_lain', 'biaya_lainnya', 'tagihan_lain']));
+
+                // Kompatibilitas jika pengguna masih mengunggah template lama
+                $legacySpp    = $cleanNominal($findValue($data, ['tunggakan_spp_bulanan', 'tunggakan_spp', 'spp_lalu', 'sisa_spp', 'spp']));
+                $totalLalu    = $cleanNominal($findValue($data, ['total_tunggakan_lalu', 'total_tunggakan', 'tunggakan_lalu', 'total_piutang']));
+
                 $ketTunggakan = $findValue($data, ['keterangan_tunggakan', 'catatan_tunggakan', 'rincian_tunggakan', 'keterangan_tagihan', 'keterangan']);
-                $tempoRaw = $findValue($data, ['jatuh_tempo_tunggakan', 'jatuh_tempo', 'tgl_jatuh_tempo', 'due_date']);
-                $jatuhTempo = $parseJatuhTempo($tempoRaw);
+                $tempoRaw     = $findValue($data, ['jatuh_tempo_tunggakan', 'jatuh_tempo', 'tgl_jatuh_tempo', 'due_date']);
+                $jatuhTempo   = $parseJatuhTempo($tempoRaw);
 
                 // Pencocokan Asrama Otomatis & Auto-Create jika Kamar Belum Ada di Sistem
                 $dormitoryId = null;
@@ -1175,7 +1394,16 @@ class StudentController extends Controller
                     // Perbarui profil santri jika ada data baru yang terisi
                     if (empty($student->no_whatsapp) && !empty($noWhatsapp)) $student->no_whatsapp = $noWhatsapp;
                     if (empty($student->nama_wali) && !empty($namaWali)) $student->nama_wali = $namaWali;
-                    if (empty($student->alamat) && !empty($alamat)) $student->alamat = $alamat;
+                    if (empty($student->ayah_nama) && !empty($namaWali)) $student->ayah_nama = $namaWali;
+                    if (empty($student->alamat_lengkap) && !empty($alamatLengkap)) $student->alamat_lengkap = $alamatLengkap;
+                    if (empty($student->alamat) && !empty($alamatLengkap)) $student->alamat = $alamatLengkap;
+                    if (empty($student->tempat_lahir) && !empty($tempatLahir)) $student->tempat_lahir = $tempatLahir;
+                    if (empty($student->nik) && !empty($nikInput)) $student->nik = $nikInput;
+                    if (empty($student->nisn) && !empty($nisnInput)) $student->nisn = $nisnInput;
+                    if (empty($student->golongan_darah) && !empty($golDarah)) $student->golongan_darah = $golDarah;
+                    if (empty($student->ayah_pekerjaan) && !empty($pekerjaanWali)) $student->ayah_pekerjaan = $pekerjaanWali;
+                    if (empty($student->ibu_nama) && !empty($namaIbu)) $student->ibu_nama = $namaIbu;
+                    if (empty($student->nama_sekolah) && !empty($namaSekolah)) $student->nama_sekolah = $namaSekolah;
                     if (!empty($dormitoryId) && empty($student->dormitory_id)) {
                         $student->dormitory_id = $dormitoryId;
                         $student->kamar_asrama = $kamarInput;
@@ -1232,6 +1460,11 @@ class StudentController extends Controller
                         'nama_lengkap' => $nama,
                         'jenis_kelamin' => $jk,
                         'tanggal_lahir' => $tglLahirDb,
+                        'tempat_lahir' => $tempatLahir ?: null,
+                        'nik' => $nikInput ?: null,
+                        'golongan_darah' => $golDarah ?: null,
+                        'alamat_lengkap' => $alamatLengkap ?: null,
+                        'alamat' => $alamatLengkap ?: null,
                         'jenjang' => $jenjangInput,
                         'kelas' => $kelasInput,
                         'kamar_asrama' => $kamarInput,
@@ -1239,8 +1472,14 @@ class StudentController extends Controller
                         'tahun_masuk' => $tahunMasuk,
                         'status' => 'Aktif',
                         'nama_wali' => $namaWali ?: null,
+                        'ayah_nama' => $namaWali ?: null,
                         'no_whatsapp' => $noWhatsapp ?: null,
-                        'alamat' => $alamat ?: null,
+                        'ayah_telepon' => $noWhatsapp ?: null,
+                        'ayah_pekerjaan' => $pekerjaanWali ?: null,
+                        'ibu_nama' => $namaIbu ?: null,
+                        'ibu_telepon' => $teleponIbu ?: null,
+                        'nama_sekolah' => $namaSekolah ?: null,
+                        'tahun_lulus' => $tahunLulus ?: null,
                         'catatan' => $catatan ?: 'Import Massal Santri & Tunggakan',
                         'password' => Hash::make($defaultPassword),
                     ]);
@@ -1251,131 +1490,157 @@ class StudentController extends Controller
                 // ============================================================
                 // PEMBUATAN TAGIHAN / TUNGGAKAN MASA LALU (KEUANGAN BENDAHARA)
                 // ============================================================
+                $tahunMasukSantri = (int)($student->tahun_masuk ?: date('Y'));
+                $tahunTagihan = $tahunMasukSantri;
+                if (!empty($ketTunggakan) && preg_match('/\b(20[2-3][0-9])\b/', $ketTunggakan, $ym)) {
+                    $tahunTagihan = (int)$ym[1];
+                }
 
-                // 1. Sisa Daftar Ulang / Uang Pangkal Masa Lalu
-                if ($du > 0) {
-                    $billTitle = 'Sisa Tunggakan Daftar Ulang / Uang Pangkal Lalu' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : "");
-                    $existBill = StudentBill::where('student_id', $student->id)
-                        ->where('kategori', 'daftar_ulang')
-                        ->where('pos_biaya', 'DAFTAR ULANG')
-                        ->where(function($q) use ($billTitle) {
-                            $q->where('judul_tagihan', $billTitle)
-                              ->orWhere('judul_tagihan', 'like', 'Sisa Tunggakan Daftar Ulang%');
+                // Helper deteksi nama bulan jika bendahara menuliskan nama bulan di keterangan (misal: "Mei-Juni" atau "April")
+                $daftarBulan = [
+                    'Januari' => '/\b(januari|january|jan)\b/i',
+                    'Februari' => '/\b(februari|february|feb)\b/i',
+                    'Maret' => '/\b(maret|march|mar)\b/i',
+                    'April' => '/\b(april|apr)\b/i',
+                    'Mei' => '/\b(mei|may)\b/i',
+                    'Juni' => '/\b(juni|june|jun)\b/i',
+                    'Juli' => '/\b(juli|july|jul)\b/i',
+                    'Agustus' => '/\b(agustus|august|agu|ags)\b/i',
+                    'September' => '/\b(september|sep|sept)\b/i',
+                    'Oktober' => '/\b(oktober|october|okt|oct)\b/i',
+                    'November' => '/\b(november|nov)\b/i',
+                    'Desember' => '/\b(desember|december|des|dec)\b/i',
+                ];
+                $detectedMonths = [];
+                if (!empty($ketTunggakan)) {
+                    foreach ($daftarBulan as $bNama => $bPattern) {
+                        if (preg_match($bPattern, $ketTunggakan)) {
+                            $detectedMonths[] = $bNama;
+                        }
+                    }
+                }
+
+                // Helper instan buat StudentBill jika belum ada duplikat persis
+                $createBillIfNotExists = function($kat, $pos, $judul, $bln, $thn, $nom) use ($student, $jatuhTempo, $creatorName, &$createdBills, &$totalNominalBills) {
+                    if ($nom <= 0) return;
+                    $exist = StudentBill::where('student_id', $student->id)
+                        ->where('kategori', $kat)
+                        ->where('pos_biaya', $pos)
+                        ->where(function($q) use ($judul, $bln, $thn) {
+                            $q->where('judul_tagihan', $judul);
+                            if (!empty($bln) && !empty($thn)) {
+                                $q->orWhere(fn($sq) => $sq->where('bulan', $bln)->where('tahun', $thn));
+                            }
                         })
                         ->first();
-                    if (!$existBill) {
+                    if (!$exist) {
                         StudentBill::create([
                             'student_id' => $student->id,
-                            'kategori' => 'daftar_ulang',
-                            'pos_biaya' => 'DAFTAR ULANG',
-                            'judul_tagihan' => $billTitle,
-                            'bulan' => 'Juli',
-                            'tahun' => (int)($student->tahun_masuk ?: date('Y')),
-                            'nominal_asli' => $du,
+                            'kategori' => $kat,
+                            'pos_biaya' => $pos,
+                            'judul_tagihan' => $judul,
+                            'bulan' => $bln,
+                            'tahun' => $thn,
+                            'nominal_asli' => $nom,
                             'nominal_potongan' => 0,
-                            'nominal_tagihan' => $du,
+                            'nominal_tagihan' => $nom,
                             'nominal_bayar' => 0,
-                            'sisa_tagihan' => $du,
+                            'sisa_tagihan' => $nom,
                             'status' => 'Belum Bayar',
                             'jatuh_tempo' => $jatuhTempo,
                             'created_by' => $creatorName,
                         ]);
                         $createdBills++;
-                        $totalNominalBills += $du;
+                        $totalNominalBills += $nom;
+                    }
+                };
+
+                // 1. Tunggakan Syahriyah Pendidikan (Rp 30.000/bln)
+                if ($syahriyahVal > 0) {
+                    if (count($detectedMonths) > 0) {
+                        $nomPerBulan = round($syahriyahVal / count($detectedMonths));
+                        foreach ($detectedMonths as $bName) {
+                            $createBillIfNotExists('bulanan', 'SYAHRIYAH', "Tunggakan Syahriyah Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                        }
+                    } else {
+                        $createBillIfNotExists('bulanan', 'SYAHRIYAH', 'Tunggakan Syahriyah Pendidikan' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $syahriyahVal);
                     }
                 }
 
-                // 2. Tunggakan SPP / Syahriyah Bulanan Masa Lalu
-                if ($spp > 0) {
-                    $billTitle = 'Tunggakan SPP / Syahriyah Masa Lalu' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : "");
-                    $existBill = StudentBill::where('student_id', $student->id)
-                        ->where('kategori', 'bulanan')
-                        ->where('pos_biaya', 'SYAHRIYAH')
-                        ->where(function($q) use ($billTitle) {
-                            $q->where('judul_tagihan', $billTitle)
-                              ->orWhere('judul_tagihan', 'like', 'Tunggakan SPP / Syahriyah Masa Lalu%');
-                        })
-                        ->first();
-                    if (!$existBill) {
-                        StudentBill::create([
-                            'student_id' => $student->id,
-                            'kategori' => 'bulanan',
-                            'pos_biaya' => 'SYAHRIYAH',
-                            'judul_tagihan' => $billTitle,
-                            'bulan' => 'Lalu',
-                            'tahun' => (int)($student->tahun_masuk ?: date('Y')) - 1,
-                            'nominal_asli' => $spp,
-                            'nominal_potongan' => 0,
-                            'nominal_tagihan' => $spp,
-                            'nominal_bayar' => 0,
-                            'sisa_tagihan' => $spp,
-                            'status' => 'Belum Bayar',
-                            'jatuh_tempo' => $jatuhTempo,
-                            'created_by' => $creatorName,
-                        ]);
-                        $createdBills++;
-                        $totalNominalBills += $spp;
+                // 2. Tunggakan Iuran SOT (MTs Rp 55.000 / MA Rp 75.000 per bulan)
+                if ($sotVal > 0) {
+                    if (count($detectedMonths) > 0) {
+                        $nomPerBulan = round($sotVal / count($detectedMonths));
+                        foreach ($detectedMonths as $bName) {
+                            $createBillIfNotExists('bulanan', 'SOT', "Tunggakan Iuran SOT Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                        }
+                    } else {
+                        $createBillIfNotExists('bulanan', 'SOT', 'Tunggakan Iuran SOT' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $sotVal);
                     }
                 }
 
-                // 3. Tunggakan Pos Lainnya (Kitab, Seragam, Kegiatan, dll)
-                if ($lain > 0) {
-                    $billTitle = !empty($ketTunggakan) ? "Tunggakan Pos Lain: {$ketTunggakan}" : 'Tunggakan Biaya Pendidikan Lainnya';
-                    $existBill = StudentBill::where('student_id', $student->id)
-                        ->where('kategori', 'lainnya')
-                        ->where('pos_biaya', 'TUNGGAKAN LALU')
-                        ->where('judul_tagihan', $billTitle)
-                        ->first();
-                    if (!$existBill) {
-                        StudentBill::create([
-                            'student_id' => $student->id,
-                            'kategori' => 'lainnya',
-                            'pos_biaya' => 'TUNGGAKAN LALU',
-                            'judul_tagihan' => $billTitle,
-                            'bulan' => null,
-                            'tahun' => (int)($student->tahun_masuk ?: date('Y')),
-                            'nominal_asli' => $lain,
-                            'nominal_potongan' => 0,
-                            'nominal_tagihan' => $lain,
-                            'nominal_bayar' => 0,
-                            'sisa_tagihan' => $lain,
-                            'status' => 'Belum Bayar',
-                            'jatuh_tempo' => $jatuhTempo,
-                            'created_by' => $creatorName,
-                        ]);
-                        $createdBills++;
-                        $totalNominalBills += $lain;
+                // 3. Tunggakan Uang Makan (Rp 300.000/bln)
+                if ($makanVal > 0) {
+                    if (count($detectedMonths) > 0) {
+                        $nomPerBulan = round($makanVal / count($detectedMonths));
+                        foreach ($detectedMonths as $bName) {
+                            $createBillIfNotExists('bulanan', 'MAKAN', "Tunggakan Uang Makan Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                        }
+                    } else {
+                        $createBillIfNotExists('bulanan', 'MAKAN', 'Tunggakan Uang Makan' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $makanVal);
                     }
                 }
 
-                // 4. Fallback jika hanya total tunggakan umum yang diisi
-                if ($totalLalu > 0 && $du == 0 && $spp == 0 && $lain == 0) {
-                    $billTitle = !empty($ketTunggakan) ? "Tunggakan Masa Lalu: {$ketTunggakan}" : 'Tunggakan Biaya Pendidikan Masa Lalu';
-                    $existBill = StudentBill::where('student_id', $student->id)
-                        ->where('kategori', 'lainnya')
-                        ->where('pos_biaya', 'TUNGGAKAN LALU')
-                        ->where('status', 'Belum Bayar')
-                        ->first();
-                    if (!$existBill) {
-                        StudentBill::create([
-                            'student_id' => $student->id,
-                            'kategori' => 'lainnya',
-                            'pos_biaya' => 'TUNGGAKAN LALU',
-                            'judul_tagihan' => $billTitle,
-                            'bulan' => null,
-                            'tahun' => (int)($student->tahun_masuk ?: date('Y')) - 1,
-                            'nominal_asli' => $totalLalu,
-                            'nominal_potongan' => 0,
-                            'nominal_tagihan' => $totalLalu,
-                            'nominal_bayar' => 0,
-                            'sisa_tagihan' => $totalLalu,
-                            'status' => 'Belum Bayar',
-                            'jatuh_tempo' => $jatuhTempo,
-                            'created_by' => $creatorName,
-                        ]);
-                        $createdBills++;
-                        $totalNominalBills += $totalLalu;
+                // 4. Tunggakan Tabungan Wajib Santri (Rp 25.000/bln)
+                if ($tabunganVal > 0) {
+                    $createBillIfNotExists('bulanan', 'TAB', 'Tunggakan Tabungan Santri' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $tabunganVal);
+                }
+
+                // 5. Tunggakan Daftar Ulang / Uang Pangkal
+                if ($duVal > 0) {
+                    $createBillIfNotExists('daftar_ulang', 'DAFTAR ULANG', 'Sisa Tunggakan Daftar Ulang / Uang Pangkal' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Juli', $tahunMasukSantri, $duVal);
+                }
+
+                // 6. Tunggakan Uang Gedung
+                if ($gedungVal > 0) {
+                    $createBillIfNotExists('daftar_ulang', 'UANG GEDUNG', 'Tunggakan Uang Gedung' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $gedungVal);
+                }
+
+                // 7. Tunggakan Seragam Santri
+                if ($seragamVal > 0) {
+                    $createBillIfNotExists('daftar_ulang', 'SERAGAM', 'Tunggakan Biaya Seragam Santri' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $seragamVal);
+                }
+
+                // 8. Tunggakan Kitab & Buku
+                if ($kitabVal > 0) {
+                    $createBillIfNotExists('daftar_ulang', 'KITAB', 'Tunggakan Kitab & Buku Pelajaran' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $kitabVal);
+                }
+
+                // 9. Tunggakan Iuran Kegiatan Tahunan
+                if ($kegiatanVal > 0) {
+                    $createBillIfNotExists('lainnya', 'KEGIATAN', 'Tunggakan Iuran Kegiatan Santri' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $kegiatanVal);
+                }
+
+                // 10. Tunggakan Pos Lainnya
+                if ($lainVal > 0) {
+                    $createBillIfNotExists('lainnya', 'TUNGGAKAN LALU', !empty($ketTunggakan) ? "Tunggakan Pos Lain: {$ketTunggakan}" : 'Tunggakan Biaya Pendidikan Lainnya', null, $tahunMasukSantri, $lainVal);
+                }
+
+                // 11. Fallback Kompatibilitas Template Lama: jika hanya mengisi tunggakan_spp_bulanan tanpa syahriyah & sot terpisah
+                if ($legacySpp > 0 && $syahriyahVal == 0 && $sotVal == 0) {
+                    if (count($detectedMonths) > 0) {
+                        $nomPerBulan = round($legacySpp / count($detectedMonths));
+                        foreach ($detectedMonths as $bName) {
+                            $createBillIfNotExists('bulanan', 'SYAHRIYAH', "Tunggakan SPP Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                        }
+                    } else {
+                        $createBillIfNotExists('bulanan', 'SYAHRIYAH', 'Tunggakan SPP / Syahriyah Masa Lalu' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $legacySpp);
                     }
+                }
+
+                // 12. Fallback Kompatibilitas Template Lama: jika hanya mengisi total tunggakan umum
+                if ($totalLalu > 0 && $syahriyahVal == 0 && $sotVal == 0 && $makanVal == 0 && $tabunganVal == 0 && $duVal == 0 && $gedungVal == 0 && $seragamVal == 0 && $kitabVal == 0 && $kegiatanVal == 0 && $lainVal == 0 && $legacySpp == 0) {
+                    $createBillIfNotExists('lainnya', 'TUNGGAKAN LALU', !empty($ketTunggakan) ? "Tunggakan Masa Lalu: {$ketTunggakan}" : 'Tunggakan Biaya Pendidikan Masa Lalu', null, $tahunMasukSantri - 1, $totalLalu);
                 }
             }
         } catch (\Throwable $e) {
@@ -1453,10 +1718,31 @@ class StudentController extends Controller
             ]);
             $msg = "Berhasil memproses kelulusan! {$count} santri dari kelas {$kelasAsal} resmi dialihkan statusnya menjadi Alumni.";
         } else {
-            Student::whereIn('id', $studentIds)->update([
-                'kelas' => $kelasTujuan,
-            ]);
-            $msg = "Alhamdulillah! {$count} santri dari kelas {$kelasAsal} berhasil dinaikkan ke kelas {$kelasTujuan}. Santri yang tidak dicentang tetap di kelas {$kelasAsal} (tinggal kelas).";
+            // Cek apakah kelas tujuan merupakan jenjang MA (misal kelas X, XI, XII atau MA)
+            $isTargetMa = preg_match('/^(X|XI|XII)[\-\s_]/i', $kelasTujuan) || stripos($kelasTujuan, 'MA') !== false;
+            $isAsalMts = preg_match('/^(VII|VIII|IX)[\-\s_]/i', $kelasAsal) || stripos($kelasAsal, 'MTs') !== false;
+
+            if ($isTargetMa && $isAsalMts) {
+                // Santri MTs melanjutkan ke MA: otomatis perbarui jenjangnya ke MA sesuai status mukim/laju
+                $targetStudents = Student::whereIn('id', $studentIds)->get();
+                foreach ($targetStudents as $ts) {
+                    $newJenjang = 'MA Mukim';
+                    if (stripos($ts->jenjang ?? '', 'laju') !== false || ($ts->kamar_asrama && stripos($ts->kamar_asrama, 'laju') !== false)) {
+                        $newJenjang = 'MA Laju';
+                    }
+                    $ts->update([
+                        'kelas' => $kelasTujuan,
+                        'jenjang' => $newJenjang,
+                        'catatan' => ($ts->catatan ? $ts->catatan . ' ' : '') . "[Lanjut dari MTs {$kelasAsal} ke MA {$kelasTujuan} pada " . date('Y-m-d') . "]",
+                    ]);
+                }
+                $msg = "Alhamdulillah! {$count} santri dari MTs ({$kelasAsal}) berhasil dinaikkan ke jenjang MA ({$kelasTujuan}). Jenjang kesiswaan & tarif otomatis disesuaikan ke MA tanpa perlu mendaftar PSB ulang.";
+            } else {
+                Student::whereIn('id', $studentIds)->update([
+                    'kelas' => $kelasTujuan,
+                ]);
+                $msg = "Alhamdulillah! {$count} santri dari kelas {$kelasAsal} berhasil dinaikkan ke kelas {$kelasTujuan}. Santri yang tidak dicentang tetap di kelas {$kelasAsal} (tinggal kelas).";
+            }
         }
 
         return redirect()->route('admin.siswa.kenaikanKelas', ['kelas_asal' => $kelasAsal])->with('success', $msg);
@@ -1844,11 +2130,11 @@ class StudentController extends Controller
         // Beri nilai peringkat / ranking
         $mtsRank = 1;
         foreach ($mtsList as $s) {
-            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $mtsRank++ : '—';
+            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $mtsRank++ : 'â€”';
         }
         $maRank = 1;
         foreach ($maList as $s) {
-            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $maRank++ : '—';
+            $s->cbt_rank = ($s->psbRegistration && $s->psbRegistration->nilai_ujian !== null) ? $maRank++ : 'â€”';
         }
 
         // Urutkan kembali berdasarkan skor CBT tertinggi
@@ -2423,6 +2709,13 @@ class StudentController extends Controller
             $query->whereYear('tanggal_mutasi', $request->tahun);
         }
 
+        if ($request->filled('angkatan')) {
+            $angkatan = $request->angkatan;
+            $query->whereHas('student', function ($sq) use ($angkatan) {
+                $sq->where('tahun_masuk', $angkatan);
+            });
+        }
+
         $mutations = $query->paginate(20)->withQueryString();
 
         $stats = [
@@ -2453,10 +2746,17 @@ class StudentController extends Controller
         $tahunList = array_values(array_unique(array_filter(array_merge($thnMutasi, $thnSantri, $defaultYears))));
         rsort($tahunList);
 
+        // Daftar Angkatan Santri khusus
+        $angkatanList = Student::select('tahun_masuk')->distinct()->whereNotNull('tahun_masuk')->pluck('tahun_masuk')->map(fn($y) => (int)$y)->filter()->unique()->values()->toArray();
+        if (empty($angkatanList)) {
+            $angkatanList = [$curYear, $curYear - 1, $curYear - 2, $curYear - 3];
+        }
+        rsort($angkatanList);
+
         $jenjangList = ['MTs Mukim', 'MTs Laju', 'MA Mukim', 'MA Laju'];
 
         return view('admin.siswa.mutasi', compact(
-            'mutations', 'stats', 'allClasses', 'allClassrooms', 'allDormitories', 'alasanOptions', 'tahunList', 'jenjangList'
+            'mutations', 'stats', 'allClasses', 'allClassrooms', 'allDormitories', 'alasanOptions', 'tahunList', 'angkatanList', 'jenjangList'
         ));
     }
 

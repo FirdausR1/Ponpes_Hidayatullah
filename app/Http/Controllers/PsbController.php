@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PsbRegistration;
+use App\Models\Setting;
 use App\Services\PhotoVerificationService;
+use App\Services\DocumentVerificationService;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class PsbController extends Controller
 {
@@ -14,7 +17,20 @@ class PsbController extends Controller
      */
     public function create()
     {
-        return view('psb.register');
+        $sched = Setting::getPsbSchedule();
+        if (!$sched['is_open']) {
+            $tutupJudul = $sched['title'];
+            $tutupPesan = $sched['pesan'];
+            $tutupBadge = $sched['badge'];
+            $tutupState = $sched['state'];
+            $tutupKontak = Setting::get('psb_tutup_kontak', Setting::get('kontak_wa', Setting::get('kontak_hotline', '0813-9110-9966')));
+            $tahunAjaran = Setting::get('tahun_ajaran', '2026/2027');
+
+            return view('psb.closed', compact('sched', 'tutupJudul', 'tutupPesan', 'tutupBadge', 'tutupState', 'tutupKontak', 'tahunAjaran'));
+        }
+
+        $gelombang = $sched['gelombang'] ?? Setting::get('psb_gelombang_aktif', 'Gelombang 1');
+        return view('psb.register', compact('sched', 'gelombang'));
     }
 
     /**
@@ -22,6 +38,12 @@ class PsbController extends Controller
      */
     public function store(Request $request)
     {
+        $sched = Setting::getPsbSchedule();
+        if (!$sched['is_open']) {
+            return redirect()->route('psb.register')
+                ->with('error', $sched['pesan'] ?? 'Mohon maaf, pendaftaran santri baru saat ini sedang ditutup.');
+        }
+
         $rules = [
             // Jalur & Ketentuan
             'jalur' => 'required|string|in:Reguler,Prestasi,Tahfidz',
@@ -167,10 +189,60 @@ class PsbController extends Controller
             $bansosPath = '/uploads/psb/bansos/' . $filename;
         }
 
+        // Verifikasi dokumen berkas resmi secara otomatis (Akta, KK, KTP)
+        $aktaVerification = $aktaPath ? DocumentVerificationService::verify(public_path($aktaPath), 'akta') : null;
+        $kkVerification = $kkPath ? DocumentVerificationService::verify(public_path($kkPath), 'kk') : null;
+        $ktpVerification = $ktpPath ? DocumentVerificationService::verify(public_path($ktpPath), 'ktp') : null;
+
+        $berkasIssues = [];
+
+        // Cek apakah santri mengunggah file yang sama untuk beberapa dokumen (misal: pas foto diupload ke KK, KTP, Akta, Bukti Transfer)
+        $uploadedCheck = [
+            'pas_foto' => ['path' => $fotoPath, 'label' => 'Pas Foto 3x4'],
+            'bukti_transfer' => ['path' => $transferPath, 'label' => 'Bukti Transfer'],
+            'file_akta_kelahiran' => ['path' => $aktaPath, 'label' => 'Akta Kelahiran'],
+            'file_kk' => ['path' => $kkPath, 'label' => 'Kartu Keluarga (KK)'],
+            'file_ktp_ortu' => ['path' => $ktpPath, 'label' => 'KTP Orang Tua'],
+        ];
+
+        $seenHashes = [];
+        foreach ($uploadedCheck as $key => $info) {
+            if ($info['path'] && file_exists(public_path($info['path']))) {
+                $hash = md5_file(public_path($info['path']));
+                if (isset($seenHashes[$hash])) {
+                    $firstLabel = $seenHashes[$hash];
+                    $berkasIssues[] = "{$info['label']}: File yang diunggah terdeteksi SAMA PERSIS dengan {$firstLabel}. Dilarang mengunggah pas foto/file yang sama untuk dokumen berbeda!";
+                } else {
+                    $seenHashes[$hash] = $info['label'];
+                }
+            }
+        }
+
+        if ($aktaVerification && $aktaVerification['status'] === 'Perlu Perbaikan') {
+            $berkasIssues[] = 'Akta Kelahiran: ' . $aktaVerification['catatan'];
+        }
+        if ($kkVerification && $kkVerification['status'] === 'Perlu Perbaikan') {
+            $berkasIssues[] = 'Kartu Keluarga (KK): ' . $kkVerification['catatan'];
+        }
+        if ($ktpVerification && $ktpVerification['status'] === 'Perlu Perbaikan') {
+            $berkasIssues[] = 'KTP Orang Tua: ' . $ktpVerification['catatan'];
+        }
+
+        $berkasStatus = empty($berkasIssues) ? 'Sesuai' : 'Perlu Perbaikan';
+        $berkasCatatan = empty($berkasIssues)
+            ? 'Seluruh dokumen berkas (Akta, KK, KTP) terverifikasi lengkap & terbaca jelas.'
+            : implode("\n", $berkasIssues);
+
+        $berkasDetail = [
+            'akta' => $aktaVerification,
+            'kk' => $kkVerification,
+            'ktp' => $ktpVerification,
+        ];
+
         // Simpan ke DB
         $bansosList = $request->has('bantuan_sosial') ? implode(', ', (array) $request->bantuan_sosial) : null;
 
-        $registration = PsbRegistration::create([
+        $insertData = [
             'jalur' => $request->jalur,
             'jenjang' => $request->jenjang ?: 'MTs Mukim',
             'bukti_transfer' => $transferPath,
@@ -182,6 +254,9 @@ class PsbController extends Controller
             'file_ktp_ortu' => $ktpPath,
             'foto_status' => $fotoVerification['status'],
             'foto_catatan' => $fotoVerification['catatan'],
+            'berkas_status' => $berkasStatus,
+            'berkas_catatan' => $berkasCatatan,
+            'berkas_detail_json' => json_encode($berkasDetail),
             'nisn' => $request->nisn,
             'jenis_kelamin' => $request->jenis_kelamin,
             'nik' => $request->nik,
@@ -230,7 +305,13 @@ class PsbController extends Controller
             'status_pembayaran' => 'Menunggu Konfirmasi',
             'nominal_pembayaran' => 200000,
             'metode_pembayaran' => 'Transfer Bank',
-        ]);
+        ];
+
+        if (Schema::hasColumn('psb_registrations', 'gelombang')) {
+            $insertData['gelombang'] = Setting::get('psb_gelombang_aktif', 'Gelombang 1');
+        }
+
+        $registration = PsbRegistration::create($insertData);
 
         return redirect()->route('psb.success', $registration->id)->with('success', 'Formulir Pendaftaran Berhasil Dikirim!');
     }
@@ -321,6 +402,69 @@ class PsbController extends Controller
         $reg = PsbRegistration::findOrFail($id);
         $mode = $request->input('mode', 'cv'); // 'cv' (default 1 lembar) atau 'all' (cv + lampiran berkas)
         return view('psb.print_card', compact('reg', 'mode'));
+    }
+
+    /**
+     * Unggah ulang berkas dokumen (KK, KTP, Akta) yang perlu perbaikan.
+     */
+    public function reuploadBerkas(Request $request, $id)
+    {
+        $registration = PsbRegistration::findOrFail($id);
+
+        $validated = $request->validate([
+            'jenis_berkas' => 'required|in:file_akta_kelahiran,file_kk,file_ktp_ortu',
+            'file_dokumen' => 'required|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+        ], [
+            'file_dokumen.required' => 'Silakan pilih file dokumen yang akan diunggah.',
+            'file_dokumen.mimes' => 'Format file harus berupa JPG, PNG, WEBP, atau PDF.',
+            'file_dokumen.max' => 'Ukuran file dokumen maksimal 10 MB.',
+        ]);
+
+        $field = $validated['jenis_berkas'];
+        $type = match($field) {
+            'file_akta_kelahiran' => 'akta',
+            'file_kk' => 'kk',
+            'file_ktp_ortu' => 'ktp',
+            default => 'generic'
+        };
+
+        $file = $request->file('file_dokumen');
+        $filename = time() . '_reupload_' . $type . '_' . Str::slug($registration->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+        $dest = public_path('uploads/psb/berkas');
+        if (!file_exists($dest)) {
+            mkdir($dest, 0777, true);
+        }
+        $file->move($dest, $filename);
+        $newPath = '/uploads/psb/berkas/' . $filename;
+
+        // Verifikasi dokumen baru secara otomatis
+        $verification = DocumentVerificationService::verify(public_path($newPath), $type);
+
+        // Update detail berkas
+        $detail = json_decode($registration->berkas_detail_json ?? '[]', true) ?: [];
+        $detail[$type] = $verification;
+
+        // Hitung ulang status keseluruhan
+        $allValid = true;
+        $allNotes = [];
+        $typeNames = ['akta' => 'Akta Kelahiran', 'kk' => 'Kartu Keluarga (KK)', 'ktp' => 'KTP Orang Tua'];
+        foreach ($detail as $docKey => $res) {
+            if (($res['status'] ?? '') === 'Perlu Perbaikan') {
+                $allValid = false;
+                $allNotes[] = ($typeNames[$docKey] ?? strtoupper($docKey)) . ': ' . ($res['catatan'] ?? '');
+            }
+        }
+
+        $registration->update([
+            $field => $newPath,
+            'berkas_status' => $allValid ? 'Sesuai' : 'Perlu Perbaikan',
+            'berkas_catatan' => $allValid ? 'Seluruh berkas dokumen terverifikasi sesuai ketentuan.' : implode("\n", $allNotes),
+            'berkas_detail_json' => json_encode($detail),
+        ]);
+
+        $label = $typeNames[$type] ?? strtoupper($type);
+        return redirect()->route('psb.checkStatus', ['no_reg' => $registration->no_registrasi])
+            ->with('success', "Dokumen {$label} berhasil diunggah ulang! Status kelayakan: {$verification['status']}");
     }
 }
 

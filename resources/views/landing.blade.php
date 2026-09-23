@@ -1754,48 +1754,55 @@
             }
         }
 
-        /* ===== FASILITAS ===== */
+        /* ===== PRESTASI SANTRI & LEMBAGA ===== */
+        .section-prestasi,
         .section-fasilitas {
-            padding: 80px 0;
+            padding: 85px 0;
             background: var(--surface-dim);
+            position: relative;
         }
 
+        .prestasi-header,
         .fasilitas-header {
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
-            margin-bottom: 36px;
+            margin-bottom: 40px;
             gap: 24px;
         }
 
+        .prestasi-grid,
         .fasilitas-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            gap: 26px;
         }
 
+        .prestasi-card,
         .fasilitas-card {
             position: relative;
-            border-radius: 16px;
+            border-radius: 18px;
             overflow: hidden;
-            min-height: 380px;
-            height: 380px;
+            min-height: 400px;
+            height: 400px;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            box-shadow: 0 10px 28px rgba(8, 36, 18, 0.16);
+            box-shadow: 0 10px 28px rgba(8, 36, 18, 0.14);
             border: 1px solid rgba(8, 36, 18, 0.12);
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
             background: #082412;
             text-decoration: none;
         }
 
+        .prestasi-card:hover,
         .fasilitas-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 22px 42px rgba(8, 36, 18, 0.35);
-            border-color: rgba(200, 164, 21, 0.45);
+            box-shadow: 0 24px 46px rgba(8, 36, 18, 0.32);
+            border-color: rgba(200, 164, 21, 0.6);
         }
 
+        .prestasi-card-bg-img,
         .fasilitas-card-bg-img {
             position: absolute;
             inset: 0;
@@ -1807,22 +1814,26 @@
             z-index: 0;
         }
 
+        .prestasi-card:hover .prestasi-card-bg-img,
         .fasilitas-card:hover .fasilitas-card-bg-img {
             transform: scale(1.08);
         }
 
+        .prestasi-card-gradient,
         .fasilitas-card-gradient {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(8, 36, 18, 0.10) 0%, rgba(8, 36, 18, 0.40) 38%, rgba(6, 30, 15, 0.88) 72%, #051a0d 100%);
+            background: linear-gradient(180deg, rgba(8, 36, 18, 0.15) 0%, rgba(8, 36, 18, 0.48) 36%, rgba(6, 30, 15, 0.90) 70%, #04160b 100%);
             z-index: 1;
             transition: background 0.4s ease;
         }
 
+        .prestasi-card:hover .prestasi-card-gradient,
         .fasilitas-card:hover .fasilitas-card-gradient {
-            background: linear-gradient(180deg, rgba(8, 36, 18, 0.05) 0%, rgba(8, 36, 18, 0.50) 32%, rgba(6, 30, 15, 0.95) 68%, #03140a 100%);
+            background: linear-gradient(180deg, rgba(8, 36, 18, 0.08) 0%, rgba(8, 36, 18, 0.52) 30%, rgba(6, 30, 15, 0.96) 66%, #020f07 100%);
         }
 
+        .prestasi-card-top,
         .fasilitas-card-top {
             position: absolute;
             top: 18px;
@@ -1831,17 +1842,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             z-index: 2;
         }
 
+        .prestasi-card-tag,
         .fasilitas-card-tag {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(8px);
             color: #082412;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.03em;
-            padding: 5px 14px;
+            padding: 5px 13px;
             border-radius: 9999px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: inline-flex;
@@ -1849,6 +1862,22 @@
             gap: 6px;
         }
 
+        .prestasi-card-level {
+            background: rgba(200, 164, 21, 0.92);
+            color: #082412;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .prestasi-card-content,
         .fasilitas-card-content {
             position: relative;
             z-index: 2;
@@ -1858,16 +1887,18 @@
             gap: 8px;
         }
 
+        .prestasi-card-title,
         .fasilitas-card-title {
             font-family: 'Grenze', Georgia, serif;
-            font-size: 22px;
+            font-size: 23px;
             font-weight: 700;
             color: #ffffff;
-            line-height: 1.3;
+            line-height: 1.28;
             margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
         }
 
+        .prestasi-card-desc,
         .fasilitas-card-desc {
             font-size: 13px;
             color: rgba(255, 255, 255, 0.88);
@@ -2574,6 +2605,7 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
+            .prestasi-grid,
             .fasilitas-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -2626,6 +2658,7 @@
                 grid-template-columns: 1fr;
             }
 
+            .prestasi-grid,
             .fasilitas-grid {
                 grid-template-columns: 1fr;
             }
@@ -2687,10 +2720,22 @@
             <div class="container">
                 <div class="hero-grid">
                     <div class="hero-content">
-                        <div class="hero-badge">
-                            <div class="hero-badge-dot"></div>
-                            <span>{!! \App\Models\Setting::get('hero_badge', 'PSB TA 2025/2026 Telah Dibuka') !!}</span>
-                        </div>
+                        @php
+                            $psbSched = \App\Models\Setting::getPsbSchedule();
+                            $isPsbOpen = $psbSched['is_open'];
+                            $psbBadgeText = $psbSched['badge'];
+                        @endphp
+                        @if($isPsbOpen)
+                            <div class="hero-badge">
+                                <div class="hero-badge-dot"></div>
+                                <span>{!! \App\Models\Setting::get('hero_badge', 'PSB TA ' . \App\Models\Setting::get('tahun_ajaran', '2026/2027') . ' Telah Dibuka') !!} &bull; {{ $psbSched['gelombang'] ?? 'Gelombang 1' }}</span>
+                            </div>
+                        @elseif($psbSched['status'] === 'belum_buka')
+                            <div class="hero-badge" style="background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.4); color: #fde68a;">
+                                <div class="hero-badge-dot" style="background: #f59e0b; box-shadow: 0 0 10px #f59e0b;"></div>
+                                <span>Pendaftaran Dibuka: {{ $psbSched['start_formatted'] ?? 'Segera' }} ({{ $psbSched['gelombang'] ?? 'Gelombang 1' }})</span>
+                            </div>
+                        @endif
                         <h1 class="hero-title">
                             {!! \App\Models\Setting::get('hero_title', "Membentuk Generasi <em>Qur'ani</em>, Berakhlak Mulia & Berwawasan Global") !!}
                         </h1>
@@ -2698,13 +2743,23 @@
                             {{ \App\Models\Setting::get('hero_subtitle', 'Sinergi pendidikan integral Pondok Pesantren Hidayatullah Tuksongo yang memadukan bimbingan Tahfidzul Qur\'an mutqin, kurikulum formal Kemenag, pembinaan akhlak santri 24 jam, dan kemandirian hidup.') }}
                         </p>
                         <div class="hero-actions">
-                            <a class="btn-primary" href="{{ route('psb.register') }}">
-                                Daftar Santri Baru
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
-                                </svg>
-                            </a>
+                            @if($isPsbOpen)
+                                <a class="btn-primary" href="{{ route('psb.register') }}">
+                                    Daftar ({{ $psbSched['gelombang'] ?? 'Gelombang 1' }})
+                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        <polyline points="12 5 19 12 12 19"></polyline>
+                                    </svg>
+                                </a>
+                            @else
+                                <a class="btn-primary" href="{{ route('psb.register') }}" style="background: linear-gradient(135deg, #475569, #334155); border-color: #64748b; color: #ffffff;">
+                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    Pendaftaran ({{ $psbBadgeText }})
+                                </a>
+                            @endif
                             <a class="btn-secondary"
                                 href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}"
                                 target="_blank">
@@ -3506,152 +3561,119 @@
             </div>
         </section>
 
-        <!-- ===== FASILITAS ===== -->
-        <section class="section-fasilitas" id="fasilitas">
+        @php
+            $defaultPrestasiList = [
+                [
+                    'tag' => "Tahfidzul Qur'an",
+                    'level' => 'Tingkat Provinsi',
+                    'judul' => "Juara 1 Musabaqah Hifdzil Qur'an (MHQ) 30 Juz Bersanad",
+                    'deskripsi' => "Prestasi santri dalam kompetisi hafalan Al-Qur'an tingkat regional Jawa Tengah dengan pengujian ketepatan tajwid, fashahah, dan kelancaran hafalan mutqin.",
+                    'image' => 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?q=80&w=800&auto=format&fit=crop',
+                ],
+                [
+                    'tag' => 'Sains & Riset Madrasah',
+                    'level' => 'Medali Emas',
+                    'judul' => 'Medali Emas KSM Bidang Matematika & Sains Terintegrasi',
+                    'deskripsi' => 'Pembuktian kompetensi sains santri madrasah dalam menyelesaikan riset dan problem solving matematika yang disinergikan dengan pemahaman dalil keislaman.',
+                    'image' => 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop',
+                ],
+                [
+                    'tag' => 'Bahasa Arab Aktif',
+                    'level' => 'Tingkat Nasional',
+                    'judul' => 'Juara 1 Khitobah Pidato Bahasa Arab & Debat Ilmiah',
+                    'deskripsi' => 'Kecakapan orasi, fashahah balaghah, dan kefasihan berbicara bahasa Arab santri di hadapan dewan juri festival bahasa pesantren nasional se-Indonesia.',
+                    'image' => 'https://images.unsplash.com/photo-1577495508048-b635879837f1?q=80&w=800&auto=format&fit=crop',
+                ],
+                [
+                    'tag' => 'Seni & Olahraga Santri',
+                    'level' => 'Juara Umum',
+                    'judul' => 'Juara Umum POSPEDA Kaligrafi Islam & Pencak Silat',
+                    'deskripsi' => "Sinergi ketangkasan fisik pendekar santri melalui pencak silat serta keindahan estetika mushaf Al-Qur'an lewat goresan khath kaligrafi murni.",
+                    'image' => 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop',
+                ],
+                [
+                    'tag' => 'Kiprah & Studi Alumni',
+                    'level' => 'Internasional',
+                    'judul' => 'Kelulusan Santri Tembus Al-Azhar Mesir & PTKIN Favorit',
+                    'deskripsi' => 'Lulusan 6 tahun TMI Hidayatullah berhasil lolos seleksi beasiswa kuliah ke Universitas Al-Azhar Kairo serta perguruan tinggi keagamaan negeri bergengsi di Indonesia.',
+                    'image' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+                ],
+                [
+                    'tag' => 'Standarisasi Mutu',
+                    'level' => 'Terakreditasi',
+                    'judul' => "Akreditasi Unggul Madrasah & Sanad Tahfidz Muttashil",
+                    'deskripsi' => "Standarisasi kurikulum formal Kemenag untuk MTs & MA Hidayatullah serta legalitas ijazah sanad tahfidz Al-Qur'an 30 juz bersambung sanadnya hingga Rasulullah SAW.",
+                    'image' => 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop',
+                ],
+            ];
+
+            $defaultPrestasiStatsList = [
+                ['angka' => '150+', 'label' => 'Juara & Penghargaan Prestasi'],
+                ['angka' => '35+', 'label' => 'Santri Mutqin Hafidz 30 Juz'],
+                ['angka' => '100%', 'label' => 'Alumni Lolos Kuliah & Khidmat'],
+            ];
+
+            $prestasiItems = json_decode(\App\Models\Setting::get('prestasi_items_json', 'null'), true) ?: $defaultPrestasiList;
+            $prestasiStats = json_decode(\App\Models\Setting::get('prestasi_stats_json', 'null'), true) ?: $defaultPrestasiStatsList;
+            $prestasiBadge = \App\Models\Setting::get('prestasi_badge', 'Raihan Prestasi & Kejuaraan Santri');
+            $prestasiJudul = \App\Models\Setting::get('prestasi_judul', 'Rekam Jejak Keunggulan Akademik & Spiritual');
+            $prestasiSubjudul = \App\Models\Setting::get('prestasi_subjudul', 'Ikhtiar pembinaan santri secara integral dan berkesinambungan mengantarkan santri Pondok Pesantren Hidayatullah Tuksongo mengukir deretan prestasi gemilang di tingkat kabupaten, provinsi, hingga kancah nasional.');
+        @endphp
+
+        <!-- ===== PRESTASI SANTRI & LEMBAGA ===== -->
+        <section class="section-prestasi" id="prestasi">
+            <span id="fasilitas" style="position: absolute; top: -80px; visibility: hidden;"></span>
             <div class="container">
-                <div class="fasilitas-header anim-fade-up">
+                <div class="prestasi-header anim-fade-up">
                     <div>
                         <span class="section-label">
                             <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                <circle cx="12" cy="8" r="7"></circle>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                             </svg>
-                            Sarana & Prasarana Kampus
+                            {{ $prestasiBadge }}
                         </span>
-                        <h2 class="section-title">Lingkungan Pembelajaran Representatif</h2>
+                        <h2 class="section-title">{{ $prestasiJudul }}</h2>
                     </div>
-                    <p class="section-desc">Fasilitas terpadu berarsitektur islami di area asri Pringsurat Temanggung
-                        yang menunjang ketenangan spiritual, kesehatan fisik, dan prestasi akademik santri.</p>
+                    <p class="section-desc">{{ $prestasiSubjudul }}</p>
                 </div>
-                <div class="fasilitas-grid">
-                    <!-- 1. Masjid Jami' Hidayatullah -->
-                    <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU6a2L-sDyoOwD_72rgteFhrsAe8symZKQSYIa4qFEcX_x_0urIjNrwIq3gKCYYSWQMViH-sIYhzZkjwLeKZYtA0h99F2ZNQIy89TBXob6RrVInKoij1Pklw1sIhPQR_Dytb1XlvsZLNmFwCeh1jHMyRlG-pJhDilfgIfiVT9KbgclTW_oorWofU9BoyAw3M5oihmSeX4mJM_OpdNIwKLugn0Icz7_QgEB7ev6T7fMhIM4W6RsAqbH"
-                            alt="Masjid Jami' Hidayatullah" loading="lazy">
-                        <div class="fasilitas-card-gradient"></div>
-                        <div class="fasilitas-card-top">
-                            <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                                </svg>
-                                Masjid Jami' Hidayatullah
-                            </span>
-                        </div>
-                        <div class="fasilitas-card-content">
-                            <h3 class="fasilitas-card-title">Masjid Jami' Pesantren</h3>
-                            <p class="fasilitas-card-desc">Pusat peribadatan utama shalat berjamaah 5 waktu, halaqah
-                                tasmi' Al-Qur'an, kajian hadits nabawi, dan pembacaan maulid mingguan.</p>
-                        </div>
-                    </div>
 
-                    <!-- 2. Asrama Santri Sehat -->
-                    <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAdIufyUcLU26xaZ61J8_dbSfX-yPAG5ljh4y-di7Qqra8jK-JVkKDj-gBeDDI20axF6hvx7_wSSN3meuUuNZ7wHTriZV5srouq1o_BC9sjfRL5BkHT4M1O_4oQ6Z8XdNBBMRZQ1DurexAIsGNY_ZFnSJaAhZv_oajAAF8YA0asSodQhgePBVvbtLnw0QM5NRPg9i4aLPQam6rO6_VNKTaVQs4Ku1lngNeYAIR8ztkvLK5gFmt9y_R"
-                            alt="Asrama Santri Sehat" loading="lazy">
-                        <div class="fasilitas-card-gradient"></div>
-                        <div class="fasilitas-card-top">
-                            <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                </svg>
-                                Asrama Santri Sehat
-                            </span>
-                        </div>
-                        <div class="fasilitas-card-content">
-                            <h3 class="fasilitas-card-title">Asrama Putra & Putri Terpisah</h3>
-                            <p class="fasilitas-card-desc">Kamar asrama berpenerangan optimal, ventilasi alami
-                                perbukitan Pringsurat, almari santri individu, dan pendampingan wali kamar 24 jam.</p>
-                        </div>
+                @if(!empty($prestasiStats) && count($prestasiStats) > 0)
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 36px;" class="anim-fade-up">
+                        @foreach($prestasiStats as $st)
+                            <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                <div style="font-size: 28px; font-weight: 800; color: #15803d; font-family: 'EB Garamond', serif; line-height: 1.1;">{{ $st['angka'] ?? '' }}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: #64748b; margin-top: 4px;">{{ $st['label'] ?? '' }}</div>
+                            </div>
+                        @endforeach
                     </div>
+                @endif
 
-                    <!-- 3. Laboratorium Sains -->
-                    <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRLDfaZnczeAOBMNdv3-O4fNJHuDHanm-hedGFiVj5hrUReVRsvzSgPxwKkbDQARwwCVj_-x201mE14Tj0x4r9wU1TIAWEkbejJX13PHjnbc0EMVq0strXuHCkm6RrQ7tXgFYIMTenYyYWuIW9h3zuoLAIWOfO-5Ihuu7qRkCD85qKWlmjCKqaQQFUDKhO25Yb18hCopf6DEGrLFi6iHqD7S18tpGA2HC8TgOqEcsZZocUAxzsq0lq"
-                            alt="Laboratorium Sains" loading="lazy">
-                        <div class="fasilitas-card-gradient"></div>
-                        <div class="fasilitas-card-top">
-                            <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <path d="M10 2v7.31L4.41 19A2 2 0 0 0 6 22h12a2 2 0 0 0 1.59-3L14 9.31V2"></path>
-                                </svg>
-                                Laboratorium Sains
-                            </span>
+                <div class="prestasi-grid">
+                    @foreach($prestasiItems as $p)
+                        <div class="prestasi-card anim-fade-up">
+                            <img class="prestasi-card-bg-img"
+                                src="{{ asset($p['image'] ?? '') }}"
+                                alt="{{ $p['judul'] ?? 'Prestasi Santri' }}" loading="lazy">
+                            <div class="prestasi-card-gradient"></div>
+                            <div class="prestasi-card-top">
+                                <span class="prestasi-card-tag">
+                                    <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="8" r="7"></circle>
+                                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                                    </svg>
+                                    {{ $p['tag'] ?? 'Prestasi' }}
+                                </span>
+                                @if(!empty($p['level']))
+                                    <span class="prestasi-card-level">{{ $p['level'] }}</span>
+                                @endif
+                            </div>
+                            <div class="prestasi-card-content">
+                                <h3 class="prestasi-card-title">{{ $p['judul'] ?? '' }}</h3>
+                                <p class="prestasi-card-desc">{{ $p['deskripsi'] ?? '' }}</p>
+                            </div>
                         </div>
-                        <div class="fasilitas-card-content">
-                            <h3 class="fasilitas-card-title">Laboratorium Sains & Komputer</h3>
-                            <p class="fasilitas-card-desc">Sarana praktikum fisika, biologi, kimia, dan lab komputer
-                                digital untuk mengasah literasi teknologi santri madrasah.</p>
-                        </div>
-                    </div>
-
-                    <!-- 4. Perpustakaan & Turats -->
-                    <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgackmlJNWMj8ykst-J3dloc8Vc0gC7YhqnQ7Isv4vtgrT4r0vG1hcaUPgEdGIR0XDtSV96zh7RqzBkDml_Qz7BJheMnpFqFUGx4a9nyCyDAVejEON4xLGZZFwRbxsT08deMXku5kRQ290jNBhBTOLWOgXYIyaXLSCq6g-QW7_P1wDAQKlzs0ZA-95wrmKpVgtgTuZKUMhPZF1Bb31F6SqtbEvhnYYy7JGhI8kbuCd4stp5rmiCfgz"
-                            alt="Perpustakaan & Turats" loading="lazy">
-                        <div class="fasilitas-card-gradient"></div>
-                        <div class="fasilitas-card-top">
-                            <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                </svg>
-                                Perpustakaan & Turats
-                            </span>
-                        </div>
-                        <div class="fasilitas-card-content">
-                            <h3 class="fasilitas-card-title">Perpustakaan Kitab Turats & Pengetahuan</h3>
-                            <p class="fasilitas-card-desc">Koleksi kitab rujukan bahasa Arab, buku referensi kurikulum
-                                Kemenag, ruang baca nyaman, dan pusat kajian muallimin.</p>
-                        </div>
-                    </div>
-
-                    <!-- 5. Kompleks Olahraga -->
-                    <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm0uFhcuuSGhojqfIRGrLu2zQVLvVBvOIjUyEU5_FgEcO5WlCVLRZn5PxszCuJAgfMErlt0IWbKB_FZudBb7QA4jVi-Joa0fMqphmkE_WzeajuRZ22kcPwzd9sz7tgWEdSbm0-2zEgjneNqLNyeBzGBCGy-HyhslYe7UQ6lWNLn0XewuZliSWthzr4qygbQfE5qHFKraLRMESrRI8VJ1MJSxc1R1Owf3JMMpyx8l4fEC27K_GXy7BX"
-                            alt="Kompleks Olahraga" loading="lazy">
-                        <div class="fasilitas-card-gradient"></div>
-                        <div class="fasilitas-card-top">
-                            <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                                    <path d="M2 12h20"></path>
-                                </svg>
-                                Kompleks Olahraga
-                            </span>
-                        </div>
-                        <div class="fasilitas-card-content">
-                            <h3 class="fasilitas-card-title">Lapangan Olahraga & Bela Diri</h3>
-                            <p class="fasilitas-card-desc">Area futsal, bulutangkis, bola voli, arena latihan pencak
-                                silat santri, dan kegiatan kepanduan Pramuka.</p>
-                        </div>
-                    </div>
-
-                    <!-- 6. Pos Kesehatan Pesantren -->
-                    <div class="fasilitas-card anim-fade-up">
-                        <img class="fasilitas-card-bg-img"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZHeIxAIcdIvaizS-iBy0iQtNF5rbrGlmdxDVcLS9wReOGG81d7womhqurfN39NuFAU24BNsukyrd6qc5U_XcTdHPGieMWHTVf7Z4236LXr88zHDdDXRLZ3VKSMUBvDcwjE4RXtbZdpJZcPo5HQysIIsEnscHm6fbWL4nab8tqO5YrpRAhDr-7Fam7Acma7ZJUqbIFpMMtRbigI76LnJU6OQhg5EuEil7-tLdBStcwSrm9l_fs6Sxo"
-                            alt="Pos Kesehatan Pesantren" loading="lazy">
-                        <div class="fasilitas-card-gradient"></div>
-                        <div class="fasilitas-card-top">
-                            <span class="fasilitas-card-tag">
-                                <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
-                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                                </svg>
-                                Pos Kesehatan Pesantren
-                            </span>
-                        </div>
-                        <div class="fasilitas-card-content">
-                            <h3 class="fasilitas-card-title">Pos Kesehatan Santri (Poskestren)</h3>
-                            <p class="fasilitas-card-desc">Penanganan pertama medis, koordinasi puskesmas setempat,
-                                ruang isolasi santri saat sakit, dan pencatatan riwayat kesehatan.</p>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </section>
@@ -3722,18 +3744,16 @@
                                 </span>
                                 <h3
                                     style="font-family: 'Grenze', Georgia, serif; font-size: clamp(22px, 3vw, 28px); color: var(--green-950); margin-top: 10px; margin-bottom: 8px;">
-                                    Transparansi Biaya Pendidikan Santri Baru MTs & MA
+                                    {{ \App\Models\Setting::get('biaya_preview_title', 'Transparansi Biaya Pendidikan Santri Baru MTs & MA') }}
                                 </h3>
                                 <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
-                                    Seluruh rincian pembiayaan awal (uang pangkal, seragam, kasur/kamar santri mukim)
-                                    serta syahriyah bulanan disajikan secara rinci, transparan, dan dapat diunduh pada
-                                    halaman khusus biaya kami.
+                                    {{ \App\Models\Setting::get('biaya_preview_desc', 'Seluruh rincian pembiayaan awal (uang pangkal, seragam, kasur/kamar santri mukim) serta syahriyah bulanan disajikan secara rinci, transparan, dan dapat diunduh pada halaman khusus biaya kami.') }}
                                 </p>
                             </div>
                             <div>
                                 <a href="{{ route('biaya.index') }}" class="btn-gold"
                                     style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; font-size: 15px; font-weight: 700; border-radius: var(--radius-sm); text-decoration: none; box-shadow: var(--shadow-md);">
-                                    <span>Lihat Rincian Biaya Lengkap</span>
+                                    <span>{{ \App\Models\Setting::get('biaya_preview_btn_text', 'Lihat Rincian Biaya Lengkap') }}</span>
                                     <svg class="icon-svg icon-svg-xs" viewBox="0 0 24 24">
                                         <line x1="5" y1="12" x2="19" y2="12"></line>
                                         <polyline points="12 5 19 12 12 19"></polyline>
@@ -3748,41 +3768,41 @@
                                 style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
                                 <div
                                     style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
-                                    Biaya Masuk Pertama</div>
+                                    {{ \App\Models\Setting::get('biaya_card1_label', 'Biaya Masuk Pertama') }}</div>
                                 <div style="font-size: 18px; font-weight: 800; color: var(--green-800); margin: 3px 0;">
-                                    Terjangkau & Jelas</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Sudah termasuk fasilitas
-                                    kamar</div>
+                                    {{ \App\Models\Setting::get('biaya_card1_value', 'Terjangkau & Jelas') }}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    {{ \App\Models\Setting::get('biaya_card1_sub', 'Sudah termasuk fasilitas kamar') }}</div>
                             </div>
                             <div
                                 style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
                                 <div
                                     style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
-                                    Syahriyah Bulanan</div>
+                                    {{ \App\Models\Setting::get('biaya_card2_label', 'Syahriyah Bulanan') }}</div>
                                 <div style="font-size: 18px; font-weight: 800; color: var(--green-800); margin: 3px 0;">
-                                    Mulai Rp 80.000/bln</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Untuk santri laju non-asrama
-                                </div>
+                                    {{ \App\Models\Setting::get('biaya_card2_value', 'Mulai Rp 80.000/bln') }}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    {{ \App\Models\Setting::get('biaya_card2_sub', 'Untuk santri laju non-asrama') }}</div>
                             </div>
                             <div
                                 style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
                                 <div
                                     style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
-                                    Makan Asrama 3x Sehari</div>
+                                    {{ \App\Models\Setting::get('biaya_card3_label', 'Makan Asrama 3x Sehari') }}</div>
                                 <div style="font-size: 18px; font-weight: 800; color: var(--green-800); margin: 3px 0;">
-                                    Rp 300.000/bln</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Menu sehat bergizi &
-                                    higienis</div>
+                                    {{ \App\Models\Setting::get('biaya_card3_value', 'Rp 300.000/bln') }}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    {{ \App\Models\Setting::get('biaya_card3_sub', 'Menu sehat bergizi & higienis') }}</div>
                             </div>
                             <div
                                 style="background: var(--surface-dim); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
                                 <div
                                     style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
-                                    Bantuan / Beasiswa</div>
+                                    {{ \App\Models\Setting::get('biaya_card4_label', 'Bantuan / Beasiswa') }}</div>
                                 <div style="font-size: 18px; font-weight: 800; color: var(--gold-600); margin: 3px 0;">
-                                    Tersedia</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Bagi dhuafa & santri
-                                    berprestasi</div>
+                                    {{ \App\Models\Setting::get('biaya_card4_value', 'Tersedia') }}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    {{ \App\Models\Setting::get('biaya_card4_sub', 'Bagi dhuafa & santri berprestasi') }}</div>
                             </div>
                         </div>
                     </div>
@@ -3805,14 +3825,25 @@
                                 konfirmasi WhatsApp langsung.
                             </p>
                             <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-                                <a href="{{ route('psb.register') }}" class="btn-gold"
-                                    style="font-size: 15px; padding: 14px 30px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 700;">
-                                    <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
-                                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                    </svg>
-                                    Buka Formulir Pendaftaran Online
-                                </a>
+                                @if($isPsbOpen)
+                                    <a href="{{ route('psb.register') }}" class="btn-gold"
+                                        style="font-size: 15px; padding: 14px 30px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 700;">
+                                        <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
+                                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                        </svg>
+                                        Buka Formulir Pendaftaran Online
+                                    </a>
+                                @else
+                                    <a href="{{ route('psb.register') }}" class="btn-gold"
+                                        style="font-size: 15px; padding: 14px 28px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; background: linear-gradient(135deg, #dc2626, #b91c1c); color: #ffffff; border-color: #ef4444;">
+                                        <svg class="icon-svg icon-svg-sm" viewBox="0 0 24 24">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                        </svg>
+                                        Pendaftaran ({{ $psbBadgeText }}) • Lihat Informasi
+                                    </a>
+                                @endif
                                 <a href="{{ route('psb.checkStatus') }}" class="btn-secondary"
                                     style="background: #ffffff; color: var(--green-950); font-weight: 700; border: none; display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; box-shadow: var(--shadow-md);"
                                     title="Cek status verifikasi formulir dan foto calon santri cukup dengan No. Registrasi atau WhatsApp">

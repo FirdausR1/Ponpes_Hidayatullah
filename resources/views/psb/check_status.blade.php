@@ -119,11 +119,16 @@
                     </div>
                     @endif
                     <div>
-                        <span class="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                            {{ $registration->no_registrasi }}
-                        </span>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                {{ $registration->no_registrasi }}
+                            </span>
+                            <span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                                {{ $registration->gelombang ?? 'Gelombang 1' }}
+                            </span>
+                        </div>
                         <h2 class="text-xl font-bold text-slate-800 mt-1">{{ $registration->nama_lengkap }}</h2>
-                        <p class="text-xs text-slate-500">Jalur: <strong class="text-slate-700">{{ $registration->jalur }}</strong> • Jenjang: <strong class="text-slate-700">{{ $registration->jenjang }}</strong> • Tgl Daftar: {{ $registration->created_at ? $registration->created_at->format('d M Y') : '—' }}</p>
+                        <p class="text-xs text-slate-500">Jalur: <strong class="text-slate-700">{{ $registration->jalur }}</strong> • Gelombang: <strong class="text-indigo-700 font-bold">{{ $registration->gelombang ?? 'Gelombang 1' }}</strong> • Jenjang: <strong class="text-slate-700">{{ $registration->jenjang }}</strong> • Tgl Daftar: {{ $registration->created_at ? $registration->created_at->format('d M Y') : '—' }}</p>
                     </div>
                 </div>
 
@@ -163,7 +168,7 @@
             </div>
 
             <!-- STATUS BOX SECTION -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
                 <!-- 1. Status Seleksi Utama -->
                 <div class="rounded-2xl p-5 border {{ $registration->status === 'Diterima' ? 'bg-emerald-50/80 border-emerald-200' : ($registration->status === 'Ditolak' ? 'bg-rose-50/80 border-rose-200' : 'bg-amber-50/80 border-amber-200') }} space-y-2.5">
@@ -179,7 +184,7 @@
                         <div class="space-y-1">
                             <strong class="text-base font-bold text-emerald-900 block">ALHAMDULILLAH, DINYATAKAN DITERIMA</strong>
                             <p class="text-xs text-emerald-800 leading-relaxed">
-                                Calon santri telah memenuhi kriteria seleksi @if($publishScores)(Nilai Ujian CBT: <strong>{{ $registration->nilai_ujian ?? '—' }}</strong> &amp; Administrasi Pembayaran Terverifikasi)@else(Ujian Seleksi CBT &amp; Administrasi Pembayaran Terverifikasi)@endif serta dinyatakan resmi diterima sebagai santri baru.
+                                Selamat! Ananda telah resmi diterima sebagai santri baru di Pondok Pesantren Hidayatullah Tuksongo. Silakan membaca petunjuk daftar ulang di bawah ini.
                             </p>
                         </div>
                         @elseif($registration->status === 'Ditolak')
@@ -187,36 +192,31 @@
                             <svg class="icon-svg w-5 h-5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </div>
                         <div class="space-y-1">
-                            <strong class="text-base font-bold text-rose-900 block">BELUM MEMENUHI KETENTUAN</strong>
-                            <p class="text-xs text-rose-800 leading-relaxed">Mohon maaf, pendaftaran belum memenuhi kuota atau kriteria kelulusan panitia seleksi.</p>
+                            <strong class="text-base font-bold text-rose-900 block">MOHON MAAF, BELUM DITERIMA</strong>
+                            <p class="text-xs text-rose-800 leading-relaxed">
+                                Terima kasih atas partisipasi ananda. Hasil seleksi belum memenuhi kuota penerimaan tahun ajaran ini. Tetap semangat menuntut ilmu di tempat terbaik lainnya.
+                            </p>
                         </div>
                         @else
-                        <div class="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 animate-pulse shadow-sm">
+                        <div class="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                             <svg class="icon-svg w-5 h-5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </div>
                         <div class="space-y-1">
-                            <strong class="text-base font-bold text-amber-900 block">DALAM PROSES SELEKSI &amp; VERIFIKASI</strong>
-                            <p class="text-xs text-amber-800 leading-relaxed">
-                                @if($publishScores)
-                                    Penentuan penerimaan ditentukan berdasarkan <strong>Nilai Tinggi Ujian CBT (&ge; {{ \App\Models\Setting::get('cbt_passing_grade', 70) }})</strong> dan <strong>Bukti Pembayaran Pendaftaran</strong>, atau penetapan khusus panitia.
-                                @else
-                                    Ujian seleksi masuk telah dituntaskan. Hasil ujian dan penetapan kelulusan santri saat ini sedang direkapitulasi dan akan diumumkan secara serentak oleh Panitia PSB.
-                                @endif
+                            <strong class="text-base font-bold text-amber-950 block">MENUNGGU VERIFIKASI / KELULUSAN</strong>
+                            <p class="text-xs text-amber-900 leading-relaxed">
+                                Berkas & pembayaran Anda sedang ditinjau panitia. Ikuti rangkaian tes CBT online jika belum melaksanakannya.
                             </p>
-                            @php
-                                $evalStatus = $registration->evaluasiSyaratPenerimaan();
-                            @endphp
-                            <div class="pt-1 flex flex-wrap gap-1.5 text-[10.5px]">
-                                <span class="px-2 py-0.5 rounded-full font-bold {{ $evalStatus['sudah_bayar'] ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600' }}">
-                                    {{ $evalStatus['sudah_bayar'] ? '✓ Biaya Terbayar' : '⏳ Menunggu Bukti Transfer' }}
+                            <div class="pt-1 flex flex-wrap gap-2 text-[11px] font-semibold">
+                                <span class="px-2 py-0.5 rounded bg-white/70 border border-amber-300 text-amber-900">
+                                    Tes CBT: {{ $registration->status_ujian ?: 'Belum Ujian' }}
                                 </span>
-                                @if($publishScores)
-                                    <span class="px-2 py-0.5 rounded-full font-bold {{ $evalStatus['nilai_tinggi'] ? 'bg-emerald-100 text-emerald-800' : ($evalStatus['sudah_ujian'] ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600') }}">
-                                        {{ $evalStatus['nilai_tinggi'] ? '✓ Nilai Lulus (' . $registration->nilai_ujian . ')' : ($evalStatus['sudah_ujian'] ? '✕ Nilai ' . $registration->nilai_ujian . ' (Belum KKM)' : '⏳ Belum Ujian CBT') }}
+                                @if($registration->status_pembayaran === 'Lunas')
+                                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        Biaya Pendaftaran: Lunas
                                     </span>
                                 @else
-                                    <span class="px-2 py-0.5 rounded-full font-bold {{ $evalStatus['sudah_ujian'] ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600' }}">
-                                        {{ $evalStatus['sudah_ujian'] ? '✓ Ujian CBT Selesai Disubmit' : '⏳ Belum Ujian CBT' }}
+                                    <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                        Biaya: {{ $registration->bukti_transfer ? 'Menunggu Konfirmasi' : 'Belum Bayar' }}
                                     </span>
                                 @endif
                             </div>
@@ -225,43 +225,150 @@
                     </div>
                 </div>
 
-                <!-- 2. Status Pas Foto & Berkas -->
-                <div class="rounded-2xl p-5 border {{ ($registration->foto_status ?? 'Sesuai') === 'Perlu Perbaikan' ? 'bg-rose-50/80 border-rose-200' : 'bg-slate-50 border-slate-200' }} space-y-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Status Verifikasi Pas Foto (3x4):</span>
-                    <div class="flex items-start gap-2.5">
-                        @if(($registration->foto_status ?? 'Sesuai') === 'Perlu Perbaikan')
-                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5">
-                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <!-- 2. Status Pas Foto (3x4) -->
+                <div class="rounded-2xl p-5 border {{ ($registration->foto_status ?? 'Sesuai') === 'Perlu Perbaikan' ? 'bg-rose-50/80 border-rose-200' : 'bg-slate-50 border-slate-200' }} space-y-2 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Status Pas Foto (3x4):</span>
+                        <div class="flex items-start gap-2.5 mt-1">
+                            @if(($registration->foto_status ?? 'Sesuai') === 'Perlu Perbaikan')
+                            <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-rose-900 block">Foto Perlu Diperbaiki</strong>
+                                <p class="text-xs text-rose-700 leading-relaxed mt-0.5">
+                                    {{ $registration->foto_catatan ?: 'Pas foto belum memenuhi ketentuan 3x4 / background merah.' }}
+                                </p>
+                            </div>
+                            @else
+                            <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-slate-800 block">Pas Foto Sesuai Ketentuan</strong>
+                                <p class="text-xs text-slate-500 leading-relaxed mt-0.5">
+                                    {{ $registration->foto_catatan ?: 'Pas foto santri telah memenuhi aspek rasio 3x4 dan background merah resmi.' }}
+                                </p>
+                            </div>
+                            @endif
                         </div>
-                        <div>
-                            <strong class="text-sm font-bold text-rose-900 block">Foto Perlu Diperbaiki</strong>
-                            <p class="text-xs text-rose-700 leading-relaxed mt-0.5">
-                                {{ $registration->foto_catatan ?: 'Pas foto belum memenuhi ketentuan 3x4 / background merah.' }}
-                            </p>
-                        </div>
-                        @else
-                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
-                            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        </div>
-                        <div>
-                            <strong class="text-sm font-bold text-slate-800 block">Pas Foto Sesuai Ketentuan</strong>
-                            <p class="text-xs text-slate-500 leading-relaxed mt-0.5">
-                                {{ $registration->foto_catatan ?: 'Pas foto santri telah memenuhi aspek rasio dan background resmi.' }}
-                            </p>
-                        </div>
-                        @endif
                     </div>
 
                     <!-- Tombol Toggle Ganti / Perbarui Pas Foto -->
                     <div class="pt-2 border-t border-slate-200/60">
                         <button type="button" onclick="const f = document.getElementById('form-ganti-foto'); f.classList.toggle('hidden'); if(!f.classList.contains('hidden')) f.scrollIntoView({behavior: 'smooth'});" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 transition">
                             <svg class="icon-svg w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                            <span>{{ ($registration->foto_status ?? '') === 'Perlu Perbaikan' ? 'Perbaiki / Unggah Pas Foto Baru' : 'Ingin Ganti / Perbarui Pas Foto? Klik di Sini' }}</span>
+                            <span>{{ ($registration->foto_status ?? '') === 'Perlu Perbaikan' ? 'Perbaiki Pas Foto Sekarang' : 'Ganti / Perbarui Pas Foto' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Status Dokumen Berkas (KK, KTP, Akta) -->
+                @php
+                    $isBerkasPerluPerbaikan = ($registration->berkas_status ?? '') === 'Perlu Perbaikan';
+                @endphp
+                <div class="rounded-2xl p-5 border {{ $isBerkasPerluPerbaikan ? 'bg-rose-50/80 border-rose-200' : 'bg-slate-50 border-slate-200' }} space-y-2 flex flex-col justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Status Dokumen (KK/KTP/Akta):</span>
+                        <div class="flex items-start gap-2.5 mt-1">
+                            @if($isBerkasPerluPerbaikan)
+                            <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-rose-900 block">Dokumen Perlu Diperbaiki</strong>
+                                <p class="text-xs text-rose-700 leading-relaxed mt-0.5 whitespace-pre-line">
+                                    {{ $registration->berkas_catatan ?: 'Terdapat dokumen yang buram, kosong, atau orientasi salah.' }}
+                                </p>
+                            </div>
+                            @else
+                            <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <div>
+                                <strong class="text-sm font-bold text-slate-800 block">Berkas Dokumen Sesuai</strong>
+                                <p class="text-xs text-slate-500 leading-relaxed mt-0.5">
+                                    {{ $registration->berkas_catatan ?: 'Seluruh berkas dokumen pendaftaran telah terverifikasi jelas & lengkap.' }}
+                                </p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Tombol Toggle Ganti / Unggah Berkas -->
+                    <div class="pt-2 border-t border-slate-200/60">
+                        <button type="button" onclick="const f = document.getElementById('form-ganti-berkas'); f.classList.toggle('hidden'); if(!f.classList.contains('hidden')) f.scrollIntoView({behavior: 'smooth'});" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 transition">
+                            <svg class="icon-svg w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <span>{{ $isBerkasPerluPerbaikan ? 'Perbaiki / Unggah Ulang Dokumen' : 'Ganti / Perbarui Berkas Dokumen' }}</span>
                         </button>
                     </div>
                 </div>
 
             </div>
+
+            <!-- FORM GANTI PAS FOTO (COLLAPSIBLE) -->
+            <form id="form-ganti-foto" action="{{ route('psb.reuploadFoto', $registration->id) }}" method="POST" enctype="multipart/form-data" class="hidden p-5 sm:p-6 bg-red-50/90 border-2 border-red-300 rounded-2xl space-y-4 transition">
+                @csrf
+                <div class="flex items-center justify-between pb-2 border-b border-red-200">
+                    <h4 class="text-sm font-bold text-red-950 flex items-center gap-2">
+                        <svg class="icon-svg w-4 h-4 text-red-600" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        Unggah Ulang Pas Foto 3x4 Santri (Revisi)
+                    </h4>
+                    <button type="button" onclick="document.getElementById('form-ganti-foto').classList.add('hidden')" class="text-xs text-red-600 hover:text-red-900 font-bold px-2 py-1 rounded bg-red-100 hover:bg-red-200 transition">
+                        ✕ Tutup
+                    </button>
+                </div>
+                <div class="p-3 bg-white rounded-xl border border-red-200 text-xs text-red-900 space-y-1">
+                    <span class="font-bold block">Ketentuan Resmi Pas Foto Santri:</span>
+                    <ul class="list-disc list-inside space-y-0.5 text-[11px] text-red-800">
+                        <li>Memakai baju kemeja putih rapi dan peci hitam (putra) / jilbab putih (putri)</li>
+                        <li><strong>Latar Belakang / Background WAJIB MERAH</strong></li>
+                        <li>Posisi tegak lurus proporsional 3x4 (bukan selfie/miring/landscape)</li>
+                        <li>Format gambar JPG, PNG, atau WEBP (maksimal 10 MB)</li>
+                    </ul>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1">Pilih File Pas Foto Baru:</label>
+                    <input type="file" name="pas_foto" accept="image/*" required class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                </div>
+                <button type="submit" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2">
+                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Simpan &amp; Verifikasi Pas Foto Baru
+                </button>
+            </form>
+
+            <!-- FORM GANTI BERKAS DOKUMEN (COLLAPSIBLE) -->
+            <form id="form-ganti-berkas" action="{{ route('psb.reuploadBerkas', $registration->id) }}" method="POST" enctype="multipart/form-data" class="hidden p-5 sm:p-6 bg-amber-50/90 border-2 border-amber-300 rounded-2xl space-y-4 transition">
+                @csrf
+                <div class="flex items-center justify-between pb-2 border-b border-amber-200">
+                    <h4 class="text-sm font-bold text-amber-950 flex items-center gap-2">
+                        <svg class="icon-svg w-4 h-4 text-amber-600" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        Unggah Ulang Berkas Dokumen (KK, KTP, Akta)
+                    </h4>
+                    <button type="button" onclick="document.getElementById('form-ganti-berkas').classList.add('hidden')" class="text-xs text-amber-700 hover:text-amber-900 font-bold px-2 py-1 rounded bg-amber-100 hover:bg-amber-200 transition">
+                        ✕ Tutup
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">Pilih Dokumen yang Ingin Diunggah Ulang / Diperbaiki: <span class="text-rose-500">*</span></label>
+                        <select name="jenis_berkas" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="file_ktp_ortu">5. KTP Orang Tua / Wali (Foto fisik e-KTP mendatar / landscape)</option>
+                            <option value="file_kk">4. Kartu Keluarga (KK) (Lembar lebar mendatar / landscape)</option>
+                            <option value="file_akta_kelahiran">3. Akta Kelahiran (Posisi tegak / portrait)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">Pilih File Dokumen Asli (JPG, PNG, WEBP, atau PDF): <span class="text-rose-500">*</span></label>
+                        <input type="file" name="file_dokumen" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-700 file:cursor-pointer border border-slate-200 bg-white rounded-xl p-1.5">
+                        <span class="text-[11px] text-slate-500 mt-1 block">Pastikan foto tidak buram, ukuran file di atas 25 KB, dan posisi orientasi sesuai. Maks 10 MB.</span>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2">
+                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Simpan &amp; Verifikasi Dokumen Baru
+                    </button>
+                </div>
+            </form>
 
             <!-- 3. BERKAS DOKUMEN HASIL UJIAN SELEKSI MASUK (CBT ONLINE) -->
             @php
@@ -476,58 +583,97 @@
                         </div>
                     </div>
 
+                    @php
+                        $berkasDetail = json_decode($registration->berkas_detail_json ?? '[]', true) ?: [];
+                        $aktaStatus = $berkasDetail['akta']['status'] ?? ($registration->file_akta_kelahiran ? 'Sesuai' : null);
+                        $kkStatus = $berkasDetail['kk']['status'] ?? ($registration->file_kk ? 'Sesuai' : null);
+                        $ktpStatus = $berkasDetail['ktp']['status'] ?? ($registration->file_ktp_ortu ? 'Sesuai' : null);
+                    @endphp
+
                     <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
                         <span class="text-[10px] text-slate-500 uppercase font-bold block">2. Pas Foto 3x4 (Merah)</span>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center justify-between gap-1">
                             @if($registration->pas_foto)
-                                <span class="text-emerald-700 font-bold flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    {{ ($registration->foto_status ?? '') === 'Perlu Perbaikan' ? 'Perlu Perbaikan' : 'Terunggah' }}
-                                </span>
+                                @if(($registration->foto_status ?? '') === 'Perlu Perbaikan')
+                                    <span class="text-rose-600 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Perlu Revisi
+                                    </span>
+                                @else
+                                    <span class="text-emerald-700 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Terverifikasi
+                                    </span>
+                                @endif
+                                <a href="{{ $registration->pas_foto }}" target="_blank" class="text-[10px] text-emerald-700 underline font-medium">Lihat</a>
                             @else
-                                <span class="text-rose-600 font-medium">Belum Diunggah</span>
+                                <span class="text-rose-600 font-medium text-[11px]">Belum Diunggah</span>
                             @endif
                         </div>
                     </div>
 
                     <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
                         <span class="text-[10px] text-slate-500 uppercase font-bold block">3. Akta Kelahiran</span>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center justify-between gap-1">
                             @if($registration->file_akta_kelahiran)
-                                <span class="text-emerald-700 font-bold flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    Terunggah
-                                </span>
+                                @if($aktaStatus === 'Perlu Perbaikan')
+                                    <span class="text-rose-600 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Perlu Revisi
+                                    </span>
+                                @else
+                                    <span class="text-emerald-700 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Terverifikasi
+                                    </span>
+                                @endif
+                                <a href="{{ $registration->file_akta_kelahiran }}" target="_blank" class="text-[10px] text-emerald-700 underline font-medium">Lihat</a>
                             @else
-                                <span class="text-slate-400 font-medium">Belum Diunggah</span>
+                                <span class="text-slate-400 font-medium text-[11px]">Belum Diunggah</span>
                             @endif
                         </div>
                     </div>
 
                     <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
                         <span class="text-[10px] text-slate-500 uppercase font-bold block">4. Kartu Keluarga (KK)</span>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center justify-between gap-1">
                             @if($registration->file_kk)
-                                <span class="text-emerald-700 font-bold flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    Terunggah
-                                </span>
+                                @if($kkStatus === 'Perlu Perbaikan')
+                                    <span class="text-rose-600 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Perlu Revisi
+                                    </span>
+                                @else
+                                    <span class="text-emerald-700 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Terverifikasi
+                                    </span>
+                                @endif
+                                <a href="{{ $registration->file_kk }}" target="_blank" class="text-[10px] text-emerald-700 underline font-medium">Lihat</a>
                             @else
-                                <span class="text-slate-400 font-medium">Belum Diunggah</span>
+                                <span class="text-slate-400 font-medium text-[11px]">Belum Diunggah</span>
                             @endif
                         </div>
                     </div>
 
                     <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
                         <span class="text-[10px] text-slate-500 uppercase font-bold block">5. KTP Orang Tua / Wali</span>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center justify-between gap-1">
                             @if($registration->file_ktp_ortu)
-                                <span class="text-emerald-700 font-bold flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    Terunggah
-                                </span>
+                                @if($ktpStatus === 'Perlu Perbaikan')
+                                    <span class="text-rose-600 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Perlu Revisi
+                                    </span>
+                                @else
+                                    <span class="text-emerald-700 font-bold flex items-center gap-1 text-[11px]">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Terverifikasi
+                                    </span>
+                                @endif
+                                <a href="{{ $registration->file_ktp_ortu }}" target="_blank" class="text-[10px] text-emerald-700 underline font-medium">Lihat</a>
                             @else
-                                <span class="text-slate-400 font-medium">Belum Diunggah</span>
+                                <span class="text-slate-400 font-medium text-[11px]">Belum Diunggah</span>
                             @endif
                         </div>
                     </div>

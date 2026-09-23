@@ -307,7 +307,7 @@
                     <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">{{ $student->nama_lengkap }}</h2>
                     <p class="text-emerald-200 text-xs mt-1 font-mono">
                         NIS: <strong>{{ $student->nis }}</strong>
-                        @if($student->nisn) &bull; NISN: <strong>{{ $student->nisn }}</strong> @endif
+                        @if($student->nisn) &bull; No. Stambuk: <strong>{{ $student->nisn }}</strong> @endif
                     </p>
                     <p class="text-emerald-100 text-xs mt-2 opacity-90">
                         Pondok Pesantren Hidayatullah Tuksongo &bull; Pringsurat Temanggung
@@ -376,7 +376,7 @@
                 <h3>{{ strtoupper($student->nama_lengkap) }}</h3>
                 <table>
                     <tr><td>NIS</td><td>: {{ $student->nis }}</td></tr>
-                    <tr><td>NISN</td><td>: {{ $student->nisn ?: '—' }}</td></tr>
+                    <tr><td>No. Stambuk</td><td>: {{ $student->nisn ?: '—' }}</td></tr>
                     <tr><td>Jenjang</td><td>: {{ $student->jenjang }}</td></tr>
                     <tr><td>Kelas</td><td>: {{ $student->kelas }}</td></tr>
                     <tr><td>Status</td><td>: {{ $student->status }}</td></tr>
@@ -404,7 +404,7 @@
                             <td class="py-1.5 font-mono font-bold text-gray-800">{{ $student->nis }}</td>
                         </tr>
                         <tr class="border-b border-gray-50">
-                            <td class="py-1.5 text-gray-500">NISN Nasional</td>
+                            <td class="py-1.5 text-gray-500">Nomor Stambuk</td>
                             <td class="py-1.5 font-mono text-gray-800">{{ $student->nisn ?: '—' }}</td>
                         </tr>
                         <tr class="border-b border-gray-50">
@@ -562,10 +562,127 @@
                 </div>
             </div>
 
-            <!-- 6. Tagihan & Tunggakan Aktif Santri -->
+            <!-- 6. Dokumen & Berkas Santri (KK, KTP, Akte) -->
+            <div class="pt-4 border-t border-gray-100 page-break-avoid">
+                <div class="flex items-center justify-between pb-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 print-section-title" style="margin:0;padding:0;border:none;">
+                        6. Dokumen &amp; Berkas Santri (Arsip Digital)
+                    </h4>
+                    <a href="{{ route('admin.siswa.edit', $student->id) }}" class="text-xs font-semibold text-emerald-600 hover:underline no-print flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        Upload / Ganti Berkas &rarr;
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Kartu Keluarga -->
+                    <div class="rounded-xl border border-gray-200 bg-white p-3.5 flex flex-col justify-between space-y-2.5">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    Kartu Keluarga (KK)
+                                </span>
+                                @if($student->berkas_kk)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        Tersedia
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+                                        Belum Ada
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1">No. KK: <strong class="font-mono text-gray-700">{{ $student->nomor_kk ?: '—' }}</strong></p>
+                        </div>
+                        <div>
+                            @if($student->berkas_kk)
+                                <a href="{{ asset($student->berkas_kk) }}" target="_blank" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    Buka File KK &rarr;
+                                </a>
+                            @else
+                                <a href="{{ route('admin.siswa.edit', $student->id) }}" class="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-emerald-500 hover:text-emerald-700 no-print transition">
+                                    + Upload KK
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- KTP Orang Tua / Wali -->
+                    <div class="rounded-xl border border-gray-200 bg-white p-3.5 flex flex-col justify-between space-y-2.5">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                                    KTP Orang Tua / Wali
+                                </span>
+                                @if($student->berkas_ktp_ortu)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Tersedia
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+                                        Belum Ada
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1">NIK: <strong class="font-mono text-gray-700">{{ $student->ayah_nik ?: ($student->ibu_nik ?: ($student->wali_nik ?: '—')) }}</strong></p>
+                        </div>
+                        <div>
+                            @if($student->berkas_ktp_ortu)
+                                <a href="{{ asset($student->berkas_ktp_ortu) }}" target="_blank" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    Buka File KTP &rarr;
+                                </a>
+                            @else
+                                <a href="{{ route('admin.siswa.edit', $student->id) }}" class="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-emerald-500 hover:text-emerald-700 no-print transition">
+                                    + Upload KTP
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Akta Kelahiran -->
+                    <div class="rounded-xl border border-gray-200 bg-white p-3.5 flex flex-col justify-between space-y-2.5">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                    Akta Kelahiran
+                                </span>
+                                @if($student->berkas_akta)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        Tersedia
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+                                        Belum Ada
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1">NIK Santri: <strong class="font-mono text-gray-700">{{ $student->nik ?: '—' }}</strong></p>
+                        </div>
+                        <div>
+                            @if($student->berkas_akta)
+                                <a href="{{ asset($student->berkas_akta) }}" target="_blank" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    Buka File Akta &rarr;
+                                </a>
+                            @else
+                                <a href="{{ route('admin.siswa.edit', $student->id) }}" class="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-emerald-500 hover:text-emerald-700 no-print transition">
+                                    + Upload Akta
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Tagihan & Tunggakan Aktif Santri -->
             <div class="pt-4 border-t border-gray-100 page-break-avoid no-print">
                 <div class="flex items-center justify-between pb-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 print-section-title" style="margin:0;padding:0;border:none;">6. Tagihan &amp; Tunggakan Santri</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 print-section-title" style="margin:0;padding:0;border:none;">7. Tagihan &amp; Tunggakan Santri</h4>
                     <a href="{{ route('admin.pembayaran.tagihan.index', ['q' => $student->nis]) }}" class="text-xs font-semibold text-rose-600 hover:underline">
                         Kelola di Buku Tagihan &rarr;
                     </a>
@@ -659,11 +776,11 @@
                 @endif
             </div>
 
-            <!-- 7. Riwayat Pembayaran Santri -->
+            <!-- 8. Riwayat Pembayaran Santri -->
 
             <div class="pt-4 border-t border-gray-100 page-break-avoid">
                 <div class="flex items-center justify-between pb-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 print-section-title" style="margin:0;padding:0;border:none;">7. Riwayat Pembayaran SPP &amp; Iuran</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 print-section-title" style="margin:0;padding:0;border:none;">8. Riwayat Pembayaran SPP &amp; Iuran</h4>
                     <a href="{{ route('admin.pembayaran.index', ['tab' => 'santri', 'q_santri' => $student->nis]) }}" class="text-xs font-semibold text-emerald-600 hover:underline no-print">
                         Lihat di Manajemen Pembayaran &rarr;
                     </a>
@@ -713,10 +830,10 @@
                 @endif
             </div>
 
-            <!-- 8. Riwayat Mutasi Santri -->
+            <!-- 9. Riwayat Mutasi Santri -->
             <div class="pt-4 border-t border-gray-100 page-break-avoid">
                 <div class="flex items-center justify-between pb-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-orange-700 print-section-title" style="margin:0;padding:0;border:none;">8. Riwayat Mutasi Santri</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-orange-700 print-section-title" style="margin:0;padding:0;border:none;">9. Riwayat Mutasi Santri</h4>
                     <a href="{{ route('admin.siswa.mutasi.index', ['q' => $student->nis]) }}" class="text-xs font-semibold text-orange-600 hover:underline no-print">
                         Buka di Menu Mutasi &rarr;
                     </a>

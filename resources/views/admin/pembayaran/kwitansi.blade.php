@@ -95,7 +95,7 @@ if ($itemsList->isEmpty()) {
         ]
     ]);
 }
-$targetRowCount = max(6, $itemsList->count());
+$targetRowCount = max(4, $itemsList->count());
 
 $stu = $payment->student ?? null;
 $psb = $payment->psbRegistration ?? null;
@@ -136,7 +136,7 @@ $noHpPenyetor = $stu
     <style id="page-print-style">
         @page {
             size: 210mm 140mm; /* Standar Ukuran Kwitansi Landscape */
-            margin: 4mm 5mm;
+            margin: 3mm 4mm;
         }
     </style>
     <style>
@@ -154,22 +154,51 @@ $noHpPenyetor = $stu
 
         @media print {
             .no-print { display: none !important; }
-            html, body { 
-                background: white !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                width: 200mm !important;
+            * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+            html {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+            body { 
+                display: block !important;
+                background: #ffffff !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 100% !important;
+                min-height: 0 !important;
+                height: auto !important;
+            }
             .slip-container {
+                display: block !important;
+                position: relative !important;
                 box-shadow: none !important;
                 border: 1.5px solid #208075 !important;
+                border-radius: 6px !important;
                 margin: 0 auto !important;
-                width: 200mm !important;
-                max-width: 200mm !important;
+                width: 100% !important;
+                max-width: 198mm !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                transform: none !important;
+            }
+            /* Kunci layout 2 kolom berdampingan secara presisi saat cetak */
+            .slip-container .grid {
+                display: grid !important;
+                grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+                gap: 12px !important;
+                padding: 10px 14px !important;
+            }
+            .slip-container .md\:col-span-6 {
+                grid-column: span 6 / span 6 !important;
+                width: 100% !important;
             }
         }
     </style>
@@ -326,20 +355,33 @@ $noHpPenyetor = $stu
                         <div class="relative w-48 h-20 flex items-center justify-between">
                             
                             <!-- Stempel Cap Pondok Tuksongo (Sebelah Kiri) -->
-                            <div class="w-20 h-20 flex items-center justify-center shrink-0 pointer-events-none transform -rotate-6 z-0">
-                                <img src="{{ $stempelImg }}" alt="Cap Stempel Pondok" class="w-20 h-20 object-contain opacity-85 mix-blend-multiply" onerror="this.style.display='none'">
-                                
-                                <!-- Stempel SVG Backup Otentik Jika Image Tidak Tampil -->
-                                <svg class="w-20 h-20 text-[#208075] opacity-60 absolute" viewBox="0 0 100 100" fill="none" stroke="currentColor">
-                                    <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
-                                    <circle cx="50" cy="50" r="39" stroke-width="1.5"/>
-                                    <circle cx="50" cy="50" r="26" stroke-width="1"/>
-                                    <path id="curveTop" d="M 18,50 A 32,32 0 1,1 82,50" fill="none"/>
-                                    <text font-size="7" font-weight="bold" fill="currentColor"><textPath href="#curveTop" startOffset="50%" text-anchor="middle">PP HIDAYATULLAH</textPath></text>
-                                    <path id="curveBot" d="M 82,50 A 32,32 0 0,1 18,50" fill="none"/>
-                                    <text font-size="6.5" font-weight="bold" fill="currentColor"><textPath href="#curveBot" startOffset="50%" text-anchor="middle">TUKSONGO TEMANGGUNG</textPath></text>
-                                    <text x="50" y="53" font-size="8" font-weight="black" fill="currentColor" text-anchor="middle">LUNAS</text>
-                                </svg>
+                            <div class="w-20 h-20 flex items-center justify-center shrink-0 pointer-events-none transform -rotate-6 z-0 relative">
+                                @if($stempelImg)
+                                    <img src="{{ $stempelImg }}" alt="Cap Stempel Pondok" class="w-20 h-20 object-contain opacity-85 mix-blend-multiply" onerror="this.style.display='none'; const el = document.getElementById('svgStempelBackup'); if(el) el.style.display='block';">
+                                    
+                                    <!-- Stempel SVG Backup Otentik Hanya Muncul Jika Gambar Gagal Dimuat -->
+                                    <svg id="svgStempelBackup" style="display: none;" class="w-20 h-20 text-[#208075] opacity-60 absolute" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                                        <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
+                                        <circle cx="50" cy="50" r="39" stroke-width="1.5"/>
+                                        <circle cx="50" cy="50" r="26" stroke-width="1"/>
+                                        <path id="curveTop" d="M 18,50 A 32,32 0 1,1 82,50" fill="none"/>
+                                        <text font-size="7" font-weight="bold" fill="currentColor"><textPath href="#curveTop" startOffset="50%" text-anchor="middle">PP HIDAYATULLAH</textPath></text>
+                                        <path id="curveBot" d="M 82,50 A 32,32 0 0,1 18,50" fill="none"/>
+                                        <text font-size="6.5" font-weight="bold" fill="currentColor"><textPath href="#curveBot" startOffset="50%" text-anchor="middle">TUKSONGO TEMANGGUNG</textPath></text>
+                                        <text x="50" y="53" font-size="8" font-weight="black" fill="currentColor" text-anchor="middle">LUNAS</text>
+                                    </svg>
+                                @else
+                                    <svg class="w-20 h-20 text-[#208075] opacity-60" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                                        <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
+                                        <circle cx="50" cy="50" r="39" stroke-width="1.5"/>
+                                        <circle cx="50" cy="50" r="26" stroke-width="1"/>
+                                        <path id="curveTop" d="M 18,50 A 32,32 0 1,1 82,50" fill="none"/>
+                                        <text font-size="7" font-weight="bold" fill="currentColor"><textPath href="#curveTop" startOffset="50%" text-anchor="middle">PP HIDAYATULLAH</textPath></text>
+                                        <path id="curveBot" d="M 82,50 A 32,32 0 0,1 18,50" fill="none"/>
+                                        <text font-size="6.5" font-weight="bold" fill="currentColor"><textPath href="#curveBot" startOffset="50%" text-anchor="middle">TUKSONGO TEMANGGUNG</textPath></text>
+                                        <text x="50" y="53" font-size="8" font-weight="black" fill="currentColor" text-anchor="middle">LUNAS</text>
+                                    </svg>
+                                @endif
                             </div>
 
                             <!-- Tanda Tangan Asli Digital (Di Sebelah Kanan Cap, Tidak Ditimpa) -->
@@ -466,7 +508,7 @@ $noHpPenyetor = $stu
                 styleTag.innerHTML = '@page { size: A5 landscape; margin: 5mm; }';
             } else {
                 // Standar Kwitansi 210 x 140 mm
-                styleTag.innerHTML = '@page { size: 210mm 140mm; margin: 4mm 5mm; }';
+                styleTag.innerHTML = '@page { size: 210mm 140mm; margin: 3mm 4mm; }';
             }
         }
 

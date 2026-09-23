@@ -1,276 +1,14 @@
 @php
     $isHome = request()->routeIs('home') || ($isLanding ?? false);
     $homeUrl = route('home');
+    $psbSched = \App\Models\Setting::getPsbSchedule();
+    $isPsbOpen = $psbSched['is_open'];
+    $psbBadgeText = $psbSched['badge'];
 @endphp
-
-<!-- ===== SHARED OFFICIAL NAVBAR (GONTOR-INSPIRED DESIGN SYSTEM) ===== -->
-<header class="official-navbar" id="siteNavbar">
-    <div class="official-navbar-container">
-        <div class="official-navbar-inner">
-            
-            <!-- BRAND IDENTITY -->
-            <a href="{{ $homeUrl }}" class="official-brand" title="Pondok Pesantren Hidayatullah Tuksongo">
-                <img src="/logo.png" alt="Logo Ponpes Hidayatullah" class="official-brand-crest">
-                <div class="official-brand-text">
-                    <img src="/logo1.png" alt="معهد هداية الله للتربية الإسلامية" class="official-brand-calligraphy">
-                    <span class="official-brand-sub">Pondok Pesantren Hidayatullah Tuksongo</span>
-                </div>
-            </a>
-
-            <!-- DESKTOP NAVIGATION MENU -->
-            <nav class="official-nav-links" id="desktopNavLinks">
-                
-                <!-- 1. Beranda -->
-                <a href="{{ $isHome ? '#beranda' : $homeUrl }}" class="official-nav-link {{ $isHome ? 'active' : '' }}">
-                    Beranda
-                </a>
-
-                <!-- 2. Tentang Pesantren (Profile) -->
-                <div class="official-nav-item">
-                    <button type="button" class="official-nav-trigger" aria-haspopup="true" aria-expanded="false">
-                        Tentang Pesantren
-                        <svg class="official-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                    <div class="official-dropdown">
-                        <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>Profil & Sejarah</strong>
-                                <span>Berdiri sejak 1999 di tanah wakaf Tuksongo</span>
-                            </div>
-                        </a>
-                        <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>Panca Jiwa & Nilai</strong>
-                                <span>Keikhlasan, kesederhanaan & kemandirian</span>
-                            </div>
-                        </a>
-                        <a href="{{ $isHome ? '#fasilitas' : $homeUrl . '#fasilitas' }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>Fasilitas Kampus</strong>
-                                <span>Masjid jami', asrama sehat & laboratorium</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 3. Unit Pendidikan -->
-                <div class="official-nav-item">
-                    <button type="button" class="official-nav-trigger {{ request()->routeIs('biaya.*') ? 'active' : '' }}" aria-haspopup="true" aria-expanded="false">
-                        Unit Pendidikan
-                        <svg class="official-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                    <div class="official-dropdown">
-                        <a href="{{ $isHome ? '#program' : $homeUrl . '#program' }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>MTs Hidayatullah</strong>
-                                <span>Madrasah Tsanawiyah terakreditasi Kemenag</span>
-                            </div>
-                        </a>
-                        <a href="{{ $isHome ? '#program' : $homeUrl . '#program' }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>MA Hidayatullah</strong>
-                                <span>Madrasah Aliyah persiapan perguruan tinggi</span>
-                            </div>
-                        </a>
-                        <a href="{{ route('biaya.index') }}" class="official-dropdown-item {{ request()->routeIs('biaya.*') ? 'selected-dd' : '' }}">
-                            <div class="off-dd-icon" style="background:#e8f5ed; border-color:#228b4c; color:#0d3b1e;">
-                                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong style="color:#0d3b1e;">Rincian Biaya Pendidikan</strong>
-                                <span>Transparansi biaya masuk & SPP bulanan</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 4. Warta & Berita -->
-                <a href="{{ route('berita.index') }}" class="official-nav-link {{ request()->routeIs('berita.*') ? 'active' : '' }}">
-                    Warta
-                </a>
-
-                <!-- 5. Pendaftaran -->
-                <div class="official-nav-item">
-                    <button type="button" class="official-nav-trigger {{ request()->routeIs('psb.*') ? 'active' : '' }}" aria-haspopup="true" aria-expanded="false">
-                        Pendaftaran
-                        <svg class="official-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                    <div class="official-dropdown official-dropdown-right">
-                        <a href="{{ route('psb.register') }}" class="official-dropdown-item">
-                            <div class="off-dd-icon" style="background:#e8f5ed; border-color:#228b4c; color:#0d3b1e;">
-                                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong style="color:#0d3b1e;">Formulir Pendaftaran Online</strong>
-                                <span>Penerimaan Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}</span>
-                            </div>
-                        </a>
-                        <a href="{{ route('psb.checkStatus') }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>Cek Status Verifikasi & Berkas</strong>
-                                <span>Periksa hasil seleksi administrasi santri</span>
-                            </div>
-                        </a>
-                        <a href="{{ route('ujian.index') }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>Portal Ujian Seleksi (CBT)</strong>
-                                <span>Tes seleksi online santri baru</span>
-                            </div>
-                        </a>
-                        <a href="{{ route('biaya.index') }}" class="official-dropdown-item">
-                            <div class="off-dd-icon">
-                                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                            </div>
-                            <div class="off-dd-text">
-                                <strong>Rincian Biaya Masuk & SPP</strong>
-                                <span>Uang pangkal, seragam & syahriyah</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 6. Kontak & Alamat -->
-                <a href="{{ $isHome ? '#kontak' : $homeUrl . '#kontak' }}" class="official-nav-link">
-                    Kontak & Alamat
-                </a>
-
-                <!-- 7. LOGIN SANTRI BUTTON -->
-                <a href="{{ route('santri.login') }}" class="official-nav-santri-btn" title="Masuk Portal Santri">
-                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span>Portal Santri</span>
-                </a>
-
-                <!-- 8. SEARCH BUTTON (MAGNIFYING GLASS) -->
-                <button type="button" class="official-nav-search-btn" id="officialSearchTrigger" aria-label="Buka Pencarian" title="Pencarian Berita & Informasi">
-                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </button>
-            </nav>
-
-            <!-- MOBILE HAMBURGER BUTTON -->
-            <button type="button" class="official-mobile-btn" id="officialMobileBtn" aria-label="Menu Navigasi Mobile">
-                <span></span><span></span><span></span>
-            </button>
-        </div>
-    </div>
-</header>
-
-<!-- MOBILE NAVIGATION DRAWER -->
-<div class="official-mobile-nav" id="officialMobileNav">
-    <div class="official-mobile-nav-header">
-        <div class="official-brand">
-            <img src="/logo.png" alt="Logo" class="official-brand-crest" style="width:32px; height:32px;">
-            <div class="official-brand-text">
-                <img src="/logo1.png" alt="Calligraphy" class="official-brand-calligraphy" style="height:20px;">
-                <span class="official-brand-sub" style="font-size:8.5px;">Ponpes Hidayatullah</span>
-            </div>
-        </div>
-        <button type="button" class="official-mobile-close" id="officialMobileClose" aria-label="Tutup Menu">✕</button>
-    </div>
-
-    <div class="official-mobile-body">
-        <a href="{{ $isHome ? '#beranda' : $homeUrl }}" onclick="closeOfficialMobileNav()" class="official-mobile-link font-bold">
-            Beranda
-        </a>
-
-        <div class="official-mobile-group">Tentang Pesantren</div>
-        <div class="official-mobile-sub">
-            <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" onclick="closeOfficialMobileNav()">• Profil & Sejarah Pesantren</a>
-            <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" onclick="closeOfficialMobileNav()">• Panca Jiwa & Nilai Luhur</a>
-            <a href="{{ $isHome ? '#fasilitas' : $homeUrl . '#fasilitas' }}" onclick="closeOfficialMobileNav()">• Fasilitas Kampus & Asrama</a>
-        </div>
-
-        <div class="official-mobile-group">Unit Pendidikan</div>
-        <div class="official-mobile-sub">
-            <a href="{{ $isHome ? '#program' : $homeUrl . '#program' }}" onclick="closeOfficialMobileNav()">• Madrasah Tsanawiyah (MTs)</a>
-            <a href="{{ $isHome ? '#program' : $homeUrl . '#program' }}" onclick="closeOfficialMobileNav()">• Madrasah Aliyah (MA)</a>
-            <a href="{{ route('biaya.index') }}" onclick="closeOfficialMobileNav()" style="color:#006837; font-weight:700;">• Rincian Biaya Pendidikan</a>
-        </div>
-
-        <div class="official-mobile-group">Warta & Berita</div>
-        <div class="official-mobile-sub">
-            <a href="{{ route('berita.index') }}" onclick="closeOfficialMobileNav()">• Warta Kabar Kegiatan Santri</a>
-            <a href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}" target="_blank" onclick="closeOfficialMobileNav()">• Unduh Brosur Resmi (PDF)</a>
-        </div>
-
-        <div class="official-mobile-group">Penerimaan Santri Baru (PSB)</div>
-        <div class="official-mobile-sub">
-            <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()" style="color:#006837; font-weight:700;">• Formulir Pendaftaran Online</a>
-            <a href="{{ route('psb.checkStatus') }}" onclick="closeOfficialMobileNav()">• Cek Status Verifikasi & Berkas</a>
-            <a href="{{ route('ujian.index') }}" onclick="closeOfficialMobileNav()">• Portal Ujian Masuk (CBT)</a>
-        </div>
-
-        <a href="{{ $isHome ? '#kontak' : $homeUrl . '#kontak' }}" onclick="closeOfficialMobileNav()" class="official-mobile-link">
-            Kontak & Alamat
-        </a>
-
-        <a href="{{ route('santri.login') }}" onclick="closeOfficialMobileNav()" class="official-mobile-santri-link">
-            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span>Portal Santri</span>
-            <span class="official-badge-santri">Login</span>
-        </a>
-
-        <a href="{{ route('admin.dashboard') }}" target="_blank" onclick="closeOfficialMobileNav()" class="official-mobile-admin-link">
-            <span>Masuk TailAdmin</span>
-            <span class="official-badge-admin">Admin</span>
-        </a>
-
-        <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()" class="official-mobile-cta">
-            Daftar Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
-        </a>
-    </div>
-</div>
-
-<!-- SEARCH MODAL OVERLAY -->
-<div class="official-search-overlay" id="officialSearchModal" role="dialog" aria-modal="true" aria-label="Kotak Pencarian">
-    <div class="official-search-backdrop" id="officialSearchBackdrop"></div>
-    <div class="official-search-card">
-        <div class="official-search-card-header">
-            <div class="official-search-title">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span>Pencarian Resmi Pesantren</span>
-            </div>
-            <button type="button" class="official-search-close" id="officialSearchClose" aria-label="Tutup Pencarian">✕</button>
-        </div>
-        <form action="{{ route('berita.index') }}" method="GET" class="official-search-form">
-            <input type="text" name="q" placeholder="Ketik kata kunci berita, kurikulum, atau info PSB..." class="official-search-input" autofocus autocomplete="off">
-            <button type="submit" class="official-search-submit">Cari</button>
-        </form>
-        <div class="official-search-hints">
-            <span>Pencarian populer:</span>
-            <a href="{{ route('berita.index') }}?q=tahfidz">Tahfidz</a>
-            <a href="{{ route('biaya.index') }}">Rincian Biaya</a>
-            <a href="{{ route('psb.register') }}">Pendaftaran</a>
-            <a href="{{ route('berita.index') }}?q=prestasi">Prestasi Santri</a>
-        </div>
-    </div>
-</div>
 
 <!-- STYLES FOR THE UNIFIED NAVBAR -->
 <style>
     /* Google Fonts Guarantee */
-    @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Grenze:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
     .official-navbar {
         position: sticky;
         top: 0;
@@ -587,6 +325,25 @@
     }
 
     /* MOBILE DRAWER */
+    
+    /* MOBILE BACKDROP */
+    .official-mobile-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .official-mobile-backdrop.open {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+
     .official-mobile-nav {
         position: fixed;
         top: 0;
@@ -598,13 +355,17 @@
         box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
         z-index: 1001;
         transform: translateX(100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        visibility: hidden;
+        pointer-events: none;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s ease;
         display: flex;
         flex-direction: column;
     }
 
     .official-mobile-nav.open {
-        transform: translateX(0);
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
     }
 
     .official-mobile-nav-header {
@@ -916,15 +677,338 @@
     }
 </style>
 
+
+<!-- ===== SHARED OFFICIAL NAVBAR (GONTOR-INSPIRED DESIGN SYSTEM) ===== -->
+<header class="official-navbar" id="siteNavbar">
+    <div class="official-navbar-container">
+        <div class="official-navbar-inner">
+            
+            <!-- BRAND IDENTITY -->
+            <a href="{{ $homeUrl }}" class="official-brand" title="Pondok Pesantren Hidayatullah Tuksongo">
+                <img src="/logo.png" alt="Logo Ponpes Hidayatullah" class="official-brand-crest">
+                <div class="official-brand-text">
+                    <img src="/logo1.png" alt="معهد هداية الله للتربية الإسلامية" class="official-brand-calligraphy">
+                    <span class="official-brand-sub">Pondok Pesantren Hidayatullah Tuksongo</span>
+                </div>
+            </a>
+
+            <!-- DESKTOP NAVIGATION MENU -->
+            <nav class="official-nav-links" id="desktopNavLinks">
+                
+                <!-- 1. Beranda -->
+                <a href="{{ $isHome ? '#beranda' : $homeUrl }}" class="official-nav-link {{ $isHome ? 'active' : '' }}">
+                    Beranda
+                </a>
+
+                <!-- 2. Tentang Pesantren (Profile) -->
+                <div class="official-nav-item">
+                    <button type="button" class="official-nav-trigger" aria-haspopup="true" aria-expanded="false">
+                        Tentang Pesantren
+                        <svg class="official-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="official-dropdown">
+                        <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>Profil & Sejarah</strong>
+                                <span>Berdiri sejak 1999 di tanah wakaf Tuksongo</span>
+                            </div>
+                        </a>
+                        <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>Panca Jiwa & Nilai</strong>
+                                <span>Keikhlasan, kesederhanaan & kemandirian</span>
+                            </div>
+                        </a>
+                        <a href="{{ $isHome ? '#prestasi' : $homeUrl . '#prestasi' }}" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>Prestasi Santri</strong>
+                                <span>Juara MHQ, sains madrasah & bahasa Arab</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. Unit Pendidikan -->
+                <div class="official-nav-item">
+                    <button type="button" class="official-nav-trigger {{ request()->routeIs('biaya.*') ? 'active' : '' }}" aria-haspopup="true" aria-expanded="false">
+                        Unit Pendidikan
+                        <svg class="official-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="official-dropdown">
+                        <a href="https://mts.hidayatullahschool.sch.id/" target="_blank" rel="noopener noreferrer" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>MTs Hidayatullah</strong>
+                                <span>Madrasah Tsanawiyah terakreditasi Kemenag ↗</span>
+                            </div>
+                        </a>
+                        <a href="https://ma.hidayatullahschool.sch.id/" target="_blank" rel="noopener noreferrer" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>MA Hidayatullah</strong>
+                                <span>Madrasah Aliyah persiapan perguruan tinggi ↗</span>
+                            </div>
+                        </a>
+                        <a href="{{ route('biaya.index') }}" class="official-dropdown-item {{ request()->routeIs('biaya.*') ? 'selected-dd' : '' }}">
+                            <div class="off-dd-icon" style="background:#e8f5ed; border-color:#228b4c; color:#0d3b1e;">
+                                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong style="color:#0d3b1e;">Rincian Biaya Pendidikan</strong>
+                                <span>Transparansi biaya masuk & SPP bulanan</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. Warta & Berita -->
+                <a href="{{ route('berita.index') }}" class="official-nav-link {{ request()->routeIs('berita.*') ? 'active' : '' }}">
+                    Warta
+                </a>
+
+                <!-- 5. Pendaftaran -->
+                <div class="official-nav-item">
+                    <button type="button" class="official-nav-trigger {{ request()->routeIs('psb.*') ? 'active' : '' }}" aria-haspopup="true" aria-expanded="false">
+                        Pendaftaran
+                        @if(!$isPsbOpen && $psbSched['status'] === 'belum_buka')
+                            <span style="background:#fef3c7; color:#b45309; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; margin-left:4px; border:1px solid #fcd34d; letter-spacing:0.3px;">{{ $psbBadgeText }}</span>
+                        @endif
+                        <svg class="official-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="official-dropdown official-dropdown-right">
+                        @if($isPsbOpen)
+                        <a href="{{ route('psb.register') }}" class="official-dropdown-item">
+                            <div class="off-dd-icon" style="background:#e8f5ed; border-color:#228b4c; color:#0d3b1e;">
+                                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong style="color:#0d3b1e;">Formulir Pendaftaran Online</strong>
+                                <span>Penerimaan Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }} &bull; {{ $psbSched['gelombang'] ?? 'Gelombang 1' }}</span>
+                            </div>
+                        </a>
+                        @else
+                        <a href="{{ route('psb.register') }}" class="official-dropdown-item" style="background:{{ $psbSched['status'] === 'belum_buka' ? '#fffdf7' : '#fff9f9' }};">
+                            <div class="off-dd-icon" style="background:{{ $psbSched['status'] === 'belum_buka' ? '#fef3c7' : '#fee2e2' }}; border-color:{{ $psbSched['status'] === 'belum_buka' ? '#fcd34d' : '#f87171' }}; color:{{ $psbSched['status'] === 'belum_buka' ? '#b45309' : '#b91c1c' }};">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <strong style="color:{{ $psbSched['status'] === 'belum_buka' ? '#92400e' : '#991b1b' }};">Formulir Pendaftaran</strong>
+                                    <span style="background:{{ $psbSched['status'] === 'belum_buka' ? '#fef3c7' : '#fee2e2' }}; color:{{ $psbSched['status'] === 'belum_buka' ? '#b45309' : '#b91c1c' }}; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; border:1px solid {{ $psbSched['status'] === 'belum_buka' ? '#fcd34d' : '#fca5a5' }};">{{ $psbBadgeText }}</span>
+                                </div>
+                                <span style="color:{{ $psbSched['status'] === 'belum_buka' ? '#92400e' : '#991b1b' }};">{{ $psbSched['pesan'] }}</span>
+                            </div>
+                        </a>
+                        @endif
+                        <a href="{{ route('psb.checkStatus') }}" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>Cek Status Verifikasi & Berkas</strong>
+                                <span>Periksa hasil seleksi administrasi santri</span>
+                            </div>
+                        </a>
+                        <a href="{{ route('ujian.index') }}" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>Portal Ujian Seleksi (CBT)</strong>
+                                <span>Tes seleksi online santri baru</span>
+                            </div>
+                        </a>
+                        <a href="{{ route('biaya.index') }}" class="official-dropdown-item">
+                            <div class="off-dd-icon">
+                                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            </div>
+                            <div class="off-dd-text">
+                                <strong>Rincian Biaya Masuk & SPP</strong>
+                                <span>Uang pangkal, seragam & syahriyah</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 6. Kontak & Alamat -->
+                <a href="{{ $isHome ? '#kontak' : $homeUrl . '#kontak' }}" class="official-nav-link">
+                    Kontak & Alamat
+                </a>
+
+                <!-- 7. LOGIN SANTRI BUTTON -->
+                <a href="{{ route('santri.login') }}" class="official-nav-santri-btn" title="Masuk Portal Santri">
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Portal Santri</span>
+                </a>
+
+                <!-- 8. SEARCH BUTTON (MAGNIFYING GLASS) -->
+                <button type="button" class="official-nav-search-btn" id="officialSearchTrigger" aria-label="Buka Pencarian" title="Pencarian Berita & Informasi">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+            </nav>
+
+            <!-- MOBILE HAMBURGER BUTTON -->
+            <button type="button" class="official-mobile-btn" id="officialMobileBtn" aria-label="Menu Navigasi Mobile">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- MOBILE NAVIGATION DRAWER -->
+<!-- MOBILE DRAWER BACKDROP -->
+<div class="official-mobile-backdrop" id="officialMobileBackdrop" onclick="closeOfficialMobileNav()"></div>
+
+<!-- MOBILE NAVIGATION DRAWER -->
+<div class="official-mobile-nav" id="officialMobileNav" style="visibility: hidden; pointer-events: none;">
+    <div class="official-mobile-nav-header">
+        <div class="official-brand">
+            <img src="/logo.png" alt="Logo" class="official-brand-crest" style="width:32px; height:32px;">
+            <div class="official-brand-text">
+                <img src="/logo1.png" alt="Calligraphy" class="official-brand-calligraphy" style="height:20px;">
+                <span class="official-brand-sub" style="font-size:8.5px;">Ponpes Hidayatullah</span>
+            </div>
+        </div>
+        <button type="button" class="official-mobile-close" id="officialMobileClose" aria-label="Tutup Menu">✕</button>
+    </div>
+
+    <div class="official-mobile-body">
+        <a href="{{ $isHome ? '#beranda' : $homeUrl }}" onclick="closeOfficialMobileNav()" class="official-mobile-link font-bold">
+            Beranda
+        </a>
+
+        <div class="official-mobile-group">Tentang Pesantren</div>
+        <div class="official-mobile-sub">
+            <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" onclick="closeOfficialMobileNav()">• Profil & Sejarah Pesantren</a>
+            <a href="{{ $isHome ? '#profil' : $homeUrl . '#profil' }}" onclick="closeOfficialMobileNav()">• Panca Jiwa & Nilai Luhur</a>
+            <a href="{{ $isHome ? '#prestasi' : $homeUrl . '#prestasi' }}" onclick="closeOfficialMobileNav()">• Prestasi Santri & Pondok</a>
+        </div>
+
+        <div class="official-mobile-group">Unit Pendidikan</div>
+        <div class="official-mobile-sub">
+            <a href="https://mts.hidayatullahschool.sch.id/" target="_blank" rel="noopener noreferrer" onclick="closeOfficialMobileNav()">• Madrasah Tsanawiyah (MTs) ↗</a>
+            <a href="https://ma.hidayatullahschool.sch.id/" target="_blank" rel="noopener noreferrer" onclick="closeOfficialMobileNav()">• Madrasah Aliyah (MA) ↗</a>
+            <a href="{{ route('biaya.index') }}" onclick="closeOfficialMobileNav()" style="color:#006837; font-weight:700;">• Rincian Biaya Pendidikan</a>
+        </div>
+
+        <div class="official-mobile-group">Warta & Berita</div>
+        <div class="official-mobile-sub">
+            <a href="{{ route('berita.index') }}" onclick="closeOfficialMobileNav()">• Warta Kabar Kegiatan Santri</a>
+            <a href="{{ \App\Models\Setting::get('brosur_file_url', '/uploads/settings/brosur_1788852849.jpeg') }}" target="_blank" onclick="closeOfficialMobileNav()">• Unduh Brosur Resmi (PDF)</a>
+        </div>
+
+        <div class="official-mobile-group">Penerimaan Santri Baru (PSB)</div>
+        <div class="official-mobile-sub">
+            @if($isPsbOpen)
+                <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()" style="color:#006837; font-weight:700;">• Formulir Pendaftaran Online</a>
+            @elseif($psbSched['status'] === 'belum_buka')
+                <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()" style="color:#b45309; font-weight:700; display:flex; align-items:center; justify-content:space-between;">
+                    <span>• Pendaftaran Online</span>
+                    <span style="background:#fef3c7; color:#b45309; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; border:1px solid #fcd34d;">{{ $psbBadgeText }}</span>
+                </a>
+            @else
+                <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()">
+                    <span>• Pendaftaran Online</span>
+                </a>
+            @endif
+            <a href="{{ route('psb.checkStatus') }}" onclick="closeOfficialMobileNav()">• Cek Status Verifikasi & Berkas</a>
+            <a href="{{ route('ujian.index') }}" onclick="closeOfficialMobileNav()">• Portal Ujian Masuk (CBT)</a>
+        </div>
+
+        <a href="{{ $isHome ? '#kontak' : $homeUrl . '#kontak' }}" onclick="closeOfficialMobileNav()" class="official-mobile-link">
+            Kontak & Alamat
+        </a>
+
+        <a href="{{ route('santri.login') }}" onclick="closeOfficialMobileNav()" class="official-mobile-santri-link">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Portal Santri</span>
+            <span class="official-badge-santri">Login</span>
+        </a>
+
+        <a href="{{ route('admin.dashboard') }}" target="_blank" onclick="closeOfficialMobileNav()" class="official-mobile-admin-link">
+            <span>Masuk TailAdmin</span>
+            <span class="official-badge-admin">Admin</span>
+        </a>
+
+        @if($isPsbOpen)
+            <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()" class="official-mobile-cta">
+                Daftar Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
+            </a>
+        @else
+            <a href="{{ route('psb.register') }}" onclick="closeOfficialMobileNav()" class="official-mobile-cta" style="background: linear-gradient(135deg, #475569, #334155); color: #ffffff;">
+                Pendaftaran ({{ $psbBadgeText }}) • Informasi Jadwal
+            </a>
+        @endif
+    </div>
+</div>
+
+<!-- SEARCH MODAL OVERLAY -->
+<div class="official-search-overlay" id="officialSearchModal" style="display: none;" role="dialog" aria-modal="true" aria-label="Kotak Pencarian">
+    <div class="official-search-backdrop" id="officialSearchBackdrop"></div>
+    <div class="official-search-card">
+        <div class="official-search-card-header">
+            <div class="official-search-title">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Pencarian Resmi Pesantren</span>
+            </div>
+            <button type="button" class="official-search-close" id="officialSearchClose" aria-label="Tutup Pencarian">✕</button>
+        </div>
+        <form action="{{ route('berita.index') }}" method="GET" class="official-search-form">
+            <input type="text" name="q" placeholder="Ketik kata kunci berita, kurikulum, atau info PSB..." class="official-search-input" autofocus autocomplete="off">
+            <button type="submit" class="official-search-submit">Cari</button>
+        </form>
+        <div class="official-search-hints">
+            <span>Pencarian populer:</span>
+            <a href="{{ route('berita.index') }}?q=tahfidz">Tahfidz</a>
+            <a href="{{ route('biaya.index') }}">Rincian Biaya</a>
+            <a href="{{ route('psb.register') }}">Pendaftaran</a>
+            <a href="{{ route('berita.index') }}?q=prestasi">Prestasi Santri</a>
+        </div>
+    </div>
+</div>
+
+
+
 <!-- SCRIPT FOR UNIFIED NAVBAR -->
 <script>
     function openOfficialMobileNav() {
         var el = document.getElementById('officialMobileNav');
-        if (el) el.classList.add('open');
+        var bd = document.getElementById('officialMobileBackdrop');
+        if (el) {
+            el.style.visibility = 'visible';
+            el.style.pointerEvents = 'auto';
+            el.classList.add('open');
+        }
+        if (bd) bd.classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
     function closeOfficialMobileNav() {
         var el = document.getElementById('officialMobileNav');
-        if (el) el.classList.remove('open');
+        var bd = document.getElementById('officialMobileBackdrop');
+        if (el) {
+            el.classList.remove('open');
+            setTimeout(function() {
+                if (el && !el.classList.contains('open')) {
+                    el.style.visibility = 'hidden';
+                    el.style.pointerEvents = 'none';
+                }
+            }, 320);
+        }
+        if (bd) bd.classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     document.addEventListener('DOMContentLoaded', function() {

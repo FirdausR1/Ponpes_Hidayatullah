@@ -102,8 +102,11 @@ class AdminCbtController extends Controller
         ]);
 
         $validated['jenjang'] = $request->input('jenjang') ?: 'Semua';
-        $validated['is_math'] = $request->has('is_math');
-        $validated['is_arabic'] = $request->has('is_arabic');
+        $allTextStore = $validated['soal'] . ' ' . $validated['opsi_a'] . ' ' . $validated['opsi_b'] . ' ' . $validated['opsi_c'] . ' ' . $validated['opsi_d'] . ' ' . ($validated['opsi_e'] ?? '');
+        [$isMathAuto, $isArabicAuto] = $this->detectTextFlags($allTextStore, $validated['kategori']);
+
+        $validated['is_math'] = $request->has('is_math') ? (bool) $request->is_math : $isMathAuto;
+        $validated['is_arabic'] = $request->has('is_arabic') ? (bool) $request->is_arabic : $isArabicAuto;
         $validated['is_active'] = $request->has('is_active');
 
         if ($request->hasFile('gambar_file')) {
@@ -161,8 +164,11 @@ class AdminCbtController extends Controller
 
         $validated['jenjang'] = $request->input('jenjang') ?: 'Semua';
 
-        $validated['is_math'] = $request->has('is_math');
-        $validated['is_arabic'] = $request->has('is_arabic');
+        $allTextUpdate = $validated['soal'] . ' ' . $validated['opsi_a'] . ' ' . $validated['opsi_b'] . ' ' . $validated['opsi_c'] . ' ' . $validated['opsi_d'] . ' ' . ($validated['opsi_e'] ?? '');
+        [$isMathAutoU, $isArabicAutoU] = $this->detectTextFlags($allTextUpdate, $validated['kategori']);
+
+        $validated['is_math'] = $request->has('is_math') ? (bool) $request->is_math : $isMathAutoU;
+        $validated['is_arabic'] = $request->has('is_arabic') ? (bool) $request->is_arabic : $isArabicAutoU;
         $validated['is_active'] = $request->has('is_active');
 
         if ($request->has('hapus_gambar') && $request->hapus_gambar == '1') {
@@ -382,40 +388,40 @@ class AdminCbtController extends Controller
                 'soal' => 'مَا هُوَ إِعْرَابُ كَلِمَةِ «الْقُرْآنَ» فِي الْجُمْلَةِ التَّالِيَةِ:\n﴿قَرَأَ التِّلْمِيْذُ النَّجِيْبُ الْقُرْآنَ بِالتَّرْتِيْلِ﴾؟',
                 'is_math' => false,
                 'is_arabic' => true,
-                'opsi_a' => 'مَفْعُوْلٌ بِهِ مَنْصُوْبٌ وَعَلَامَةُ نَصْبِهِ الْفَتْحَةُ (Maf\'ul bih manshub)',
-                'opsi_b' => 'فَاعِلٌ مَرْفُوْعٌ وَعَلَامَةُ رَفْعِهِ الضَّمَّةُ (Fa\'il marfu\')',
+                'opsi_a' => 'فَاعِلٌ مَرْفُوْعٌ وَعَلَامَةُ رَفْعِهِ الضَّمَّةُ (Fa\'il marfu\')',
+                'opsi_b' => 'مَفْعُوْلٌ بِهِ مَنْصُوْبٌ وَعَلَامَةُ نَصْبِهِ الْفَتْحَةُ (Maf\'ul bih manshub)',
                 'opsi_c' => 'مُبْتَدَأٌ مَرْفُوْعٌ وَعَلَامَةُ رَفْعِهِ الضَّمَّةُ (Mubtada\' marfu\')',
                 'opsi_d' => 'خَبَرٌ مَرْفُوْعٌ وَعَلَامَةُ رَفْعِهِ الضَّمَّةُ (Khabar marfu\')',
                 'opsi_e' => 'نَعْتٌ مَجْرُوْرٌ بِالْكَسْرَةِ (Na\'at majrur)',
-                'kunci_jawaban' => 'A',
+                'kunci_jawaban' => 'B',
                 'bobot' => 1,
-                'pembahasan' => 'Al-Qur\'an berkedudukan sebagai objek (maf\'ul bih) dari kata kerja qara\'a.',
+                'pembahasan' => 'Al-Qur\'an berkedudukan sebagai maf\'ul bih (objek penderita) manshub dengan tanda fathah.',
             ],
             [
                 'kategori' => 'Bahasa Arab',
                 'soal' => 'قال رسول الله صلى الله عليه وسلم: «طلب العلم فريضة على كل مسلم».\nالمعنى الصحيح والواضح لكلمة (فريضة) في هذا الحديث الشريف هو...',
                 'is_math' => false,
                 'is_arabic' => true,
-                'opsi_a' => 'Kewajiban mutlak yang harus dilaksanakan',
-                'opsi_b' => 'Amalan sunnah yang sangat dianjurkan',
-                'opsi_c' => 'Perkara mubah yang boleh dipilih',
+                'opsi_a' => 'Amalan sunnah yang sangat dianjurkan',
+                'opsi_b' => 'Perkara mubah yang boleh dipilih',
+                'opsi_c' => 'Kewajiban mutlak yang harus dilaksanakan',
                 'opsi_d' => 'Amalan sedekah yang bersifat sukarela',
                 'opsi_e' => 'Budi pekerti pelengkap kehidupan',
-                'kunci_jawaban' => 'A',
+                'kunci_jawaban' => 'C',
                 'bobot' => 1,
-                'pembahasan' => 'Faridhah berarti kewajiban mutlak (fardhu).',
+                'pembahasan' => 'Faridhah berarti kewajiban mutlak (fardhu \'ain) bagi setiap muslim.',
             ],
             [
                 'kategori' => 'Bahasa Arab',
                 'soal' => 'ذهب الطلاب في الصباح الباكر الى المسجد الجامع لاداء صلاة الفجر ثم جلسوا في حلقة حفظ القرآن مع الاساتذة.\nالسؤال: متى ذهب الطلاب الى المسجد؟',
                 'is_math' => false,
                 'is_arabic' => true,
-                'opsi_a' => 'في الصباح الباكر قبل طلوع الشمس (Pagi-pagi buta)',
-                'opsi_b' => 'في وقت الظهيرة بعد الزوال (Siang hari)',
-                'opsi_c' => 'في المساء بعد صلاة المغرب (Malam hari)',
-                'opsi_d' => 'في يوم العطلة الاسبوعية (Hari libur)',
+                'opsi_a' => 'في وقت الظهيرة بعد الزوال (Siang hari)',
+                'opsi_b' => 'في المساء بعد صلاة المغرب (Malam hari)',
+                'opsi_c' => 'في يوم العطلة الاسبوعية (Hari libur)',
+                'opsi_d' => 'في الصباح الباكر قبل طلوع الشمس (Pagi-pagi buta)',
                 'opsi_e' => 'في منتصف الليل (Tengah malam)',
-                'kunci_jawaban' => 'A',
+                'kunci_jawaban' => 'D',
                 'bobot' => 1,
                 'pembahasan' => 'Teks Arab gundul menyatakan: dzahaba ath-thullab fi ash-shabaah al-baakir...',
             ],
@@ -424,12 +430,12 @@ class AdminCbtController extends Controller
                 'soal' => 'مَا هُوَ مُفْرَدُ كَلِمَةِ «أَسَاتِذَةٌ» (Asaatidzatun) فِي اللُّغَةِ الْعَرَبِيَّةِ؟',
                 'is_math' => false,
                 'is_arabic' => true,
-                'opsi_a' => 'أُسْتَاذٌ (Ustadz / Guru laki-laki)',
-                'opsi_b' => 'تِلْمِيْذٌ (Murid laki-laki)',
+                'opsi_a' => 'تِلْمِيْذٌ (Murid laki-laki)',
+                'opsi_b' => 'أُسْتَاذٌ (Ustadz / Guru laki-laki)',
                 'opsi_c' => 'كِتَابٌ (Buku bacaan)',
                 'opsi_d' => 'مَدْرَسَةٌ (Gedung sekolah)',
                 'opsi_e' => 'مَجْلِسٌ (Tempat duduk)',
-                'kunci_jawaban' => 'A',
+                'kunci_jawaban' => 'B',
                 'bobot' => 1,
                 'pembahasan' => 'Asaatidzatun adalah bentuk jamak taksir dari mufrod Ustaadzun.',
             ],
@@ -567,11 +573,32 @@ class AdminCbtController extends Controller
             ],
         ];
 
+        $loadedCount = 0;
         foreach ($templates as $idx => $t) {
             $t['jenjang'] = $t['jenjang'] ?? 'Semua';
             $t['urutan'] = $idx + 1;
             $t['is_active'] = true;
-            Question::create($t);
+            
+            // Cek agar tidak menduplikasi butir soal yang identik
+            $existing = Question::where('soal', $t['soal'])->first();
+            if (!$existing) {
+                Question::create($t);
+                $loadedCount++;
+            } else {
+                // Update opsi dan kunci agar selalu selaras dengan template terbaru
+                $existing->update([
+                    'opsi_a'        => $t['opsi_a'],
+                    'opsi_b'        => $t['opsi_b'],
+                    'opsi_c'        => $t['opsi_c'],
+                    'opsi_d'        => $t['opsi_d'],
+                    'opsi_e'        => $t['opsi_e'],
+                    'kunci_jawaban' => $t['kunci_jawaban'],
+                    'bobot'         => $t['bobot'],
+                    'is_math'       => $t['is_math'],
+                    'is_arabic'     => $t['is_arabic'],
+                    'pembahasan'    => $t['pembahasan'],
+                ]);
+            }
         }
 
         $count = count($templates);
@@ -1753,7 +1780,7 @@ class AdminCbtController extends Controller
             $sheet->setCellValueExplicit('D' . $rowIdx, (string)$q->opsi_a, DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('E' . $rowIdx, (string)$q->opsi_b, DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('F' . $rowIdx, (string)$q->opsi_c, DataType::TYPE_STRING);
-            $sheet->setCellValueExplicit('G' . $rowIdx, (string)($q->opsi_e ?? ''), DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('G' . $rowIdx, (string)($q->opsi_d ?? ''), DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('H' . $rowIdx, (string)($q->opsi_e ?? ''), DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('I' . $rowIdx, (string)$q->kunci_jawaban, DataType::TYPE_STRING);
             $sheet->setCellValue('J' . $rowIdx, (int)$q->bobot);
@@ -1828,26 +1855,37 @@ class AdminCbtController extends Controller
                 $sheet = $spreadsheet->getActiveSheet();
                 $rows = $sheet->toArray(null, true, true, false);
             } else {
-                // Membaca CSV
-                $handle = fopen($file->getRealPath(), 'r');
-                if ($handle === false) {
-                    return back()->with('error', 'Gagal membuka file CSV.');
+                // Membaca CSV dengan deteksi dan normalisasi encoding aman (UTF-8, UTF-8 BOM, CP1256, atau CP1252)
+                $rawContent = file_get_contents($file->getRealPath());
+                if ($rawContent === false) {
+                    return back()->with('error', 'Gagal membaca isi file CSV.');
                 }
-                $bom = fread($handle, 3);
-                if ($bom !== "\xEF\xBB\xBF") {
-                    rewind($handle);
+
+                if (!mb_check_encoding($rawContent, 'UTF-8')) {
+                    $from1256 = @iconv('CP1256', 'UTF-8//IGNORE', $rawContent);
+                    if ($from1256 !== false && preg_match('/[\x{0600}-\x{06FF}]/u', $from1256)) {
+                        $rawContent = $from1256;
+                    } else {
+                        $rawContent = mb_convert_encoding($rawContent, 'UTF-8', 'Windows-1252');
+                    }
                 }
-                $firstLine = fgets($handle);
-                rewind($handle);
-                if ($bom === "\xEF\xBB\xBF") {
-                    fread($handle, 3);
+
+                if (str_starts_with($rawContent, "\xEF\xBB\xBF")) {
+                    $rawContent = substr($rawContent, 3);
                 }
+
+                $stream = fopen('php://memory', 'r+');
+                fwrite($stream, $rawContent);
+                rewind($stream);
+
+                $firstLine = fgets($stream);
+                rewind($stream);
                 $delim = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
 
-                while (($r = fgetcsv($handle, 10000, $delim)) !== false) {
+                while (($r = fgetcsv($stream, 10000, $delim)) !== false) {
                     $rows[] = $r;
                 }
-                fclose($handle);
+                fclose($stream);
             }
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan saat membaca file: ' . $e->getMessage());
@@ -1911,7 +1949,7 @@ class AdminCbtController extends Controller
             }
 
             // Tentukan Soal & Kolom
-            $soalText = trim((string)($data['soal'] ?? $data[2] ?? $data[1] ?? $data[0] ?? ''));
+            $soalText = Question::cleanFormattingText(trim((string)($data['soal'] ?? $data[2] ?? $data[1] ?? $data[0] ?? '')));
             if (empty($soalText)) continue;
 
             $rowKategori = !empty($data['kategori']) ? trim((string)$data['kategori']) : '';
@@ -1921,14 +1959,16 @@ class AdminCbtController extends Controller
                 $kategori = !empty($rowKategori) ? $rowKategori : ($defaultKategori === 'sesuai_csv' ? 'Umum' : $defaultKategori);
             }
 
-            $opsiA  = trim((string)($data['opsi_a'] ?? $data[3] ?? $data[2] ?? ''));
-            $opsiB  = trim((string)($data['opsi_b'] ?? $data[4] ?? $data[3] ?? ''));
-            $opsiC  = trim((string)($data['opsi_c'] ?? $data[5] ?? $data[4] ?? ''));
-            $opsiD  = trim((string)($data['opsi_d'] ?? $data[6] ?? $data[5] ?? ''));
-            $opsiE  = trim((string)($data['opsi_e'] ?? $data[7] ?? $data[6] ?? '')) ?: null;
+            $opsiA  = Question::cleanFormattingText(trim((string)($data['opsi_a'] ?? $data[3] ?? $data[2] ?? '')));
+            $opsiB  = Question::cleanFormattingText(trim((string)($data['opsi_b'] ?? $data[4] ?? $data[3] ?? '')));
+            $opsiC  = Question::cleanFormattingText(trim((string)($data['opsi_c'] ?? $data[5] ?? $data[4] ?? '')));
+            $opsiD  = Question::cleanFormattingText(trim((string)($data['opsi_d'] ?? $data[6] ?? $data[5] ?? '')));
+            $rawOpsiE = trim((string)($data['opsi_e'] ?? $data[7] ?? $data[6] ?? ''));
+            $opsiE  = !empty($rawOpsiE) ? Question::cleanFormattingText($rawOpsiE) : null;
             $kunci  = strtoupper(trim((string)($data['kunci_jawaban'] ?? $data[8] ?? $data[7] ?? 'A')));
             $bobot  = max(1, (int) ($data['bobot'] ?? $data[9] ?? $data[8] ?? 1));
-            $pembahasan = trim((string)($data['pembahasan'] ?? $data[10] ?? $data[9] ?? ''));
+            $rawPembahasan = trim((string)($data['pembahasan'] ?? $data[10] ?? $data[9] ?? ''));
+            $pembahasan = !empty($rawPembahasan) ? Question::cleanFormattingText($rawPembahasan) : null;
 
             if (empty($opsiA) || empty($opsiB) || empty($opsiC) || empty($opsiD)) {
                 $errors[] = "Baris {$rowNum}: Opsi A-D tidak lengkap, dilewati.";
@@ -2051,6 +2091,11 @@ class AdminCbtController extends Controller
                     break;
                 }
             }
+        }
+
+        // Jika materi Bahasa Arab dan tidak ada rumus LaTeX eksplisit, pastikan isMath = false
+        if ($isArabic && !str_contains($text, '$$') && !str_contains($text, '\\frac') && !str_contains($text, '\\sqrt')) {
+            $isMath = false;
         }
 
         return [$isMath, $isArabic];

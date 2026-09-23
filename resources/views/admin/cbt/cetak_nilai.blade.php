@@ -173,7 +173,6 @@
                     <th style="width: 75px;">Jenjang</th>
                     <th class="text-center" style="width: 70px;">Nilai CBT</th>
                     <th class="text-center" style="width: 100px;">Status Kelulusan</th>
-                    <th>Catatan Panitia / Penguji</th>
                 </tr>
             </thead>
             <tbody>
@@ -194,13 +193,10 @@
                                 <span style="font-weight:600; color:#b45309;">{{ strtoupper($statusKel) }}</span>
                             @endif
                         </td>
-                        <td style="font-size: 10.5px; color:#555;">
-                            {{ $s->catatan_penguji ?: '-' }}
-                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center" style="padding: 24px; color:#888;">Belum ada santri yang menyelesaikan ujian CBT.</td>
+                        <td colspan="6" class="text-center" style="padding: 24px; color:#888;">Belum ada santri yang menyelesaikan ujian CBT.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -11,6 +11,8 @@ use App\Models\StudentBill;
 use App\Models\StudentDiscount;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\File;
 
 class StudentAuthController extends Controller
 {
@@ -115,6 +117,135 @@ class StudentAuthController extends Controller
             'recentBills',
             'recentPayments'
         ));
+    }
+
+    /**
+     * Halaman Kelola Biodata & Dokumen Mandiri Santri.
+     */
+    public function profil()
+    {
+        $student = Auth::guard('santri')->user();
+        if (!$student) {
+            return redirect()->route('santri.login');
+        }
+
+        return view('santri.profil', compact('student'));
+    }
+
+    /**
+     * Perbarui Biodata & Upload Dokumen (KK, KTP, Akta, Pas Foto) Mandiri Santri.
+     */
+    public function updateProfil(Request $request)
+    {
+        $student = Auth::guard('santri')->user();
+        if (!$student) {
+            return redirect()->route('santri.login');
+        }
+
+        $validated = $request->validate([
+            // Data Pribadi
+            'nik' => 'nullable|string|max:30',
+            'nomor_kk' => 'nullable|string|max:30',
+            'tempat_lahir' => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|string|max:30',
+            'anak_ke' => 'nullable|integer|min:1',
+            'jumlah_saudara' => 'nullable|integer|min:0',
+            'golongan_darah' => 'nullable|string|max:10',
+            'hobi' => 'nullable|string|max:150',
+            'riwayat_penyakit' => 'nullable|string',
+            'alamat_lengkap' => 'nullable|string',
+            'no_whatsapp' => 'nullable|string|max:30',
+
+            // Asal Sekolah
+            'nama_sekolah' => 'nullable|string|max:255',
+            'alamat_sekolah' => 'nullable|string',
+            'tahun_lulus' => 'nullable|string|max:10',
+
+            // Data Orang Tua (Ayah)
+            'ayah_nama' => 'nullable|string|max:255',
+            'ayah_nik' => 'nullable|string|max:30',
+            'ayah_telepon' => 'nullable|string|max:30',
+            'ayah_pekerjaan' => 'nullable|string|max:100',
+            'ayah_penghasilan' => 'nullable|string|max:50',
+            'ayah_pendidikan' => 'nullable|string|max:50',
+
+            // Data Orang Tua (Ibu)
+            'ibu_nama' => 'nullable|string|max:255',
+            'ibu_nik' => 'nullable|string|max:30',
+            'ibu_telepon' => 'nullable|string|max:30',
+            'ibu_pekerjaan' => 'nullable|string|max:100',
+            'ibu_penghasilan' => 'nullable|string|max:50',
+            'ibu_pendidikan' => 'nullable|string|max:50',
+
+            // Data Wali
+            'nama_wali' => 'nullable|string|max:255',
+            'wali_nik' => 'nullable|string|max:30',
+            'wali_telepon' => 'nullable|string|max:30',
+            'wali_hubungan' => 'nullable|string|max:50',
+            'wali_pekerjaan' => 'nullable|string|max:100',
+            'wali_penghasilan' => 'nullable|string|max:50',
+
+            // Berkas Dokumen & Pas Foto
+            'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'file_kk' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_ktp_ortu' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+            'file_akta_kelahiran' => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+        ], [
+            'foto_file.image' => 'Pas foto harus berupa file gambar (JPG, PNG, WEBP).',
+            'foto_file.max' => 'Ukuran pas foto maksimal 5 MB.',
+            'file_kk.mimes' => 'File Kartu Keluarga harus berformat PDF, JPG, PNG, atau WEBP.',
+            'file_ktp_ortu.mimes' => 'File KTP Orang Tua harus berformat PDF, JPG, PNG, atau WEBP.',
+            'file_akta_kelahiran.mimes' => 'File Akta Kelahiran harus berformat PDF, JPG, PNG, atau WEBP.',
+        ]);
+
+        // Upload Pas Foto Santri
+        if ($request->hasFile('foto_file')) {
+            $file = $request->file('foto_file');
+            $filename = time() . '_siswa_' . Str::slug($student->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/siswa'), $filename);
+            $validated['foto'] = '/uploads/siswa/' . $filename;
+        }
+
+        // Upload Berkas Dokumen (KK, KTP Orang Tua, Akte Kelahiran)
+        $docsDir = public_path('uploads/santri_dokumen');
+        if (!File::isDirectory($docsDir)) {
+            File::makeDirectory($docsDir, 0755, true, true);
+        }
+
+        if ($request->hasFile('file_kk')) {
+            $file = $request->file('file_kk');
+            $filename = time() . '_kk_' . Str::slug($student->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_kk')) {
+                $validated['file_kk'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if ($request->hasFile('file_ktp_ortu')) {
+            $file = $request->file('file_ktp_ortu');
+            $filename = time() . '_ktp_' . Str::slug($student->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_ktp_ortu')) {
+                $validated['file_ktp_ortu'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if ($request->hasFile('file_akta_kelahiran')) {
+            $file = $request->file('file_akta_kelahiran');
+            $filename = time() . '_akta_' . Str::slug($student->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+            $file->move($docsDir, $filename);
+            if (Schema::hasColumn('students', 'file_akta_kelahiran')) {
+                $validated['file_akta_kelahiran'] = '/uploads/santri_dokumen/' . $filename;
+            }
+        }
+
+        if (empty($validated['alamat']) && !empty($validated['alamat_lengkap'])) {
+            $validated['alamat'] = $validated['alamat_lengkap'];
+        }
+
+        $student->update($validated);
+
+        return redirect()->route('santri.profil')->with('success', 'Alhamdulillah! Biodata dan dokumen berkas Anda berhasil diperbarui.');
     }
 
     /**

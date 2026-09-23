@@ -552,16 +552,34 @@
 
         <!-- 4. CTA Banner -->
         <div class="cta-banner">
-            <h3>Siap Mendaftarkan Putra-Putri Anda?</h3>
-            <p>Penerimaan Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }} Gelombang 1 sedang berlangsung. Kuota asrama terbatas untuk menjaga kualitas pembinaan intensif.</p>
-            <div class="cta-btn-group">
-                <a href="{{ route('psb.register') }}" class="btn-gold">
-                    Isi Formulir Pendaftaran Sekarang &rarr;
-                </a>
-                <a href="{{ route('psb.checkStatus') }}" class="btn-outline-white">
-                    Cek Status Pendaftaran
-                </a>
-            </div>
+            @php
+                $psbSched = \App\Models\Setting::getPsbSchedule();
+                $isPsbOpen = $psbSched['is_open'];
+                $psbBadgeText = $psbSched['badge'];
+            @endphp
+            @if($isPsbOpen)
+                <h3>Siap Mendaftarkan Putra-Putri Anda?</h3>
+                <p>Penerimaan Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }} sedang berlangsung. Kuota asrama terbatas untuk menjaga kualitas pembinaan intensif.</p>
+                <div class="cta-btn-group">
+                    <a href="{{ route('psb.register') }}" class="btn-gold">
+                        Isi Formulir Pendaftaran Sekarang &rarr;
+                    </a>
+                    <a href="{{ route('psb.checkStatus') }}" class="btn-outline-white">
+                        Cek Status Pendaftaran
+                    </a>
+                </div>
+            @else
+                <h3>{{ $psbSched['title'] }}</h3>
+                <p>{{ $psbSched['pesan'] }}</p>
+                <div class="cta-btn-group">
+                    <a href="{{ route('psb.register') }}" class="btn-gold" style="background: linear-gradient(135deg, #dc2626, #b91c1c); border-color: #ef4444; color: #ffffff;">
+                        Pendaftaran ({{ $psbBadgeText }}) • Info Lengkap &rarr;
+                    </a>
+                    <a href="{{ route('psb.checkStatus') }}" class="btn-outline-white">
+                        Cek Status Pendaftaran
+                    </a>
+                </div>
+            @endif
         </div>
     </main>
 

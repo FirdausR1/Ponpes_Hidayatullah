@@ -33,7 +33,7 @@ class ArticleController extends Controller
 
         $categories = [
             'Semua',
-            'Kajian Subuh',
+            'Kajian',
             'Prestasi',
             'Literasi Turats',
             'Informasi PSB',

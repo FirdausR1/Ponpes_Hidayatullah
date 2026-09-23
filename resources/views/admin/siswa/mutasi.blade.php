@@ -83,13 +83,13 @@
 
     {{-- ===== FILTER BAR LENGKAP (TERHUBUNG KE TABEL SANTRI & KELAS) ===== --}}
     <div class="bg-white rounded-2xl border border-gray-200 shadow-theme-xs p-4 sm:p-5">
-        <form method="GET" action="{{ route('admin.siswa.mutasi.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+        <form method="GET" action="{{ route('admin.siswa.mutasi.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
             {{-- Cari --}}
             <div class="lg:col-span-2">
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Cari Santri / Alasan / Sekolah</label>
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama santri, NIS, alasan..."
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama santri, NIS, no stambuk, alasan..."
                         class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                 </div>
             </div>
@@ -101,6 +101,17 @@
                     <option value="">Semua Jenis</option>
                     <option value="Keluar" {{ request('jenis') === 'Keluar' ? 'selected' : '' }}>Mutasi Keluar</option>
                     <option value="Masuk"  {{ request('jenis') === 'Masuk'  ? 'selected' : '' }}>Mutasi Masuk</option>
+                </select>
+            </div>
+
+            {{-- Angkatan Santri --}}
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Angkatan</label>
+                <select name="angkatan" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="">Semua Angkatan</option>
+                    @foreach($angkatanList as $akt)
+                        <option value="{{ $akt }}" {{ request('angkatan') == $akt ? 'selected' : '' }}>Angkatan {{ $akt }}</option>
+                    @endforeach
                 </select>
             </div>
 
@@ -128,7 +139,7 @@
 
             {{-- Tahun & Action Buttons --}}
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Tahun</label>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Tahun Mutasi</label>
                 <div class="flex items-center gap-1.5">
                     <select name="tahun" class="flex-1 px-2.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                         <option value="">Semua</option>
@@ -139,7 +150,7 @@
                     <button type="submit" class="px-3.5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer">
                         Filter
                     </button>
-                    @if(request()->anyFilled(['q','jenis','jenjang','kelas','tahun']))
+                    @if(request()->anyFilled(['q','jenis','jenjang','kelas','tahun','angkatan']))
                         <a href="{{ route('admin.siswa.mutasi.index') }}" class="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition flex items-center justify-center" title="Reset Filter">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         </a>
@@ -421,7 +432,7 @@
                                     .catch(() => { loading = false; })
                             } else { results = []; }
                         "
-                        placeholder="Ketik Nama, NIS, atau NISN santri..."
+                        placeholder="Ketik Nama, NIS, atau No. Stambuk santri..."
                         class="w-full pl-3 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
                         autocomplete="off">
 

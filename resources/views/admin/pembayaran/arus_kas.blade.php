@@ -274,6 +274,15 @@
                     <span class="flex items-center gap-1.5 font-medium"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Masuk MA:</span>
                     <span class="font-mono font-bold text-emerald-800">Rp {{ number_format($totalMasukMa, 0, ',', '.') }}</span>
                 </div>
+                <div class="flex justify-between items-center text-gray-700 pt-2 border-t border-dashed border-emerald-200">
+                    <span class="flex items-center gap-1.5 font-bold text-emerald-950"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Penerimaan SOT:</span>
+                    <div class="text-right">
+                        <span class="font-mono font-black text-emerald-900">Rp {{ number_format($totalSotMasuk ?? 0, 0, ',', '.') }}</span>
+                        <div class="text-[10px] text-gray-500 font-mono">
+                            MTs: Rp {{ number_format($totalSotMasukMts ?? 0, 0, ',', '.') }} &bull; MA: Rp {{ number_format($totalSotMasukMa ?? 0, 0, ',', '.') }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

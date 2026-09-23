@@ -588,6 +588,26 @@ class ExpenseController extends Controller
         arsort($posPemasukanMts);
         arsort($posPemasukanMa);
 
+        // 6b. Hitung Total SOT Masuk Khusus (Secara Total & per Jenjang MTs / MA)
+        $totalSotMasuk = 0;
+        foreach ($posPemasukanBreakdown as $posKey => $posNom) {
+            if (stripos($posKey, 'SOT') !== false) {
+                $totalSotMasuk += (float) $posNom;
+            }
+        }
+        $totalSotMasukMts = 0;
+        foreach ($posPemasukanMts as $posKey => $posNom) {
+            if (stripos($posKey, 'SOT') !== false) {
+                $totalSotMasukMts += (float) $posNom;
+            }
+        }
+        $totalSotMasukMa = 0;
+        foreach ($posPemasukanMa as $posKey => $posNom) {
+            if (stripos($posKey, 'SOT') !== false) {
+                $totalSotMasukMa += (float) $posNom;
+            }
+        }
+
         // 7. Kas Masuk Periode per Metode (Tunai vs Bank/Transfer)
         $masukSantriTunai = (float) $studentPayments->filter(function($p) {
             $metode = strtolower($p->metode_pembayaran ?? 'tunai');
@@ -653,6 +673,9 @@ class ExpenseController extends Controller
             'masukSantriMa',
             'masukPsbMts',
             'masukPsbMa',
+            'totalSotMasuk',
+            'totalSotMasukMts',
+            'totalSotMasukMa',
             'totalKasKeluar',
             'keluarMts',
             'keluarMa',

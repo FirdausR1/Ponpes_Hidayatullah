@@ -4,6 +4,9 @@
 
 @section('content')
 <div class="space-y-6" x-data="{ 
+    modalTagihanUnified: false,
+    tabTagihan: 'bulanan',
+    targetBulananTipe: 'all',
     modalBulanan: false, 
     modalTambahan: false,
     modalImportTunggakan: false,
@@ -65,11 +68,12 @@
         }
         this.autoFillJudul();
     },
-    openModalTambahan(kategori = 'bulanan', pos = 'SOT') {
+    openModalTambahan(kategori = 'tambahan', pos = 'SOT') {
         this.selectedKategori = kategori;
         this.selectedPosTambahan = pos;
         this.onPosOrKategoriChange();
-        this.modalTambahan = true;
+        this.tabTagihan = 'insidental';
+        this.modalTagihanUnified = true;
     },
     openTangguhkan(id, judul, santri, sisaRp) {
         this.targetBill.id = id;
@@ -127,15 +131,9 @@
                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                 <span>Kasir Pembayaran</span>
             </a>
-            <button type="button" @click="modalBulanan = true" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-emerald-700 transition">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25012 3C5.25012 2.58579 5.58591 2.25 6.00012 2.25C6.41433 2.25 6.75012 2.58579 6.75012 3V5.25012L9.00034 5.25012C9.41455 5.25012 9.75034 5.58591 9.75034 6.00012C9.75034 6.41433 9.41455 6.75012 9.00034 6.75012H6.75012V9.00034C6.75012 9.41455 6.41433 9.75034 6.00012 9.75034C5.58591 9.75034 5.25012 9.41455 5.25012 9.00034L5.25012 6.75012H3C2.58579 6.75012 2.25 6.41433 2.25 6.00012C2.25 5.58591 2.58579 5.25012 3 5.25012H5.25012V3Z" fill="currentColor"/>
-                </svg>
-                <span>Terbitkan Tagihan Bulanan</span>
-            </button>
-            <button type="button" @click="openModalTambahan('bulanan', 'SOT')" class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-gray-800 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                <span>Buat Tagihan Santri</span>
+            <button type="button" @click="modalTagihanUnified = true; tabTagihan = 'bulanan'" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-theme-xs hover:bg-emerald-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span>+ Buat &amp; Terbitkan Tagihan</span>
             </button>
             <button type="button" @click="modalImportTunggakan = true" class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-semibold text-amber-900 shadow-theme-xs hover:bg-amber-100 hover:border-amber-400 transition" title="Upload data santri massal beserta tunggakan tagihan masa lalu via Excel">
                 <svg class="w-4 h-4 text-amber-600 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
@@ -630,20 +628,71 @@
         </div>
     </div>
 
-    <!-- MODAL 1: TERBITKAN TAGIHAN BULANAN MASSAL (TailAdmin Modal Style) -->
-    <div x-show="modalBulanan" x-cloak class="ta-modal-backdrop">
-        <div @click.away="modalBulanan = false" class="ta-modal max-w-lg">
+    <!-- MODAL TERPADU: BUAT & TERBITKAN TAGIHAN SANTRI (BULANAN RUTIN & INSIDENTAL) -->
+    <div x-show="modalTagihanUnified" x-cloak class="ta-modal-backdrop">
+        <div @click.away="modalTagihanUnified = false" class="ta-modal max-w-lg">
             <div class="ta-modal-header">
                 <div>
-                    <h3 class="text-base font-bold text-gray-900">Terbitkan Tagihan Rutin Bulanan</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Generate otomatis tagihan Syahriyah, Makan, SOT, Tabungan</p>
+                    <h3 class="text-base font-bold text-gray-900">Buat &amp; Terbitkan Tagihan Santri</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Pilih paket tagihan bulanan (massal / per kelas / satu santri) atau tagihan khusus</p>
                 </div>
-                <button type="button" @click="modalBulanan = false" class="text-gray-400 hover:text-gray-600 transition text-lg">&times;</button>
+                <button type="button" @click="modalTagihanUnified = false" class="text-gray-400 hover:text-gray-600 transition text-lg">&times;</button>
             </div>
 
-            <form method="POST" action="{{ route('admin.pembayaran.tagihan.bulanan') }}">
+            <!-- Tab Switcher -->
+            <div class="px-5 pt-3 bg-gray-50/80 border-b border-gray-200 flex gap-2">
+                <button type="button" @click="tabTagihan = 'bulanan'"
+                    :class="tabTagihan === 'bulanan' ? 'border-emerald-600 text-emerald-800 bg-white font-bold shadow-xs' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
+                    class="px-3 py-2 text-xs rounded-t-lg border-b-2 flex items-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span>Tagihan Bulanan (Massal / Satu Santri)</span>
+                </button>
+                <button type="button" @click="tabTagihan = 'insidental'"
+                    :class="tabTagihan === 'insidental' ? 'border-emerald-600 text-emerald-800 bg-white font-bold shadow-xs' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
+                    class="px-3 py-2 text-xs rounded-t-lg border-b-2 flex items-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span>Tagihan Khusus / Insidental</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: TAGIHAN BULANAN RUTIN (MASSAL / PER KELAS / PERORANGAN) -->
+            <form x-show="tabTagihan === 'bulanan'" method="POST" action="{{ route('admin.pembayaran.tagihan.bulanan') }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
                 @csrf
-                <div class="ta-modal-body space-y-4 text-xs">
+                <div class="ta-modal-body space-y-4 text-xs overflow-y-auto flex-1 min-h-0">
+                    <!-- Sasaran Penerima Tagihan -->
+                    <div class="p-3 bg-emerald-50/50 border border-emerald-200 rounded-xl space-y-2">
+                        <label class="block font-bold text-gray-800 text-[11px] uppercase tracking-wider">Sasaran Santri yang Ditagihkan *</label>
+                        <select name="target_jenjang" x-model="targetBulananTipe" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-800 focus:border-emerald-500 outline-none bg-white">
+                            <option value="all">Semua Santri Aktif (MTs &amp; MA Serentak)</option>
+                            <option value="MTs">Khusus Santri MTs</option>
+                            <option value="MA">Khusus Santri MA</option>
+                            <option value="kelas">Per Rombongan Kelas Tertentu</option>
+                            <option value="santri">Satu Santri Spesifik (Penunggak / Perorangan)</option>
+                        </select>
+
+                        <!-- Pilihan jika per kelas -->
+                        <div x-show="targetBulananTipe === 'kelas'" x-cloak class="pt-1">
+                            <label class="block font-medium text-gray-700 mb-1">Pilih Kelas</label>
+                            <select name="target_kelas" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 bg-white">
+                                @foreach($classrooms as $c)
+                                    <option value="{{ $c->nama_kelas }}">{{ $c->nama_kelas }} ({{ $c->jenjang }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Pilihan jika Satu Santri Spesifik -->
+                        <div x-show="targetBulananTipe === 'santri'" x-cloak class="pt-1">
+                            <label class="block font-bold text-emerald-900 mb-1">Pilih Nama Santri (Termasuk Alumni Berhutang):</label>
+                            <select name="target_santri_id" class="h-10 w-full rounded-lg border border-emerald-400 px-3 text-xs font-semibold text-gray-900 bg-white">
+                                @foreach($activeStudents as $s)
+                                    <option value="{{ $s->id }}">{{ $s->nama_lengkap }} (NIS: {{ $s->nis }} - {{ $s->kelas }}) {{ $s->status === 'Alumni' ? '[Alumni]' : '' }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-[11px] text-emerald-700 mt-1 font-medium">Tagihan hanya akan dibuat untuk santri ini. Santri lain yang sudah lunas tidak terganggu.</p>
+                        </div>
+                    </div>
+
+                    <!-- Periode Bulan & Tahun -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Pilih Bulan *</label>
@@ -660,18 +709,9 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block font-medium text-gray-700 mb-1">Sasaran Jenjang Santri *</label>
-                        <select name="target_jenjang" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 focus:border-brand-500 outline-none bg-white">
-                            <option value="all">Semua Santri Aktif (MTs &amp; MA)</option>
-                            <option value="MTs">Khusus Santri MTs</option>
-                            <option value="MA">Khusus Santri MA</option>
-                        </select>
-                    </div>
-
                     <!-- Pilihan Pos Biaya Bulanan yang diterbitkan -->
                     <div class="space-y-1.5 p-3 rounded-xl border border-gray-200 bg-gray-50/70">
-                        <label class="block font-bold text-gray-800 text-[11px] uppercase tracking-wider mb-2">Pilih Pos Biaya Bulanan yang Diterbitkan:</label>
+                        <label class="block font-bold text-gray-800 text-[11px] uppercase tracking-wider mb-2">Pilih Pos Biaya yang Diterbitkan:</label>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
                                 <input type="checkbox" name="pos_bulanan[]" value="MAKAN" checked class="mt-0.5 text-emerald-600 rounded">
@@ -717,46 +757,34 @@
                             Fitur Otomatisasi Terpadu:
                         </div>
                         <ul class="list-disc list-inside space-y-0.5 text-gray-600 text-[11px] pl-1">
-                            <li>Tarif <strong>SOT</strong> otomatis dibedakan: <strong>MTs = Rp 55.000</strong>, <strong>MA = Rp 75.000</strong>.</li>
-                            <li>Bagi santri yang memiliki <strong>SKTM</strong> atau <strong>Beasiswa</strong> aktif di menu Keringanan, potongan otomatis dikurangi dari tagihan.</li>
+                            <li>Tarif <strong>SOT</strong> otomatis: <strong>MTs = Rp 55.000</strong>, <strong>MA = Rp 75.000</strong>.</li>
+                            <li>Bagi santri yang memiliki <strong>SKTM</strong> atau <strong>Beasiswa</strong>, potongan dihitung otomatis.</li>
                             <li>Tagihan pada bulan dan santri yang sama tidak akan terduplikasi.</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="ta-modal-footer">
-                    <button type="button" @click="modalBulanan = false" class="ta-btn-outline text-xs">
+                    <button type="button" @click="modalTagihanUnified = false" class="ta-btn-outline text-xs">
                         Batal
                     </button>
                     <button type="submit" class="ta-btn-primary text-xs bg-emerald-600 hover:bg-emerald-700">
-                        Terbitkan Sekarang
+                        Terbitkan Tagihan Sekarang
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
 
-    <!-- MODAL 2: BUAT TAGIHAN SANTRI (BULANAN / INSIDENTAL / TAMBAHAN / SEKALI BAYAR) -->
-    <div x-show="modalTambahan" x-cloak class="ta-modal-backdrop">
-        <div @click.away="modalTambahan = false" class="ta-modal max-w-lg">
-            <div class="ta-modal-header">
-                <div>
-                    <h3 class="text-base font-bold text-gray-900">Buat Tagihan Santri</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Biaya bulanan (Uang Makan, Tabungan, SOT beda MTs/MA, Syahriyah), insidental, atau tahunan</p>
-                </div>
-                <button type="button" @click="modalTambahan = false" class="text-gray-400 hover:text-gray-600 transition text-lg">&times;</button>
-            </div>
-
-            <form method="POST" action="{{ route('admin.pembayaran.tagihan.tambahan') }}">
+            <!-- TAB 2: TAGIHAN KHUSUS / INSIDENTAL (TAMBAHAN / KUSTOM) -->
+            <form x-show="tabTagihan === 'insidental'" method="POST" action="{{ route('admin.pembayaran.tagihan.tambahan') }}" class="flex flex-col flex-1 min-h-0 overflow-hidden">
                 @csrf
-                <div class="ta-modal-body space-y-3.5 text-xs">
+                <div class="ta-modal-body space-y-3.5 text-xs overflow-y-auto flex-1 min-h-0">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <!-- Kategori Tagihan -->
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Kategori Tagihan *</label>
                             <select name="kategori" x-model="selectedKategori" @change="onPosOrKategoriChange()" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-800 focus:border-brand-500 outline-none bg-white">
-                                <option value="bulanan">Biaya Bulanan (Rutin)</option>
                                 <option value="tambahan">Biaya Tambahan / Insidental</option>
+                                <option value="bulanan">Biaya Bulanan (Rutin Satu Pos)</option>
                                 <option value="sekali_bayar">Sekali Bayar (Pangkal / Gedung)</option>
                                 <option value="tahunan">Biaya Tahunan / Registrasi</option>
                             </select>
@@ -766,18 +794,18 @@
                         <div>
                             <label class="block font-medium text-gray-700 mb-1">Pos Biaya (Sesuai Buku Kas) *</label>
                             <select name="pos_biaya" x-model="selectedPosTambahan" @change="onPosOrKategoriChange()" required class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-semibold text-gray-800 focus:border-brand-500 outline-none bg-white">
-                                <optgroup label="Biaya Bulanan (Rutin)">
-                                    <option value="MAKAN">MAKAN (Uang Makan 3x Sehari)</option>
-                                    <option value="TAB">TAB (Tabungan Wajib Santri)</option>
-                                    <option value="SOT">SOT (Iuran SOT - MA/MTs Beda)</option>
-                                    <option value="SYAHRIYAH">SYAHRIYAH (Syahriyah Pendidikan SPP)</option>
-                                </optgroup>
                                 <optgroup label="Pos Biaya Insidental &amp; Lainnya">
                                     @foreach($posBiayaList as $key => $label)
                                         @if(!in_array($key, ['MAKAN', 'TAB', 'SOT', 'SYAHRIYAH']))
                                             <option value="{{ $key }}">{{ $key }} ({{ $label }})</option>
                                         @endif
                                     @endforeach
+                                </optgroup>
+                                <optgroup label="Biaya Bulanan (Rutin)">
+                                    <option value="MAKAN">MAKAN (Uang Makan 3x Sehari)</option>
+                                    <option value="TAB">TAB (Tabungan Wajib Santri)</option>
+                                    <option value="SOT">SOT (Iuran SOT - MA/MTs Beda)</option>
+                                    <option value="SYAHRIYAH">SYAHRIYAH (Syahriyah Pendidikan SPP)</option>
                                 </optgroup>
                                 <optgroup label="Pos Biaya Baru / Di Luar Standar">
                                     <option value="__CUSTOM__">+ Pos Biaya Baru / Kustom (Lainnya)...</option>
@@ -819,58 +847,6 @@
                         <input type="text" name="pos_biaya_kustom" placeholder="Nama pos biaya baru..." class="h-10 w-full uppercase rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-900 focus:border-brand-500 outline-none bg-white">
                     </div>
 
-                    <!-- Banner Informasi & Pilihan Otomatisasi untuk 4 Pos Bulanan -->
-                    <!-- 1. SOT: MA / MTs beda -->
-                    <div x-show="selectedPosTambahan === 'SOT'" x-cloak class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-emerald-900">
-                        <div class="flex items-center justify-between">
-                            <div class="font-bold text-xs flex items-center gap-1.5 text-emerald-800">
-                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Tarif SOT (MA &amp; MTs Beda)
-                            </div>
-                            <span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-white border border-emerald-300 text-emerald-700">Otomatisasi Jenjang</span>
-                        </div>
-                        <p class="text-[11px] text-emerald-700">
-                            Sesuai ketentuan pesantren: Santri <strong>MTs = Rp 55.000</strong>/bulan, sedangkan santri <strong>MA = Rp 75.000</strong>/bulan.
-                        </p>
-                        <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-emerald-300 cursor-pointer text-xs font-semibold text-emerald-900 hover:bg-emerald-50 transition">
-                            <input type="checkbox" name="tarif_otomatis_jenjang" value="1" x-model="useTarifOtomatis" class="w-4 h-4 text-emerald-600 rounded">
-                            <span>Terapkan tarif otomatis sesuai jenjang santri (MTs: Rp 55rb | MA: Rp 75rb)</span>
-                        </label>
-                    </div>
-
-                    <!-- 2. Syahriyah -->
-                    <div x-show="selectedPosTambahan === 'SYAHRIYAH'" x-cloak class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-emerald-900">
-                        <div class="flex items-center justify-between">
-                            <div class="font-bold text-xs flex items-center gap-1.5 text-emerald-800">
-                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Tarif Syahriyah Pendidikan
-                            </div>
-                        </div>
-                        <p class="text-[11px] text-emerald-700">
-                            MTs Mukim: Rp 85.000 (Laju: Rp 55.000) &bull; MA Mukim: Rp 105.000 (Laju: Rp 75.000).
-                        </p>
-                        <label class="flex items-center gap-2 p-2 bg-white rounded-lg border border-emerald-300 cursor-pointer text-xs font-semibold text-emerald-900 hover:bg-emerald-50 transition">
-                            <input type="checkbox" name="tarif_otomatis_jenjang" value="1" x-model="useTarifOtomatis" class="w-4 h-4 text-emerald-600 rounded">
-                            <span>Terapkan tarif otomatis (sesuai jenjang MTs/MA &amp; status Mukim/Laju)</span>
-                        </label>
-                    </div>
-
-                    <!-- 3. Uang Makan -->
-                    <div x-show="selectedPosTambahan === 'MAKAN'" x-cloak class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-center gap-2">
-                        <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div>
-                            <strong class="font-semibold">Info Uang Makan:</strong> Standar Rp 300.000/bulan untuk santri Mukim/Asrama (Santri Laju otomatis Rp 0/dilewati).
-                        </div>
-                    </div>
-
-                    <!-- 4. Tabungan Wajib -->
-                    <div x-show="selectedPosTambahan === 'TAB'" x-cloak class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div>
-                            <strong class="font-semibold">Info Tabungan:</strong> Standar nominal Rp 25.000/bulan per santri.
-                        </div>
-                    </div>
-
                     <!-- Judul / Deskripsi Tagihan -->
                     <div>
                         <div class="flex items-center justify-between mb-1">
@@ -887,15 +863,8 @@
                     <div>
                         <label class="block font-medium text-gray-700 mb-1">
                             Nominal Biaya (Rp) *
-                            <span x-show="useTarifOtomatis && (selectedPosTambahan === 'SOT' || selectedPosTambahan === 'SYAHRIYAH')" class="text-emerald-600 text-[11px] font-semibold">(Otomatis Standar Jenjang)</span>
                         </label>
-                        <input type="number" name="nominal" x-model="inputNominal" :disabled="useTarifOtomatis && (selectedPosTambahan === 'SOT' || selectedPosTambahan === 'SYAHRIYAH')" :required="!useTarifOtomatis || (selectedPosTambahan !== 'SOT' && selectedPosTambahan !== 'SYAHRIYAH')" min="0" step="1000" placeholder="0" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-bold text-gray-900 focus:border-brand-500 outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500">
-                        <p x-show="useTarifOtomatis && selectedPosTambahan === 'SOT'" class="text-[11px] text-emerald-700 mt-1 font-semibold">
-                            ✓ Dihitung otomatis saat diterbitkan: MTs = Rp 55.000, MA = Rp 75.000.
-                        </p>
-                        <p x-show="useTarifOtomatis && selectedPosTambahan === 'SYAHRIYAH'" class="text-[11px] text-emerald-700 mt-1 font-semibold">
-                            ✓ Dihitung otomatis saat diterbitkan sesuai jenjang dan asrama santri.
-                        </p>
+                        <input type="number" name="nominal" x-model="inputNominal" required min="0" step="1000" placeholder="0" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-bold text-gray-900 focus:border-brand-500 outline-none bg-white">
                     </div>
 
                     <!-- Sasaran Target Santri -->
@@ -946,7 +915,7 @@
                             <label class="block font-medium text-gray-700 mb-1">Pilih Santri Spesifik</label>
                             <select name="sasaran_nilai" class="h-10 w-full rounded-lg border border-gray-300 px-3 text-xs font-medium text-gray-800 bg-white">
                                 @foreach($activeStudents as $s)
-                                    <option value="{{ $s->id }}">{{ $s->nama_lengkap }} (NIS: {{ $s->nis }} - {{ $s->kelas }})</option>
+                                    <option value="{{ $s->id }}">{{ $s->nama_lengkap }} (NIS: {{ $s->nis }} - {{ $s->kelas }}) {{ $s->status === 'Alumni' ? '[Alumni]' : '' }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -965,11 +934,11 @@
                 </div>
 
                 <div class="ta-modal-footer">
-                    <button type="button" @click="modalTambahan = false" class="ta-btn-outline text-xs">
+                    <button type="button" @click="modalTagihanUnified = false" class="ta-btn-outline text-xs">
                         Batal
                     </button>
                     <button type="submit" class="ta-btn-primary text-xs bg-gray-900 hover:bg-gray-800">
-                        <span x-text="selectedKategori === 'bulanan' ? 'Terbitkan Tagihan Bulanan' : 'Buat Tagihan'"></span>
+                        Buat Tagihan
                     </button>
                 </div>
             </form>
@@ -1258,16 +1227,16 @@
         </div>
     </div>
 
-    <!-- MODAL: UPLOAD SANTRI MASSAL & TAGIHAN TUNGGAKAN LALU (BENDAHARA) -->
+    <!-- MODAL: UPLOAD SANTRI MASSAL BESERTA TUNGGAKAN LALU (TEMPLATE RESMI TERPADU) -->
     <div x-show="modalImportTunggakan" class="ta-modal-backdrop" style="display: none;" x-cloak>
-        <div class="ta-modal max-w-xl" @click.away="modalImportTunggakan = false">
+        <div class="ta-modal max-w-lg" @click.away="modalImportTunggakan = false">
             <div class="ta-modal-header">
                 <div>
                     <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
                         <svg class="w-5 h-5 text-amber-600 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
-                        <span>Upload Data Santri &amp; Tagihan Tunggakan Lalu</span>
+                        <span>Upload Santri &amp; Tagihan Tunggakan Lalu</span>
                     </h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Unggah data santri baru/lama serentak via Excel beserta histori tunggakan yang lalu.</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Unggah data santri baru/lama serentak via Excel beserta rincian tunggakan masa lalu.</p>
                 </div>
                 <button type="button" @click="modalImportTunggakan = false" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
             </div>
@@ -1275,37 +1244,25 @@
             <form action="{{ route('admin.siswa.importExcel') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="ta-modal-body space-y-4 text-xs">
-                    <!-- Langkah 1: Download Template -->
+                    <!-- Langkah 1: Unduh Template Terpadu -->
                     <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-emerald-950 block">Langkah 1: Unduh Format Template Excel (.xlsx)</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-600 text-white uppercase tracking-wider">Format Resmi</span>
+                            <span class="font-bold text-emerald-950 block">Langkah 1: Unduh Format Template Resmi</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-600 text-white uppercase tracking-wider">Format Resmi Terpadu</span>
                         </div>
                         <p class="text-gray-600 leading-relaxed text-[11px]">
-                            Template ini telah disederhanakan khusus untuk Bendahara (Hanya 10 Kolom Praktis) agar cepat diisi dari catatan manual:
+                            Template ini telah disatukan dengan Data Santri dan dilengkapi kolom biodata, alamat, serta tagihan masa lalu:
                         </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-700 bg-white p-2.5 rounded-lg border border-emerald-100">
-                            <div class="flex items-start gap-1.5">
-                                <span class="text-emerald-600 font-bold">✓</span>
-                                <span><strong>Kolom A-G:</strong> Data Pokok (Nama, NIS, L/P, Tgl Lahir, Kelas, Wali, WA)</span>
-                            </div>
-                            <div class="flex items-start gap-1.5">
-                                <span class="text-amber-600 font-bold">✓</span>
-                                <span><strong>Kolom H:</strong> Sisa Uang Pangkal / Daftar Ulang</span>
-                            </div>
-                            <div class="flex items-start gap-1.5">
-                                <span class="text-amber-600 font-bold">✓</span>
-                                <span><strong>Kolom I:</strong> Tunggakan SPP Bulanan</span>
-                            </div>
-                            <div class="flex items-start gap-1.5">
-                                <span class="text-amber-600 font-bold">✓</span>
-                                <span><strong>Kolom J:</strong> Rincian / Keterangan Tunggakan</span>
-                            </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10.5px] text-gray-700 bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <div><strong class="text-emerald-700">✓ Kolom A-F:</strong> Data Pokok Wajib (Nama, NIS, L/P, Tgl Lahir, Thn Masuk, Kelas)</div>
+                            <div><strong class="text-blue-700">✓ Kolom G-L:</strong> Biodata &amp; Alamat (Tempat Lahir, NIK, Alamat, Asrama)</div>
+                            <div><strong class="text-purple-700">✓ Kolom M-Q:</strong> Orang Tua &amp; Sekolah (Wali, WA, Pekerjaan, Ibu, Asal SD/MI)</div>
+                            <div><strong class="text-amber-700">✓ Kolom R-AB:</strong> Tagihan per Kategori (Syahriyah Rp 30k, SOT, Makan, Tabungan, DU, Gedung, Seragam, Kitab, Kegiatan, Lainnya)</div>
                         </div>
                         <div class="pt-1">
                             <a href="{{ route('admin.siswa.downloadTemplate') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-theme-xs transition">
                                 <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
-                                <span>Unduh Template Excel Praktis (10 Kolom)</span>
+                                <span>Unduh Template Excel Resmi (.xlsx)</span>
                             </a>
                         </div>
                     </div>
@@ -1314,16 +1271,16 @@
                     <div class="space-y-2">
                         <label class="block font-bold text-gray-800 uppercase tracking-wider">Langkah 2: Pilih File Excel yang Telah Diisi</label>
                         <input type="file" name="file_excel" accept=".xlsx, .xls, .csv" required class="ta-input text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700">
-                        <p class="text-[11px] text-gray-500">Mendukung format Microsoft Excel <code>.xlsx</code> atau <code>.xls</code> (Maksimal 15 MB).</p>
+                        <p class="text-[11px] text-gray-500">Mendukung file Microsoft Excel <code>.xlsx</code> atau <code>.xls</code> (Maksimal 15 MB).</p>
                     </div>
 
-                    <!-- Info Integrasi Finansial -->
-                    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] space-y-1.5">
-                        <span class="font-bold block text-amber-950">💡 Informasi Penting untuk Bendahara:</span>
-                        <ul class="list-disc list-inside space-y-1 text-gray-700 text-[10.5px]">
-                            <li><strong>Santri Lama:</strong> Jika santri sudah ada di sistem dan kolom NIS diisi sesuai NIS santri, sistem otomatis menambahkan tagihan tunggakan tanpa membuat akun ganda.</li>
-                            <li><strong>Santri Baru:</strong> Akun santri baru langsung terbuat otomatis dengan password default tanggal lahir (format DDMMYYYY).</li>
-                            <li><strong>Kalkulasi Kasir:</strong> Seluruh tunggakan yang diunggah akan langsung muncul di Kasir POS Pembayaran dan Rekap Tunggakan Keuangan.</li>
+                    <!-- Info Integrasi Finansial & Alumni -->
+                    <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] space-y-1">
+                        <span class="font-bold block text-amber-950">💡 Panduan Pengisian Bendahara:</span>
+                        <ul class="list-disc list-inside space-y-0.5 text-gray-700 text-[10.5px]">
+                            <li><strong>Santri Lama / Alumni:</strong> Isi kolom NIS sesuai NIS lama santri agar tagihan langsung tersambung tanpa akun ganda.</li>
+                            <li><strong>Santri Baru:</strong> Password otomatis dibuat dari tanggal lahir (format DDMMYYYY).</li>
+                            <li><strong>Tagihan Kasir:</strong> Semua tunggakan langsung muncul di Kasir POS dan Rekap Keuangan.</li>
                         </ul>
                     </div>
                 </div>

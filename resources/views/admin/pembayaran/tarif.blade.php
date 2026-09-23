@@ -214,6 +214,127 @@
             </div>
         </form>
     </div>
+
+    <!-- Card 3: Pengaturan Widget Ringkasan Biaya di Halaman Depan (Landing Page) -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <form action="{{ route('admin.pembayaran.tarif.update') }}" method="POST" class="p-6 space-y-6">
+            @csrf
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-amber-50 text-amber-600 font-bold text-xs">3</span>
+                        <h2 class="font-bold text-gray-900 text-base">Pratinjau Ringkasan Biaya di Halaman Depan (Landing Page)</h2>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Ubah judul, narasi singkat, dan 4 kartu highlight biaya yang tampil pada bagian depan website utama.</p>
+                </div>
+                <a href="{{ route('home') }}#biaya-section" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 text-xs font-semibold hover:bg-gray-100 transition">
+                    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    Lihat di Landing Page
+                </a>
+            </div>
+
+            <!-- Teks Judul & Deskripsi -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Judul Utama Bagian Biaya</label>
+                    <input type="text" name="biaya_preview_title" value="{{ \App\Models\Setting::get('biaya_preview_title', 'Transparansi Biaya Pendidikan Santri Baru MTs & MA') }}" class="w-full rounded-lg border border-gray-200 bg-gray-50/50 px-3.5 py-2.5 text-xs font-bold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Teks Tombol Tautan</label>
+                    <input type="text" name="biaya_preview_btn_text" value="{{ \App\Models\Setting::get('biaya_preview_btn_text', 'Lihat Rincian Biaya Lengkap') }}" class="w-full rounded-lg border border-gray-200 bg-gray-50/50 px-3.5 py-2.5 text-xs font-semibold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Deskripsi / Penjelasan Singkat</label>
+                    <textarea name="biaya_preview_desc" rows="2" class="w-full rounded-lg border border-gray-200 bg-gray-50/50 px-3.5 py-2 text-xs text-gray-800 focus:bg-white focus:border-emerald-500 outline-none">{{ \App\Models\Setting::get('biaya_preview_desc', 'Seluruh rincian pembiayaan awal (uang pangkal, seragam, kasur/kamar santri mukim) serta syahriyah bulanan disajikan secara rinci, transparan, dan dapat diunduh pada halaman khusus biaya kami.') }}</textarea>
+                </div>
+            </div>
+
+            <!-- 4 Kartu Highlight Biaya -->
+            <div>
+                <label class="block text-xs font-bold text-gray-800 mb-2.5">4 Kartu Sorotan / Highlight (Kotak Bawah):</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Kartu 1 -->
+                    <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Kartu 1</span>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Label Atas</label>
+                            <input type="text" name="biaya_card1_label" value="{{ \App\Models\Setting::get('biaya_card1_label', 'Biaya Masuk Pertama') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-700 outline-none focus:border-emerald-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Nominal / Teks Utama</label>
+                            <input type="text" name="biaya_card1_value" value="{{ \App\Models\Setting::get('biaya_card1_value', 'Terjangkau & Jelas') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-emerald-800 outline-none focus:border-emerald-500 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Keterangan Bawah</label>
+                            <input type="text" name="biaya_card1_sub" value="{{ \App\Models\Setting::get('biaya_card1_sub', 'Sudah termasuk fasilitas kamar') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+
+                    <!-- Kartu 2 -->
+                    <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Kartu 2</span>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Label Atas</label>
+                            <input type="text" name="biaya_card2_label" value="{{ \App\Models\Setting::get('biaya_card2_label', 'Syahriyah Bulanan') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-700 outline-none focus:border-emerald-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Nominal / Teks Utama</label>
+                            <input type="text" name="biaya_card2_value" value="{{ \App\Models\Setting::get('biaya_card2_value', 'Mulai Rp 80.000/bln') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-emerald-800 outline-none focus:border-emerald-500 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Keterangan Bawah</label>
+                            <input type="text" name="biaya_card2_sub" value="{{ \App\Models\Setting::get('biaya_card2_sub', 'Untuk santri laju non-asrama') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+
+                    <!-- Kartu 3 -->
+                    <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Kartu 3</span>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Label Atas</label>
+                            <input type="text" name="biaya_card3_label" value="{{ \App\Models\Setting::get('biaya_card3_label', 'Makan Asrama 3x Sehari') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-700 outline-none focus:border-emerald-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Nominal / Teks Utama</label>
+                            <input type="text" name="biaya_card3_value" value="{{ \App\Models\Setting::get('biaya_card3_value', 'Rp 300.000/bln') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-emerald-800 outline-none focus:border-emerald-500 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Keterangan Bawah</label>
+                            <input type="text" name="biaya_card3_sub" value="{{ \App\Models\Setting::get('biaya_card3_sub', 'Menu sehat bergizi & higienis') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+
+                    <!-- Kartu 4 -->
+                    <div class="p-3.5 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Kartu 4</span>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Label Atas</label>
+                            <input type="text" name="biaya_card4_label" value="{{ \App\Models\Setting::get('biaya_card4_label', 'Bantuan / Beasiswa') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-700 outline-none focus:border-emerald-500 font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Nominal / Teks Utama</label>
+                            <input type="text" name="biaya_card4_value" value="{{ \App\Models\Setting::get('biaya_card4_value', 'Tersedia') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-amber-600 outline-none focus:border-emerald-500 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 font-medium mb-1">Keterangan Bawah</label>
+                            <input type="text" name="biaya_card4_sub" value="{{ \App\Models\Setting::get('biaya_card4_sub', 'Bagi dhuafa & santri berprestasi') }}" class="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs bg-white text-gray-600 outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <span class="text-xs text-gray-500 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Perubahan teks dan nominal kartu di atas akan seketika tampil di landing page depan setelah disimpan.
+                </span>
+                <button type="submit" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Simpan Tampilan Biaya Landing Page
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>

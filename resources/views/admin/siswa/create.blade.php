@@ -62,9 +62,9 @@
                     </div>
                     <div>
                         <label class="mb-1.5 block text-xs sm:text-sm font-medium text-gray-700">
-                            NISN Nasional
+                            Nomor Stambuk
                         </label>
-                        <input type="text" name="nisn" value="{{ old('nisn') }}" placeholder="10 digit nomor NISN" class="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-xs sm:text-sm text-gray-800 font-mono focus:border-emerald-500">
+                        <input type="text" name="nisn" value="{{ old('nisn') }}" placeholder="Nomor Stambuk / NISN santri" class="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-xs sm:text-sm text-gray-800 font-mono focus:border-emerald-500">
                     </div>
 
                     <div>
@@ -318,6 +318,57 @@
                             Catatan Khusus Santri (Opsional)
                         </label>
                         <textarea name="catatan" rows="2" placeholder="Catatan kepesantrenan, prestasi tahfidz, atau kebutuhan khusus santri..." class="w-full rounded-lg border border-gray-300 px-4 py-2 text-xs sm:text-sm text-gray-800 focus:border-emerald-500">{{ old('catatan') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 7: Dokumen & Berkas Santri (KK, KTP, Akte) -->
+            <div>
+                <div class="flex items-center gap-2 pb-2.5 border-b border-gray-100 mb-4">
+                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">7</span>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-800">Dokumen &amp; Berkas Santri (KK, KTP, Akte)</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Scan KK -->
+                    <div class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-2.5 hover:border-indigo-200 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </span>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-800">Kartu Keluarga (KK)</label>
+                                <span class="text-[10px] text-gray-500">PDF / JPG / PNG (Maks 10MB)</span>
+                            </div>
+                        </div>
+                        <input type="file" name="file_kk" accept="image/*,application/pdf" class="w-full text-xs text-gray-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 bg-white rounded-lg p-1">
+                    </div>
+
+                    <!-- Scan KTP Orang Tua -->
+                    <div class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-2.5 hover:border-emerald-200 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                            </span>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-800">KTP Orang Tua / Wali</label>
+                                <span class="text-[10px] text-gray-500">PDF / JPG / PNG (Maks 10MB)</span>
+                            </div>
+                        </div>
+                        <input type="file" name="file_ktp_ortu" accept="image/*,application/pdf" class="w-full text-xs text-gray-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-gray-200 bg-white rounded-lg p-1">
+                    </div>
+
+                    <!-- Scan Akte Kelahiran -->
+                    <div class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-2.5 hover:border-amber-200 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            </span>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-800">Akta Kelahiran Santri</label>
+                                <span class="text-[10px] text-gray-500">PDF / JPG / PNG (Maks 10MB)</span>
+                            </div>
+                        </div>
+                        <input type="file" name="file_akta_kelahiran" accept="image/*,application/pdf" class="w-full text-xs text-gray-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-gray-200 bg-white rounded-lg p-1">
                     </div>
                 </div>
             </div>

@@ -12,6 +12,7 @@ class PsbRegistration extends Model
     protected $fillable = [
         'no_registrasi',
         'jalur',
+        'gelombang',
         'bukti_transfer',
         'bukti_prestasi_tahfidz',
         'nama_lengkap',
@@ -21,6 +22,9 @@ class PsbRegistration extends Model
         'file_ktp_ortu',
         'foto_status',
         'foto_catatan',
+        'berkas_status',
+        'berkas_catatan',
+        'berkas_detail_json',
         'nisn',
         'nik',
         'tempat_lahir',
@@ -248,6 +252,26 @@ class PsbRegistration extends Model
     }
 
     /**
+     * Petakan nama item biaya masuk ke kode POS standar buku kas bendahara.
+     */
+    public static function mapItemToPosBiaya(string $nama): string
+    {
+        $namaLower = strtolower($nama);
+        if (str_contains($namaLower, 'kts') || str_contains($namaLower, 'seragam')) return 'KTS';
+        if (str_contains($namaLower, 'pangkal')) return 'PANGKAL';
+        if (str_contains($namaLower, 'kertas') || str_contains($namaLower, 'evaluasi')) return 'KERTAS';
+        if (str_contains($namaLower, 'syahriah') || str_contains($namaLower, 'spp')) return 'SYAHRIYAH';
+        if (str_contains($namaLower, 'kesehatan')) return 'KESEHATAN';
+        if (str_contains($namaLower, 'kegiatan')) return 'KEGIATAN';
+        if (str_contains($namaLower, 'almari')) return 'ALMARI';
+        if (str_contains($namaLower, 'gedung') || str_contains($namaLower, 'sarpras')) return 'GEDUNG';
+        if (str_contains($namaLower, 'pendaftaran')) return 'PENDAFTARAN';
+
+        $clean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', substr($nama, 0, 15)));
+        return !empty($clean) ? $clean : 'BIAYA_MASUK';
+    }
+
+    /**
      * Hitung struktur tarif resmi berdasarkan jenjang & hunian (Mukim vs Laju).
      * Dinamis membaca konfigurasi tarif resmi yang diatur Bendahara di Pengaturan Tarif / Web.
      */
@@ -280,8 +304,10 @@ class PsbRegistration extends Model
                 $valStr = $row[$fieldKey] ?? '0';
                 $nom = (float) preg_replace('/[^0-9]/', '', $valStr);
 
+                $posCode = static::mapItemToPosBiaya($nama);
                 $itemsDaftarUlang[] = [
                     'nama' => $nama,
+                    'pos_biaya' => $posCode,
                     'nominal' => $nom,
                     'keterangan' => ($isLaju && stripos($nama, 'almari') !== false) ? 'Khusus Santri Mukim' : null,
                 ];
@@ -313,15 +339,15 @@ class PsbRegistration extends Model
             $biayaPendaftaran = $pendaftaran;
 
             $itemsDaftarUlang = [
-                ['nama' => 'Santri Baru KTS', 'nominal' => $kts],
-                ['nama' => 'Uang Pangkal Masuk', 'nominal' => $pangkal],
-                ['nama' => 'Kertas / Evaluasi Belajar (1 Th)', 'nominal' => $kertas],
-                ['nama' => 'Syahriah Bulan Juli', 'nominal' => $syahriahJuli],
-                ['nama' => 'Kesehatan Santri (1 Th)', 'nominal' => $kesehatan],
-                ['nama' => 'Kegiatan Santri (1 Th)', 'nominal' => $kegiatan],
-                ['nama' => 'Pembelian Almari', 'nominal' => $almari, 'keterangan' => $isLaju ? 'Khusus Santri Mukim' : 'Fasilitas Kamar'],
-                ['nama' => 'Uang Gedung & Sarpras', 'nominal' => $gedung],
-                ['nama' => 'Biaya Pendaftaran PSB', 'nominal' => $pendaftaran],
+                ['nama' => 'Santri Baru KTS', 'pos_biaya' => 'KTS', 'nominal' => $kts],
+                ['nama' => 'Uang Pangkal Masuk', 'pos_biaya' => 'PANGKAL', 'nominal' => $pangkal],
+                ['nama' => 'Kertas / Evaluasi Belajar (1 Th)', 'pos_biaya' => 'KERTAS', 'nominal' => $kertas],
+                ['nama' => 'Syahriah Bulan Juli', 'pos_biaya' => 'SYAHRIYAH', 'nominal' => $syahriahJuli],
+                ['nama' => 'Kesehatan Santri (1 Th)', 'pos_biaya' => 'KESEHATAN', 'nominal' => $kesehatan],
+                ['nama' => 'Kegiatan Santri (1 Th)', 'pos_biaya' => 'KEGIATAN', 'nominal' => $kegiatan],
+                ['nama' => 'Pembelian Almari', 'pos_biaya' => 'ALMARI', 'nominal' => $almari, 'keterangan' => $isLaju ? 'Khusus Santri Mukim' : 'Fasilitas Kamar'],
+                ['nama' => 'Uang Gedung & Sarpras', 'pos_biaya' => 'GEDUNG', 'nominal' => $gedung],
+                ['nama' => 'Biaya Pendaftaran PSB', 'pos_biaya' => 'PENDAFTARAN', 'nominal' => $pendaftaran],
             ];
         }
 
@@ -349,15 +375,15 @@ class PsbRegistration extends Model
             }
         } else {
             $uangMakan = $isLaju ? 0 : 300000;
-            $syahriahBulanan = $isMa 
-                ? ($isLaju ? 75000 : 105000) 
-                : ($isLaju ? 55000 : 85000);
+            $syahriahBulanan = $isLaju ? 0 : 30000;
+            $sotBulanan = $isMa ? 75000 : 55000;
             $tabunganWajib = 25000;
-            $totalBulanan = $uangMakan + $syahriahBulanan + $tabunganWajib;
+            $totalBulanan = $uangMakan + $syahriahBulanan + $sotBulanan + $tabunganWajib;
 
             $itemsBulanan = [
                 ['nama' => 'Uang Makan 3x Sehari', 'nominal' => $uangMakan],
                 ['nama' => 'Syahriah Pendidikan', 'nominal' => $syahriahBulanan],
+                ['nama' => 'Iuran SOT', 'nominal' => $sotBulanan],
                 ['nama' => 'Tabungan Wajib Santri', 'nominal' => $tabunganWajib],
             ];
         }

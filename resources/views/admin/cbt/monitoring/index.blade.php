@@ -93,8 +93,8 @@
         </div>
 
         {{-- TABLE --}}
-        <div class="monitor-table-wrap">
-            <table class="ta-table">
+        <div class="overflow-x-auto">
+            <table class="ta-table min-w-[900px]">
                 <thead>
                     <tr>
                         <th class="w-10">#</th>

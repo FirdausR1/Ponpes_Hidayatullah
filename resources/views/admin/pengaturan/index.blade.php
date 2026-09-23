@@ -55,6 +55,10 @@
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             Hero, Brosur & Panduan
         </button>
+        <button type="button" onclick="switchTab('tab-prestasi')" id="btn-tab-prestasi" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
+            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+            Prestasi Santri & Lembaga
+        </button>
         <button type="button" onclick="switchTab('tab-falsafah')" id="btn-tab-falsafah" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
             Falsafah & Fondasi Hidup
@@ -74,6 +78,14 @@
         <button type="button" onclick="switchTab('tab-ttd')" id="btn-tab-ttd" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path></svg>
             TTD Digital & Stempel PSB
+        </button>
+        <button type="button" onclick="switchTab('tab-psb')" id="btn-tab-psb" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
+            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            Status &amp; Pengaturan PSB
+        </button>
+        <button type="button" onclick="switchTab('tab-biaya')" id="btn-tab-biaya" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
+            <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            Biaya &amp; Tarif Pendidikan
         </button>
         <button type="button" onclick="switchTab('tab-footer')" id="btn-tab-footer" class="tab-btn px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-100">
             <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
@@ -340,6 +352,159 @@
                 <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-lg shadow-sm hover:shadow transition">
                     <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                     Simpan File Buku Panduan
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+    <!-- ==================== TAB 1B: PRESTASI SANTRI & LEMBAGA ==================== -->
+    <div id="tab-prestasi" class="tab-content hidden space-y-6">
+
+        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm space-y-6">
+            @csrf
+            <input type="hidden" name="active_tab" value="tab-prestasi">
+            <input type="hidden" name="section_name" value="Prestasi Santri & Lembaga">
+
+            <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-800 text-base">Prestasi Santri & Lembaga (Landing Page)</h2>
+                    <p class="text-xs text-slate-500">Kelola judul header, statistik capaian kejuaraan, dan galeri kartu prestasi yang tampil di beranda website.</p>
+                </div>
+            </div>
+
+            <!-- Header Section Prestasi -->
+            <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-200/70 space-y-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Header Bagian Prestasi
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Badge / Tag Atas</label>
+                        <input type="text" name="prestasi_badge" value="{{ old('prestasi_badge', $settings['prestasi_badge'] ?? 'PRESTASI & REPUTASI SANTRI') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Judul Utama</label>
+                        <input type="text" name="prestasi_judul" value="{{ old('prestasi_judul', $settings['prestasi_judul'] ?? 'Menorehkan Jejak Prestasi, Menjunjung Tinggi Adab Islami') }}" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Subjudul / Deskripsi Pengantar</label>
+                        <textarea name="prestasi_subjudul" rows="2" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-brand-500 outline-none">{{ old('prestasi_subjudul', $settings['prestasi_subjudul'] ?? 'Santri Pesantren Hidayatullah terus membuktikan keunggulan di kancah daerah hingga internasional — memadukan hafalan Al-Qur\'an mutqin, kecakapan sains, dan akhlak karimah.') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 Statistik Capaian Prestasi -->
+            <div class="bg-slate-50/60 p-4 rounded-xl border border-slate-200/70 space-y-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-brand-500"></span> Statistik Singkat Prestasi (3 Badge Angka)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    @php
+                        $sItems = is_array($prestasiStats) && count($prestasiStats) ? $prestasiStats : [
+                            ['angka' => '150+', 'label' => 'Penghargaan & Trofi Resmi'],
+                            ['angka' => '100%', 'label' => 'Target Hafalan Mutqin Teruji'],
+                            ['angka' => '15+', 'label' => 'Juara Nasional & Internasional']
+                        ];
+                    @endphp
+                    @foreach($sItems as $sIdx => $st)
+                    <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs space-y-2">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Statistik #{{ $sIdx + 1 }}</span>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Angka / Metrik</label>
+                            <input type="text" name="prestasi_stat_angka[]" value="{{ $st['angka'] ?? '' }}" placeholder="150+" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:border-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Keterangan Label</label>
+                            <input type="text" name="prestasi_stat_label[]" value="{{ $st['label'] ?? '' }}" placeholder="Penghargaan & Trofi Resmi" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 focus:border-brand-500 outline-none">
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Galeri Kartu Prestasi -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Daftar Kartu Prestasi Santri & Lembaga
+                        </h3>
+                        <p class="text-[11px] text-slate-400">Anda dapat mengubah isi, mengganti foto, menghapus, atau menambah prestasi baru.</p>
+                    </div>
+                    <button type="button" onclick="addPrestasiCard()" class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg border border-brand-200 shadow-2xs transition">
+                        <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Tambah Prestasi
+                    </button>
+                </div>
+
+                <div id="prestasiContainer" class="space-y-4">
+                    @foreach($prestasiItems as $pIdx => $item)
+                    <div class="prestasi-card-row bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center card-number">{{ $pIdx + 1 }}</span>
+                                <span class="text-xs font-bold text-slate-700">Kartu Prestasi #<span class="card-number-text">{{ $pIdx + 1 }}</span></span>
+                            </div>
+                            <button type="button" onclick="removePrestasiCard(this)" class="text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 hover:bg-rose-50 px-2 py-1 rounded transition">
+                                <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                Hapus
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <!-- Preview Foto -->
+                            <div class="md:col-span-3 space-y-2">
+                                <label class="block text-[11px] font-semibold text-slate-600">Foto Dokumentasi</label>
+                                <div class="w-full h-32 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative group">
+                                    <img id="prestasi_preview_{{ $pIdx }}" src="{{ !empty($item['image']) ? (str_starts_with($item['image'], 'http') ? $item['image'] : asset($item['image'])) : 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop' }}" alt="Dokumentasi" class="w-full h-full object-cover">
+                                </div>
+                                <div class="space-y-1">
+                                    <input type="file" name="prestasi_file_{{ $pIdx }}" onchange="previewPrestasiFile(this, {{ $pIdx }})" accept="image/*" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 border border-slate-200 rounded-lg p-1 bg-slate-50/50 cursor-pointer">
+                                    <input type="text" name="prestasi_image[]" id="prestasi_url_{{ $pIdx }}" oninput="previewPrestasiUrl(this.value, {{ $pIdx }})" value="{{ $item['image'] ?? '' }}" placeholder="Atau paste URL Foto (https://...)" class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-700 focus:border-brand-500 outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Informasi Kartu -->
+                            <div class="md:col-span-9 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Kategori / Tag</label>
+                                        <input type="text" name="prestasi_tag[]" value="{{ $item['tag'] ?? 'Prestasi Santri' }}" placeholder="Contoh: Tahfidz & Tilawah" class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-medium focus:border-brand-500 outline-none" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tingkat Kejuaraan / Skala</label>
+                                        <input type="text" name="prestasi_level[]" value="{{ $item['level'] ?? 'Tingkat Nasional' }}" placeholder="Contoh: Tingkat Nasional / Internasional" class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-medium focus:border-brand-500 outline-none">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Judul Prestasi / Kejuaraan</label>
+                                    <input type="text" name="prestasi_judul_item[]" value="{{ $item['judul'] ?? '' }}" placeholder="Contoh: Juara 1 MHQ 30 Juz Tingkat Nasional" class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-semibold focus:border-brand-500 outline-none" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Deskripsi Singkat / Keterangan Santri & Lembaga Penyelenggara</label>
+                                    <textarea name="prestasi_deskripsi[]" rows="2" placeholder="Tuliskan nama santri peraih, penyelenggara lomba, atau penghargaan yang didapatkan..." class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-brand-500 outline-none">{{ $item['deskripsi'] ?? '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="addPrestasiCard()" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-lg border border-slate-300 shadow-2xs transition">
+                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Tambah Kartu Prestasi Baru
+                </button>
+                <button type="submit" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-6 py-2.5 rounded-lg shadow-sm hover:shadow transition">
+                    <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Simpan Seluruh Pengaturan Prestasi
                 </button>
             </div>
         </form>
@@ -1504,6 +1669,575 @@
         </form>
     </div>
 
+    <!-- ==================== TAB: BIAYA & TARIF PENDIDIKAN ==================== -->
+    <div id="tab-biaya" class="tab-content space-y-6 hidden">
+        <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-6">
+            @csrf
+            <input type="hidden" name="active_tab" value="tab-biaya">
+            <input type="hidden" name="section_name" value="Biaya & Master Tarif Pendidikan">
+
+            <!-- Card 1: Pratinjau Ringkasan Biaya di Halaman Depan (Landing Page) -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">1</div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-base">Pratinjau Ringkasan Biaya di Halaman Depan (Landing Page)</h2>
+                            <p class="text-xs text-slate-500">Ubah judul, narasi singkat, dan 4 kartu highlight biaya yang tampil pada beranda website utama.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('home') }}#biaya-section" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition">
+                            <svg class="icon-svg w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            Lihat di Landing Page
+                        </a>
+                        <a href="{{ route('admin.pembayaran.tarif.index') }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800 transition">
+                            Master Tarif Kasir &amp; SPP ↗
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Teks Judul & Deskripsi -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Judul Utama Bagian Biaya</label>
+                        <input type="text" name="biaya_preview_title" value="{{ \App\Models\Setting::get('biaya_preview_title', 'Transparansi Biaya Pendidikan Santri Baru MTs & MA') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Teks Tombol Tautan</label>
+                        <input type="text" name="biaya_preview_btn_text" value="{{ \App\Models\Setting::get('biaya_preview_btn_text', 'Lihat Rincian Biaya Lengkap') }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Deskripsi / Penjelasan Singkat</label>
+                        <textarea name="biaya_preview_desc" rows="2" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-xs text-slate-800 focus:bg-white focus:border-brand-500 outline-none">{{ \App\Models\Setting::get('biaya_preview_desc', 'Seluruh rincian pembiayaan awal (uang pangkal, seragam, kasur/kamar santri mukim) serta syahriyah bulanan disajikan secara rinci, transparan, dan dapat diunduh pada halaman khusus biaya kami.') }}</textarea>
+                    </div>
+                </div>
+
+                <!-- 4 Kartu Highlight Biaya -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-2.5">4 Kartu Sorotan / Highlight (Kotak Bawah):</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Kartu 1 -->
+                        <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Kartu 1</span>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Label Atas</label>
+                                <input type="text" name="biaya_card1_label" value="{{ \App\Models\Setting::get('biaya_card1_label', 'Biaya Masuk Pertama') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-700 outline-none focus:border-brand-500 font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Nominal / Teks Utama</label>
+                                <input type="text" name="biaya_card1_value" value="{{ \App\Models\Setting::get('biaya_card1_value', 'Terjangkau & Jelas') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-emerald-800 outline-none focus:border-brand-500 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Keterangan Bawah</label>
+                                <input type="text" name="biaya_card1_sub" value="{{ \App\Models\Setting::get('biaya_card1_sub', 'Sudah termasuk fasilitas kamar') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-600 outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <!-- Kartu 2 -->
+                        <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Kartu 2</span>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Label Atas</label>
+                                <input type="text" name="biaya_card2_label" value="{{ \App\Models\Setting::get('biaya_card2_label', 'Syahriyah Bulanan') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-700 outline-none focus:border-brand-500 font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Nominal / Teks Utama</label>
+                                <input type="text" name="biaya_card2_value" value="{{ \App\Models\Setting::get('biaya_card2_value', 'Mulai Rp 80.000/bln') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-emerald-800 outline-none focus:border-brand-500 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Keterangan Bawah</label>
+                                <input type="text" name="biaya_card2_sub" value="{{ \App\Models\Setting::get('biaya_card2_sub', 'Untuk santri laju non-asrama') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-600 outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <!-- Kartu 3 -->
+                        <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Kartu 3</span>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Label Atas</label>
+                                <input type="text" name="biaya_card3_label" value="{{ \App\Models\Setting::get('biaya_card3_label', 'Makan Asrama 3x Sehari') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-700 outline-none focus:border-brand-500 font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Nominal / Teks Utama</label>
+                                <input type="text" name="biaya_card3_value" value="{{ \App\Models\Setting::get('biaya_card3_value', 'Rp 300.000/bln') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-emerald-800 outline-none focus:border-brand-500 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Keterangan Bawah</label>
+                                <input type="text" name="biaya_card3_sub" value="{{ \App\Models\Setting::get('biaya_card3_sub', 'Menu sehat bergizi & higienis') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-600 outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <!-- Kartu 4 -->
+                        <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                            <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Kartu 4</span>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Label Atas</label>
+                                <input type="text" name="biaya_card4_label" value="{{ \App\Models\Setting::get('biaya_card4_label', 'Bantuan / Beasiswa') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-700 outline-none focus:border-brand-500 font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Nominal / Teks Utama</label>
+                                <input type="text" name="biaya_card4_value" value="{{ \App\Models\Setting::get('biaya_card4_value', 'Tersedia') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-amber-600 outline-none focus:border-brand-500 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-medium mb-1">Keterangan Bawah</label>
+                                <input type="text" name="biaya_card4_sub" value="{{ \App\Models\Setting::get('biaya_card4_sub', 'Bagi dhuafa & santri berprestasi') }}" class="w-full rounded border border-slate-200 px-2.5 py-1.5 text-xs bg-white text-slate-600 outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
+                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Simpan Tampilan Biaya Landing Page
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ==================== TAB: STATUS & PENGATURAN PSB ==================== -->
+    <div id="tab-psb" class="tab-content space-y-6 hidden">
+        <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-6">
+            @csrf
+            <input type="hidden" name="active_tab" value="tab-psb">
+            <input type="hidden" name="section_name" value="Status & Pengaturan Jadwal PSB">
+
+            @php
+                $psbSchedule = \App\Models\Setting::getPsbSchedule();
+                $currPsbMode = old('psb_mode', $settings['psb_mode'] ?? 'jadwal');
+                $currPsbStartDate = old('psb_start_date', $settings['psb_start_date'] ?? '');
+                $currPsbEndDate = old('psb_end_date', $settings['psb_end_date'] ?? '');
+                $currPsbStatus = old('psb_status', $settings['psb_status'] ?? 'buka');
+            @endphp
+
+            <!-- Live Schedule Real-time Status Card -->
+            <div class="rounded-2xl border p-5 shadow-sm transition-all {{ $psbSchedule['is_open'] ? 'bg-emerald-50/80 border-emerald-200' : ($psbSchedule['status'] === 'belum_buka' ? 'bg-amber-50/80 border-amber-200' : 'bg-rose-50/80 border-rose-200') }}">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 {{ $psbSchedule['is_open'] ? 'bg-emerald-100 text-emerald-700 ring-4 ring-emerald-100' : ($psbSchedule['status'] === 'belum_buka' ? 'bg-amber-100 text-amber-700 ring-4 ring-amber-100' : 'bg-rose-100 text-rose-700 ring-4 ring-rose-100') }}">
+                            @if($psbSchedule['is_open'])
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            @elseif($psbSchedule['status'] === 'belum_buka')
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            @else
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <span class="text-sm font-bold uppercase tracking-wider {{ $psbSchedule['is_open'] ? 'text-emerald-900' : ($psbSchedule['status'] === 'belum_buka' ? 'text-amber-900' : 'text-rose-900') }}">
+                                    STATUS LIVE PSB: {{ strtoupper($psbSchedule['title']) }}
+                                </span>
+                                <span class="px-3 py-0.5 rounded-full text-xs font-black uppercase {{ $psbSchedule['badge_class'] }}">
+                                    {{ $psbSchedule['badge'] }}
+                                </span>
+                                <span class="text-[11px] px-2 py-0.5 rounded-md bg-white/70 border text-slate-600 font-medium">
+                                    Mode: {{ $currPsbMode === 'jadwal' ? '📅 Otomatis Tanggal' : ($currPsbMode === 'buka' ? '🟢 Paksa Buka' : '🔴 Paksa Tutup') }}
+                                </span>
+                            </div>
+                            <p class="text-xs mt-1 leading-relaxed {{ $psbSchedule['is_open'] ? 'text-emerald-800' : ($psbSchedule['status'] === 'belum_buka' ? 'text-amber-800' : 'text-rose-800') }}">
+                                {{ $psbSchedule['pesan'] }}
+                            </p>
+                            <div class="mt-2.5 flex items-center gap-4 text-[11px] text-slate-600 flex-wrap">
+                                <span class="flex items-center gap-1.5 font-medium">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    Waktu Server: <strong class="text-slate-800">{{ now()->format('d M Y, H:i') }} WIB</strong>
+                                </span>
+                                @if(!empty($currPsbStartDate) || !empty($currPsbEndDate))
+                                    <span class="flex items-center gap-1.5 font-medium">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                        Jadwal Aktif: <strong class="text-slate-800">{{ $psbSchedule['start_formatted'] ?? '—' }}</strong> s/d <strong class="text-slate-800">{{ $psbSchedule['end_formatted'] ?? '—' }}</strong>
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 self-start md:self-center">
+                        <a href="{{ route('psb.register') }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <span>Uji Coba Tampilan Publik</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 1: Mode Operasional & Rentang Tanggal Buka Tutup -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-black">1</div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-base">Aturan Buka &amp; Tutup Pendaftaran Santri Baru</h2>
+                            <p class="text-xs text-slate-500">Pilih mode otomatis menurut tanggal (rekomendasi) atau kontrol manual.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3 Pilihan Mode (Jadwal Otomatis / Paksa Buka / Paksa Tutup) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Mode 1: Jadwal Otomatis -->
+                    <label class="relative p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between {{ $currPsbMode === 'jadwal' ? 'border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                                    📅
+                                </div>
+                                <div>
+                                    <strong class="block text-xs font-bold text-slate-800">Otomatis Menurut Tanggal</strong>
+                                    <span class="text-[11px] text-emerald-600 font-semibold">(Sangat Direkomendasikan)</span>
+                                </div>
+                            </div>
+                            <input type="radio" name="psb_mode" id="psb_mode_jadwal" value="jadwal" {{ $currPsbMode === 'jadwal' ? 'checked' : '' }} onchange="togglePsbModeUI('jadwal')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
+                            Pendaftaran akan otomatis dibuka tepat pada jam mulai dan ditutup otomatis pada jam selesai.
+                        </p>
+                    </label>
+
+                    <!-- Mode 2: Paksa Buka Manual -->
+                    <label class="relative p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between {{ $currPsbMode === 'buka' ? 'border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                                    🟢
+                                </div>
+                                <div>
+                                    <strong class="block text-xs font-bold text-slate-800">Paksa Selalu Buka</strong>
+                                    <span class="text-[11px] text-slate-400">Override Manual</span>
+                                </div>
+                            </div>
+                            <input type="radio" name="psb_mode" id="psb_mode_buka" value="buka" {{ $currPsbMode === 'buka' ? 'checked' : '' }} onchange="togglePsbModeUI('buka')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
+                            Formulir pendaftaran selalu terbuka tanpa memperhitungkan tanggal jadwal.
+                        </p>
+                    </label>
+
+                    <!-- Mode 3: Paksa Tutup Manual -->
+                    <label class="relative p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between {{ $currPsbMode === 'tutup' ? 'border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/10' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                                    🔴
+                                </div>
+                                <div>
+                                    <strong class="block text-xs font-bold text-slate-800">Paksa Selalu Tutup</strong>
+                                    <span class="text-[11px] text-slate-400">Override Manual</span>
+                                </div>
+                            </div>
+                            <input type="radio" name="psb_mode" id="psb_mode_tutup" value="tutup" {{ $currPsbMode === 'tutup' ? 'checked' : '' }} onchange="togglePsbModeUI('tutup')" class="w-4 h-4 text-rose-600 focus:ring-rose-500">
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
+                            Formulir langsung dikunci dan menampilkan notifikasi tutup kapan saja.
+                        </p>
+                    </label>
+                </div>
+
+                @php
+                    $currGelombang = old('psb_gelombang_aktif', $settings['psb_gelombang_aktif'] ?? 'Gelombang 1');
+                @endphp
+
+                <!-- Gelombang Pendaftaran yang Sedang Dibuka -->
+                <div class="p-4 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                Gelombang Pendaftaran yang Sedang Berjalan
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] text-slate-500 font-semibold">Pilih Cepat:</span>
+                            <button type="button" onclick="setGelombangPreset('Gelombang 1')" class="px-2.5 py-1 rounded-md text-xs font-bold bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition cursor-pointer">Gelombang 1</button>
+                            <button type="button" onclick="setGelombangPreset('Gelombang 2')" class="px-2.5 py-1 rounded-md text-xs font-bold bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition cursor-pointer">Gelombang 2</button>
+                            <button type="button" onclick="setGelombangPreset('Gelombang 3')" class="px-2.5 py-1 rounded-md text-xs font-bold bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition cursor-pointer">Gelombang 3</button>
+                            <button type="button" onclick="setGelombangPreset('Gelombang Khusus')" class="px-2.5 py-1 rounded-md text-xs font-bold bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition cursor-pointer">Khusus / Inden</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                        <div>
+                            <input type="text" name="psb_gelombang_aktif" id="psb_gelombang_aktif" value="{{ $currGelombang }}" placeholder="Contoh: Gelombang 1" class="w-full rounded-lg border border-emerald-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-800 focus:border-emerald-600 outline-none">
+                            <p class="text-[11px] text-slate-500 mt-1">Nama gelombang ini otomatis tersimpan di data pendaftaran setiap santri baru.</p>
+                        </div>
+                        <div class="text-[11px] text-slate-600 bg-white/80 p-2.5 rounded-lg border border-emerald-100 leading-relaxed">
+                            💡 Santri baru yang mendaftar online otomatis terdata di <strong>{{ $currGelombang }}</strong>. Anda dapat memfilter santri per gelombang di tabel Manajemen PSB.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JADWAL TANGGAL MASING-MASING GELOMBANG (MULTI-GELOMBANG) -->
+                <div class="p-5 bg-indigo-50/50 rounded-2xl border-2 border-indigo-200/80 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">📅</span>
+                            <div>
+                                <h3 class="text-xs sm:text-sm font-bold text-indigo-950 uppercase tracking-wider">
+                                    Jadwal Tanggal Spesifik Tiap Gelombang (Multi-Gelombang)
+                                </h3>
+                                <p class="text-[11px] text-indigo-700">
+                                    Tentukan periode tanggal buka &amp; tutup masing-masing gelombang agar sistem beralih otomatis menurut kalender.
+                                </p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300">
+                            Otomatis Sesuai Tanggal
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Gelombang 1 -->
+                        @php
+                            $g1Start = old('psb_g1_start', $settings['psb_g1_start'] ?? '');
+                            $g1End = old('psb_g1_end', $settings['psb_g1_end'] ?? '');
+                            $g1Status = 'Belum Diatur';
+                            $g1Badge = 'bg-slate-100 text-slate-600 border-slate-200';
+                            if ($g1Start && $g1End) {
+                                $dt1S = \Carbon\Carbon::parse($g1Start);
+                                $dt1E = \Carbon\Carbon::parse($g1End);
+                                if (now()->between($dt1S, $dt1E)) { $g1Status = 'Sedang Berjalan'; $g1Badge = 'bg-emerald-100 text-emerald-800 border-emerald-300'; }
+                                elseif (now()->lt($dt1S)) { $g1Status = 'Mendatang'; $g1Badge = 'bg-amber-100 text-amber-800 border-amber-300'; }
+                                else { $g1Status = 'Telah Selesai'; $g1Badge = 'bg-slate-200 text-slate-700 border-slate-300'; }
+                            }
+                        @endphp
+                        <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-2xs space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                                    <strong class="text-xs font-bold text-slate-800">Gelombang 1</strong>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $g1Badge }}">{{ $g1Status }}</span>
+                                    <button type="button" onclick="activateWaveNow('Gelombang 1', 'psb_g1_start', 'psb_g1_end')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 transition cursor-pointer" title="Jadikan gelombang ini aktif saat ini">Aktifkan</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Mulai Dibuka</label>
+                                    <input type="datetime-local" name="psb_g1_start" id="psb_g1_start" value="{{ $g1Start }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Batas Penutupan</label>
+                                    <input type="datetime-local" name="psb_g1_end" id="psb_g1_end" value="{{ $g1End }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gelombang 2 -->
+                        @php
+                            $g2Start = old('psb_g2_start', $settings['psb_g2_start'] ?? '');
+                            $g2End = old('psb_g2_end', $settings['psb_g2_end'] ?? '');
+                            $g2Status = 'Belum Diatur';
+                            $g2Badge = 'bg-slate-100 text-slate-600 border-slate-200';
+                            if ($g2Start && $g2End) {
+                                $dt2S = \Carbon\Carbon::parse($g2Start);
+                                $dt2E = \Carbon\Carbon::parse($g2End);
+                                if (now()->between($dt2S, $dt2E)) { $g2Status = 'Sedang Berjalan'; $g2Badge = 'bg-emerald-100 text-emerald-800 border-emerald-300'; }
+                                elseif (now()->lt($dt2S)) { $g2Status = 'Mendatang'; $g2Badge = 'bg-amber-100 text-amber-800 border-amber-300'; }
+                                else { $g2Status = 'Telah Selesai'; $g2Badge = 'bg-slate-200 text-slate-700 border-slate-300'; }
+                            }
+                        @endphp
+                        <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-2xs space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                                    <strong class="text-xs font-bold text-slate-800">Gelombang 2</strong>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $g2Badge }}">{{ $g2Status }}</span>
+                                    <button type="button" onclick="activateWaveNow('Gelombang 2', 'psb_g2_start', 'psb_g2_end')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 transition cursor-pointer" title="Jadikan gelombang ini aktif saat ini">Aktifkan</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Mulai Dibuka</label>
+                                    <input type="datetime-local" name="psb_g2_start" id="psb_g2_start" value="{{ $g2Start }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Batas Penutupan</label>
+                                    <input type="datetime-local" name="psb_g2_end" id="psb_g2_end" value="{{ $g2End }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gelombang 3 -->
+                        @php
+                            $g3Start = old('psb_g3_start', $settings['psb_g3_start'] ?? '');
+                            $g3End = old('psb_g3_end', $settings['psb_g3_end'] ?? '');
+                            $g3Status = 'Belum Diatur';
+                            $g3Badge = 'bg-slate-100 text-slate-600 border-slate-200';
+                            if ($g3Start && $g3End) {
+                                $dt3S = \Carbon\Carbon::parse($g3Start);
+                                $dt3E = \Carbon\Carbon::parse($g3End);
+                                if (now()->between($dt3S, $dt3E)) { $g3Status = 'Sedang Berjalan'; $g3Badge = 'bg-emerald-100 text-emerald-800 border-emerald-300'; }
+                                elseif (now()->lt($dt3S)) { $g3Status = 'Mendatang'; $g3Badge = 'bg-amber-100 text-amber-800 border-amber-300'; }
+                                else { $g3Status = 'Telah Selesai'; $g3Badge = 'bg-slate-200 text-slate-700 border-slate-300'; }
+                            }
+                        @endphp
+                        <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-2xs space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                                    <strong class="text-xs font-bold text-slate-800">Gelombang 3</strong>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $g3Badge }}">{{ $g3Status }}</span>
+                                    <button type="button" onclick="activateWaveNow('Gelombang 3', 'psb_g3_start', 'psb_g3_end')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 transition cursor-pointer" title="Jadikan gelombang ini aktif saat ini">Aktifkan</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Mulai Dibuka</label>
+                                    <input type="datetime-local" name="psb_g3_start" id="psb_g3_start" value="{{ $g3Start }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Batas Penutupan</label>
+                                    <input type="datetime-local" name="psb_g3_end" id="psb_g3_end" value="{{ $g3End }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gelombang Khusus / Inden -->
+                        @php
+                            $gkStart = old('psb_gkhusus_start', $settings['psb_gkhusus_start'] ?? '');
+                            $gkEnd = old('psb_gkhusus_end', $settings['psb_gkhusus_end'] ?? '');
+                            $gkStatus = 'Belum Diatur';
+                            $gkBadge = 'bg-slate-100 text-slate-600 border-slate-200';
+                            if ($gkStart && $gkEnd) {
+                                $dtkS = \Carbon\Carbon::parse($gkStart);
+                                $dtkE = \Carbon\Carbon::parse($gkEnd);
+                                if (now()->between($dtkS, $dtkE)) { $gkStatus = 'Sedang Berjalan'; $gkBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300'; }
+                                elseif (now()->lt($dtkS)) { $gkStatus = 'Mendatang'; $gkBadge = 'bg-amber-100 text-amber-800 border-amber-300'; }
+                                else { $gkStatus = 'Telah Selesai'; $gkBadge = 'bg-slate-200 text-slate-700 border-slate-300'; }
+                            }
+                        @endphp
+                        <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-2xs space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                                    <strong class="text-xs font-bold text-slate-800">Gelombang Khusus / Inden</strong>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $gkBadge }}">{{ $gkStatus }}</span>
+                                    <button type="button" onclick="activateWaveNow('Gelombang Khusus', 'psb_gkhusus_start', 'psb_gkhusus_end')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 transition cursor-pointer" title="Jadikan gelombang ini aktif saat ini">Aktifkan</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Mulai Dibuka</label>
+                                    <input type="datetime-local" name="psb_gkhusus_start" id="psb_gkhusus_start" value="{{ $gkStart }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-600 mb-1">Batas Penutupan</label>
+                                    <input type="datetime-local" name="psb_gkhusus_end" id="psb_gkhusus_end" value="{{ $gkEnd }}" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-white/90 rounded-xl border border-indigo-150 text-[11px] text-indigo-950 flex items-start gap-2.5">
+                        <span class="text-sm">💡</span>
+                        <div class="leading-relaxed">
+                            <strong>Cara Kerja Sistem Tanggal Tiap Gelombang:</strong><br>
+                            Saat Anda mengisi tanggal pada gelombang di atas, sistem akan <strong>otomatis beralih</strong> sesuai waktu kalender nyata. Calon santri yang mendaftar pada rentang tanggal Gelombang 1 otomatis tercatat di Gelombang 1, dan saat kalender masuk ke tanggal Gelombang 2, sistem otomatis beralih membuka Gelombang 2!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Tanggal & Jam Buka Tutup (Otomatis Jadwal / Tanggal Utama Aktif) -->
+                <div id="psbScheduleContainer" class="p-5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-800 block">
+                                Rentang Tanggal &amp; Jam Pendaftaran PSB (Otomatis)
+                            </span>
+                            <span class="text-xs text-slate-500">Tentukan periode tanggal dan jam pembukaan serta penutupan resmi.</span>
+                        </div>
+                        <!-- Quick Presets -->
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] text-slate-500 font-semibold">Preset Cepat:</span>
+                            <button type="button" onclick="setPsbPreset(1)" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer">+1 Bulan</button>
+                            <button type="button" onclick="setPsbPreset(3)" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer">+3 Bulan</button>
+                            <button type="button" onclick="setPsbPreset(6)" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer">+6 Bulan</button>
+                            <button type="button" onclick="setPsbPreset(12)" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition shadow-2xs cursor-pointer">1 Tahun</button>
+                            <button type="button" onclick="clearPsbDates()" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition shadow-2xs cursor-pointer">Kosongkan</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label for="psb_start_date" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                                Tanggal &amp; Jam Mulai Dibuka (Start)
+                            </label>
+                            <input type="datetime-local" name="psb_start_date" id="psb_start_date" value="{{ $currPsbStartDate }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:border-brand-500 outline-none">
+                            <p class="text-[11px] text-slate-400 mt-1">Sebelum tanggal ini, formulir belum bisa diisi dan menampilkan pengumuman "Belum Dibuka".</p>
+                        </div>
+
+                        <div>
+                            <label for="psb_end_date" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                                Tanggal &amp; Jam Penutupan Resmi (Deadline)
+                            </label>
+                            <input type="datetime-local" name="psb_end_date" id="psb_end_date" value="{{ $currPsbEndDate }}" class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:border-brand-500 outline-none">
+                            <p class="text-[11px] text-slate-400 mt-1">Setelah tanggal ini berakhir, sistem otomatis mengunci pendaftaran baru.</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden legacy fallback to keep backward compatibility -->
+                    <input type="hidden" name="psb_status" id="psb_status_fallback" value="{{ $currPsbStatus }}">
+                </div>
+            </div>
+
+            <!-- Card 2: Konten Pengumuman Resmi Saat Tutup -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-black">2</div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base">Konten &amp; Keterangan Pengumuman Tutup</h2>
+                        <p class="text-xs text-slate-500">Informasi ini akan ditampilkan kepada calon santri &amp; wali santri ketika pendaftaran ditutup.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Judul Pengumuman Penutupan</label>
+                        <input type="text" name="psb_tutup_judul" value="{{ old('psb_tutup_judul', $settings['psb_tutup_judul'] ?? 'Penerimaan Santri Baru (PSB) Telah Ditutup') }}" required placeholder="Contoh: Penerimaan Santri Baru (PSB) Telah Resmi Ditutup" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm font-semibold text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                        <p class="text-[11px] text-slate-400 mt-1">Judul utama pada halaman pengumuman penutupan pendaftaran.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pesan / Penjelasan Penutupan untuk Calon Wali Santri</label>
+                        <textarea name="psb_tutup_pesan" rows="4" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 p-4 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none leading-relaxed" placeholder="Tuliskan keterangan lengkap mengenai penutupan kuota, evaluasi berkas, atau jadwal gelombang berikutnya...">{{ old('psb_tutup_pesan', $settings['psb_tutup_pesan'] ?? "Mohon maaf, pendaftaran santri baru Pondok Pesantren Hidayatullah Tuksongo saat ini telah resmi ditutup. Untuk informasi pendaftaran gelombang berikutnya atau konsultasi pendidikan, silakan hubungi kontak panitia atau pantau pengumuman resmi website kami.") }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nomor WhatsApp Panitia PSB (Informasi Wali Santri)</label>
+                            <input type="text" name="psb_tutup_kontak" value="{{ old('psb_tutup_kontak', $settings['psb_tutup_kontak'] ?? ($settings['kontak_wa'] ?? ($settings['kontak_hotline'] ?? '0813-9110-9966'))) }}" placeholder="Contoh: 0813-9110-9966" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                            <p class="text-[11px] text-slate-400 mt-1">Tombol 'WhatsApp Panitia PSB' di halaman tutup akan terhubung langsung ke nomor ini.</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Keterangan Gelombang / Jadwal Buka Kembali (Opsional)</label>
+                            <input type="text" name="psb_tutup_jadwal_buka" value="{{ old('psb_tutup_jadwal_buka', $settings['psb_tutup_jadwal_buka'] ?? 'Gelombang berikutnya akan diumumkan melalui website resmi') }}" placeholder="Contoh: Gelombang 2 Dibuka Bulan Depan" class="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:bg-white focus:border-brand-500 outline-none">
+                            <p class="text-[11px] text-slate-400 mt-1">Catatan ringkas perkiraan jadwal pembukaan gelombang berikutnya.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <a href="{{ route('psb.register') }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline">
+                        <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        Lihat Halaman Pendaftaran Publik Sekarang
+                    </a>
+                    <button type="submit" class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
+                        <svg class="icon-svg w-4 h-4" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Simpan Pengaturan Jadwal PSB
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
 </div>
 @endsection
 
@@ -1922,6 +2656,223 @@
             const img = document.getElementById('slide_preview_' + index);
             if (img) img.src = url.trim();
         }
+    }
+
+    // ==================== PRESTASI CARD MANAGEMENT ====================
+    function reindexPrestasiCards() {
+        const container = document.getElementById('prestasiContainer');
+        if (!container) return;
+        const cards = container.querySelectorAll('.prestasi-card-row');
+        cards.forEach((card, idx) => {
+            const numBadge = card.querySelector('.card-number');
+            if (numBadge) numBadge.textContent = idx + 1;
+            const numText = card.querySelector('.card-number-text');
+            if (numText) numText.textContent = idx + 1;
+
+            const fileInput = card.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.name = `prestasi_file_${idx}`;
+                fileInput.setAttribute('onchange', `previewPrestasiFile(this, ${idx})`);
+            }
+            const img = card.querySelector('img');
+            if (img) img.id = `prestasi_preview_${idx}`;
+            const urlInput = card.querySelector('input[name="prestasi_image[]"]');
+            if (urlInput) {
+                urlInput.id = `prestasi_url_${idx}`;
+                urlInput.setAttribute('oninput', `previewPrestasiUrl(this.value, ${idx})`);
+            }
+        });
+    }
+
+    function addPrestasiCard() {
+        const container = document.getElementById('prestasiContainer');
+        if (!container) return;
+        const count = container.querySelectorAll('.prestasi-card-row').length;
+        const template = document.createElement('div');
+        template.className = 'prestasi-card-row bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative space-y-4';
+        template.innerHTML = `
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center card-number">${count + 1}</span>
+                    <span class="text-xs font-bold text-slate-700">Kartu Prestasi #<span class="card-number-text">${count + 1}</span></span>
+                </div>
+                <button type="button" onclick="removePrestasiCard(this)" class="text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 hover:bg-rose-50 px-2 py-1 rounded transition">
+                    <svg class="icon-svg w-3.5 h-3.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    Hapus
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-3 space-y-2">
+                    <label class="block text-[11px] font-semibold text-slate-600">Foto Dokumentasi</label>
+                    <div class="w-full h-32 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative group">
+                        <img id="prestasi_preview_${count}" src="https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop" alt="Dokumentasi" class="w-full h-full object-cover">
+                    </div>
+                    <div class="space-y-1">
+                        <input type="file" name="prestasi_file_${count}" onchange="previewPrestasiFile(this, ${count})" accept="image/*" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 border border-slate-200 rounded-lg p-1 bg-slate-50/50 cursor-pointer">
+                        <input type="text" name="prestasi_image[]" id="prestasi_url_${count}" oninput="previewPrestasiUrl(this.value, ${count})" value="" placeholder="Atau paste URL Foto (https://...)" class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-700 focus:border-brand-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="md:col-span-9 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Kategori / Tag</label>
+                            <input type="text" name="prestasi_tag[]" value="Prestasi Santri" placeholder="Contoh: Tahfidz / Sains / Robotik" class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-medium focus:border-brand-500 outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tingkat Kejuaraan / Skala</label>
+                            <input type="text" name="prestasi_level[]" value="Tingkat Nasional" placeholder="Contoh: Tingkat Nasional / Internasional" class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-medium focus:border-brand-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Judul Prestasi / Kejuaraan</label>
+                        <input type="text" name="prestasi_judul_item[]" value="" placeholder="Contoh: Juara 1 Lomba Kaligrafi Nasional" class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-semibold focus:border-brand-500 outline-none" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Deskripsi Singkat / Keterangan Santri & Lembaga Penyelenggara</label>
+                        <textarea name="prestasi_deskripsi[]" rows="2" placeholder="Tuliskan nama santri peraih, penyelenggara lomba, atau rincian penghargaan..." class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-brand-500 outline-none"></textarea>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(template);
+        reindexPrestasiCards();
+    }
+
+    function removePrestasiCard(btn) {
+        const card = btn.closest('.prestasi-card-row');
+        if (card) {
+            const container = document.getElementById('prestasiContainer');
+            if (container && container.querySelectorAll('.prestasi-card-row').length <= 1) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Minimal 1 Kartu',
+                    text: 'Setidaknya harus ada 1 kartu prestasi yang tersisa.',
+                    confirmButtonColor: '#465fff'
+                });
+                return;
+            }
+            card.remove();
+            reindexPrestasiCards();
+        }
+    }
+
+    function previewPrestasiFile(input, index) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('prestasi_preview_' + index);
+                if (img) img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewPrestasiUrl(url, index) {
+        if (url && url.trim().length > 5) {
+            const img = document.getElementById('prestasi_preview_' + index);
+            if (img) img.src = url.trim();
+        }
+    }
+
+    // ==================== PSB SCHEDULE PRESET & MODE CONTROLS ====================
+    function togglePsbModeUI(mode) {
+        const container = document.getElementById('psbScheduleContainer');
+        if (!container) return;
+        if (mode === 'jadwal') {
+            container.classList.remove('opacity-60');
+            container.style.pointerEvents = 'auto';
+        } else {
+            container.classList.add('opacity-60');
+        }
+        const fallback = document.getElementById('psb_status_fallback');
+        if (fallback) {
+            fallback.value = (mode === 'tutup') ? 'tutup' : 'buka';
+        }
+    }
+
+    function setPsbPreset(months) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const startStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        const future = new Date(now.getTime() + months * 30 * 24 * 60 * 60 * 1000);
+        const fYear = future.getFullYear();
+        const fMonth = String(future.getMonth() + 1).padStart(2, '0');
+        const fDay = String(future.getDate()).padStart(2, '0');
+        const endStr = `${fYear}-${fMonth}-${fDay}T23:59`;
+
+        const sInput = document.getElementById('psb_start_date');
+        const eInput = document.getElementById('psb_end_date');
+        if (sInput) sInput.value = startStr;
+        if (eInput) eInput.value = endStr;
+
+        const radioJadwal = document.getElementById('psb_mode_jadwal');
+        if (radioJadwal) {
+            radioJadwal.checked = true;
+            togglePsbModeUI('jadwal');
+        }
+    }
+
+    function clearPsbDates() {
+        const sInput = document.getElementById('psb_start_date');
+        const eInput = document.getElementById('psb_end_date');
+        if (sInput) sInput.value = '';
+        if (eInput) eInput.value = '';
+    }
+
+    function setGelombangPreset(val) {
+        const input = document.getElementById('psb_gelombang_aktif');
+        if (input) input.value = val;
+
+        // Auto-sync start and end dates if wave has dates
+        let sVal = '';
+        let eVal = '';
+        if (val === 'Gelombang 1') {
+            sVal = document.getElementById('psb_g1_start')?.value;
+            eVal = document.getElementById('psb_g1_end')?.value;
+        } else if (val === 'Gelombang 2') {
+            sVal = document.getElementById('psb_g2_start')?.value;
+            eVal = document.getElementById('psb_g2_end')?.value;
+        } else if (val === 'Gelombang 3') {
+            sVal = document.getElementById('psb_g3_start')?.value;
+            eVal = document.getElementById('psb_g3_end')?.value;
+        } else if (val === 'Gelombang Khusus') {
+            sVal = document.getElementById('psb_gkhusus_start')?.value;
+            eVal = document.getElementById('psb_gkhusus_end')?.value;
+        }
+
+        if (sVal && document.getElementById('psb_start_date')) {
+            document.getElementById('psb_start_date').value = sVal;
+        }
+        if (eVal && document.getElementById('psb_end_date')) {
+            document.getElementById('psb_end_date').value = eVal;
+        }
+    }
+
+    function activateWaveNow(waveName, startInputId, endInputId) {
+        setGelombangPreset(waveName);
+        const sVal = document.getElementById(startInputId)?.value;
+        const eVal = document.getElementById(endInputId)?.value;
+        if (sVal && document.getElementById('psb_start_date')) {
+            document.getElementById('psb_start_date').value = sVal;
+        }
+        if (eVal && document.getElementById('psb_end_date')) {
+            document.getElementById('psb_end_date').value = eVal;
+        }
+        const radioJadwal = document.getElementById('psb_mode_jadwal');
+        if (radioJadwal) {
+            radioJadwal.checked = true;
+            togglePsbModeUI('jadwal');
+        }
+        alert('Gelombang ' + waveName + ' telah disinkronkan sebagai gelombang aktif saat ini.');
     }
 
     // Restore active tab on load

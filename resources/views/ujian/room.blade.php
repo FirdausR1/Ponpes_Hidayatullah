@@ -3,15 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Ruang Ujian Seleksi CBT — {{ $reg->nama_lengkap }}</title>
     <link rel="icon" href="/logo.png" type="image/png">
 
-    <!-- Google Fonts: EB Garamond, Amiri, Plus Jakarta Sans -->
+    <!-- Google Fonts: EB Garamond, Amiri, Scheherazade New, Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Scheherazade+New:wght@400;700&family=EB+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- KaTeX CSS untuk render rumus Matematika -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -35,6 +36,11 @@
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         /* Anti-cheat: disable selection on entire body */
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -43,19 +49,44 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
         }
 
-        /* Arabic Text Class */
+        /* Arabic Text Class with Bidi Isolation & Crisp Fonts */
         .arabic-text {
-            font-family: 'Amiri', serif;
+            font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
             direction: rtl;
             text-align: right;
-            font-size: 1.35rem;
-            line-height: 2.3;
+            font-size: 1.45rem;
+            line-height: 2.2;
+            letter-spacing: 0;
+            unicode-bidi: isolate;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .option-label.arabic-text {
+            font-size: 1.25rem;
+            line-height: 2.0;
+            display: block;
+            flex: 1;
+            min-width: 0;
+            text-align: right;
+            width: auto;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .arabic-inline {
+            font-family: 'Amiri', serif;
+            direction: rtl;
+            unicode-bidi: isolate;
         }
 
         .katex { font-size: 1.15em !important; }
@@ -69,6 +100,8 @@
             z-index: 40;
             padding: 12px 24px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .header-inner {
@@ -78,12 +111,15 @@
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .brand-info {
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .brand-info img.crest {
@@ -101,6 +137,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
+            flex-shrink: 0;
         }
 
         .candidate-meta {
@@ -133,6 +170,7 @@
             align-items: center;
             gap: 8px;
             box-shadow: 0 1px 2px rgba(239, 68, 68, 0.1);
+            flex-shrink: 0;
         }
 
         .anti-cheat-badge {
@@ -146,6 +184,7 @@
             border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
+            flex-shrink: 0;
         }
 
         /* Container */
@@ -154,10 +193,19 @@
             margin: 20px auto;
             padding: 0 20px;
             display: grid;
-            grid-template-columns: 1fr 310px;
+            grid-template-columns: minmax(0, 1fr) 310px;
             gap: 24px;
             flex: 1;
             width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .questions-column {
+            min-width: 0;
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         @media (max-width: 900px) {
@@ -224,6 +272,10 @@
             padding: 24px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             margin-bottom: 20px;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            scroll-margin-top: 80px;
         }
 
         .q-header {
@@ -233,6 +285,7 @@
             margin-bottom: 14px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--slate-100);
+            gap: 10px;
         }
 
         .q-num {
@@ -240,6 +293,7 @@
             font-size: 19px;
             font-weight: 700;
             color: var(--primary);
+            flex-shrink: 0;
         }
 
         .q-tag {
@@ -250,6 +304,8 @@
             padding: 3px 10px;
             border-radius: 6px;
             border: 1px solid #bfdbfe;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .q-text {
@@ -258,12 +314,18 @@
             color: var(--slate-800);
             margin-bottom: 20px;
             font-weight: 500;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         .options-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .option-item {
@@ -276,6 +338,10 @@
             cursor: pointer;
             transition: all 0.15s;
             background: #ffffff;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            min-width: 0;
         }
 
         .option-item:hover {
@@ -317,6 +383,9 @@
             font-size: 14px;
             color: var(--slate-800);
             flex: 1;
+            min-width: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         /* Subject Header & Tabs */
@@ -324,17 +393,28 @@
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding: 2px 0 14px 0;
-            margin-bottom: 6px;
+            max-width: 100%;
+            width: 100%;
+            padding: 4px 2px 12px 2px;
+            margin-bottom: 8px;
             scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
         }
 
         .category-tabs-bar::-webkit-scrollbar {
-            height: 4px;
+            height: 5px;
+        }
+        .category-tabs-bar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
         }
         .category-tabs-bar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
+        }
+        .category-tabs-bar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .cat-pill {
@@ -350,6 +430,7 @@
             color: var(--slate-700);
             text-decoration: none;
             white-space: nowrap;
+            flex-shrink: 0;
             transition: all 0.15s;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
@@ -372,6 +453,9 @@
             justify-content: space-between;
             box-shadow: 0 2px 8px rgba(21, 128, 61, 0.16);
             scroll-margin-top: 80px;
+            max-width: 100%;
+            box-sizing: border-box;
+            gap: 12px;
         }
 
         .sidebar-categories {
@@ -468,6 +552,135 @@
             background: var(--primary);
             border-color: var(--primary);
             color: white;
+        }
+
+        .nav-btn.current-active {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2.5px rgba(37, 99, 235, 0.5) !important;
+            font-weight: 800 !important;
+            transform: scale(1.08);
+            z-index: 2;
+        }
+
+        .nav-btn.doubtful {
+            background: #fef08a !important;
+            color: #854d0e !important;
+            border-color: #eab308 !important;
+            font-weight: 800 !important;
+        }
+
+        .nav-btn.answered.doubtful {
+            background: #fef08a !important;
+            color: #854d0e !important;
+            border: 2px dashed #15803d !important;
+        }
+
+        .cat-pill.active-cat {
+            background: var(--primary) !important;
+            color: #ffffff !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 2px 6px rgba(21, 128, 61, 0.3) !important;
+        }
+
+        /* Single Question CBT Action Bar */
+        .q-actions-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--slate-100);
+        }
+
+        .btn-cbt-nav {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 20px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1.5px solid transparent;
+            font-family: inherit;
+        }
+
+        .btn-prev {
+            background: #ffffff;
+            color: var(--slate-700);
+            border-color: var(--slate-300);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: var(--slate-400);
+            transform: translateX(-2px);
+        }
+
+        .btn-doubt {
+            background: #fefce8;
+            color: #a16207;
+            border-color: #fef08a;
+        }
+
+        .btn-doubt:hover {
+            background: #fef9c3;
+            border-color: #fde047;
+        }
+
+        .btn-doubt.is-doubtful {
+            background: #fef08a;
+            color: #854d0e;
+            border-color: #eab308;
+            box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #15803d, #166534);
+            color: #ffffff;
+            box-shadow: 0 3px 10px rgba(21, 128, 61, 0.25);
+        }
+
+        .btn-next:hover {
+            background: linear-gradient(135deg, #166534, #14532d);
+            transform: translateX(2px);
+        }
+
+        .btn-next.btn-finish-direct {
+            background: linear-gradient(135deg, #b45309, #d97706);
+            box-shadow: 0 3px 10px rgba(217, 119, 6, 0.3);
+        }
+
+        /* Nav Legend */
+        .nav-legend {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 10.5px;
+            color: var(--slate-500);
+            margin-bottom: 14px;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--slate-200);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+
+        .legend-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
         }
 
         .btn-finish {
@@ -581,97 +794,121 @@
                     <!-- Quick Jump Subject Tabs -->
                     <div class="category-tabs-bar">
                         @foreach($categoriesGrouped as $catName => $grp)
-                            <a href="#cat-section-{{ Str::slug($catName) }}" class="cat-pill">
+                            <button type="button" onclick="goToQuestion({{ $grp['startIndex'] }})" class="cat-pill {{ $loop->first ? 'active-cat' : '' }}" id="cat-pill-{{ Str::slug($catName) }}" data-category="{{ $catName }}">
                                 <span>{{ $catName }}</span>
-                                <span style="font-size: 10.5px; background: #f1f5f9; color: #64748b; padding: 1px 7px; border-radius: 10px;">{{ count($grp['items']) }} Soal</span>
-                            </a>
+                                <span style="font-size: 10.5px; background: rgba(0,0,0,0.06); padding: 1px 7px; border-radius: 10px;">{{ count($grp['items']) }} Soal</span>
+                            </button>
                         @endforeach
                     </div>
                 @endif
 
+                <!-- Dynamic Subject & Progress Banner (Single View Header) -->
+                @php
+                    $firstCat = isset($categoriesGrouped) && count($categoriesGrouped) > 0 ? array_key_first($categoriesGrouped) : ($questions[0]->kategori ?? 'Ujian Seleksi');
+                @endphp
+                <div class="subject-banner" id="activeSubjectBanner">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">📚</span>
+                        <div>
+                            <h2 style="font-size: 15px; font-weight: 700; margin: 0; line-height: 1.2;" id="activeCategoryName">Mata Pelajaran: {{ $firstCat }}</h2>
+                            <span style="font-size: 11.5px; opacity: 0.9;" id="activeQuestionProgress">Soal Nomor <span id="currentQNumText">1</span> dari {{ count($questions) }} Butir Soal &bull; Mode Fokus</span>
+                        </div>
+                    </div>
+                    <span style="font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; white-space: nowrap;" id="activeTotalBadge">
+                        {{ count($questions) }} Butir Soal
+                    </span>
+                </div>
+
+                <!-- ALL QUESTION CARDS (PAGINATED IN JS) -->
                 @if(isset($categoriesGrouped) && count($categoriesGrouped) > 0)
                     @foreach($categoriesGrouped as $catName => $grp)
-                        <div class="subject-section" id="cat-section-{{ Str::slug($catName) }}" style="margin-bottom: 24px;">
-                            <!-- Subject Banner -->
-                            <div class="subject-banner">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-size: 18px;">📚</span>
-                                    <div>
-                                        <h2 style="font-size: 15px; font-weight: 700; margin: 0; line-height: 1.2;">Mata Pelajaran: {{ $catName }}</h2>
-                                        <span style="font-size: 11.5px; opacity: 0.9;">Soal Nomor {{ $grp['startIndex'] }} s/d {{ $grp['endIndex'] }} &bull; Diacak untuk Anda</span>
-                                    </div>
+                        @foreach($grp['items'] as $item)
+                            @php
+                                $q = $item['question'];
+                                $globalNum = $item['globalIndex'];
+                                $savedVal = $savedAnswers[$q->id] ?? null;
+                            @endphp
+                            <div class="question-card question-pane" id="q-block-{{ $q->id }}" data-global-index="{{ $globalNum }}" data-category="{{ $q->kategori }}" style="{{ $globalNum === 1 ? '' : 'display: none;' }}">
+                                <div class="q-header">
+                                    <span class="q-num">Nomor {{ $globalNum }} <span style="font-size: 13px; font-weight: 400; color: #64748b;">/ {{ count($questions) }}</span></span>
+                                    <span class="q-tag">{{ $q->kategori }}</span>
                                 </div>
-                                <span style="font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; white-space: nowrap;">
-                                    {{ count($grp['items']) }} Butir Soal
-                                </span>
-                            </div>
 
-                            @foreach($grp['items'] as $item)
+                                <div class="q-text {{ $q->is_math ? 'render-math' : '' }} {{ $q->is_arabic ? 'arabic-text' : '' }}">
+                                    <bdi>{!! nl2br(e(\App\Models\Question::cleanFormattingText($q->soal))) !!}</bdi>
+                                </div>
+
+                                @if(!empty($q->gambar))
+                                    <div class="q-image-wrap" style="margin: 14px 0 18px 0;">
+                                        <img src="{{ asset($q->gambar) }}" alt="Gambar Soal Nomor {{ $globalNum }}" 
+                                             style="max-height: 280px; max-width: 100%; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #ffffff; padding: 4px; object-fit: contain; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
+                                             onclick="window.open(this.src, '_blank')" title="Klik untuk membuka gambar ukuran penuh">
+                                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">🔍 Klik gambar untuk memperbesar</span>
+                                    </div>
+                                @endif
+
                                 @php
-                                    $q = $item['question'];
-                                    $globalNum = $item['globalIndex'];
-                                    $savedVal = $savedAnswers[$q->id] ?? null;
+                                    $optionsArray = [
+                                        'A' => $q->opsi_a,
+                                        'B' => $q->opsi_b,
+                                        'C' => $q->opsi_c,
+                                        'D' => $q->opsi_d,
+                                    ];
+                                    if (!empty($q->opsi_e)) {
+                                        $optionsArray['E'] = $q->opsi_e;
+                                    }
                                 @endphp
-                                <div class="question-card" id="q-block-{{ $q->id }}">
-                                    <div class="q-header">
-                                        <span class="q-num">Nomor {{ $globalNum }}</span>
-                                        <span class="q-tag">{{ $q->kategori }}</span>
-                                    </div>
 
-                                    <div class="q-text render-math {{ $q->is_arabic ? 'arabic-text' : '' }}">
-                                        {!! nl2br(e(\App\Models\Question::cleanFormattingText($q->soal))) !!}
-                                    </div>
-
-                                    @if(!empty($q->gambar))
-                                        <div class="q-image-wrap" style="margin: 14px 0 18px 0;">
-                                            <img src="{{ asset($q->gambar) }}" alt="Gambar Soal Nomor {{ $globalNum }}" 
-                                                 style="max-height: 280px; max-width: 100%; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #ffffff; padding: 4px; object-fit: contain; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
-                                                 onclick="window.open(this.src, '_blank')" title="Klik untuk membuka gambar ukuran penuh">
-                                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">🔍 Klik gambar untuk memperbesar</span>
-                                        </div>
-                                    @endif
-
-                                    @php
-                                        $optionsArray = [
-                                            'A' => $q->opsi_a,
-                                            'B' => $q->opsi_b,
-                                            'C' => $q->opsi_c,
-                                            'D' => $q->opsi_d,
-                                        ];
-                                        if (!empty($q->opsi_e)) {
-                                            $optionsArray['E'] = $q->opsi_e;
-                                        }
-                                    @endphp
-
-                                    <div class="options-list">
-                                        @foreach($optionsArray as $key => $val)
-                                            <label class="option-item {{ $savedVal === $key ? 'selected' : '' }}" onclick="selectOption({{ $q->id }}, '{{ $key }}')">
-                                                <input type="radio" name="jawaban[{{ $q->id }}]" value="{{ $key }}" id="opt-{{ $q->id }}-{{ $key }}" {{ $savedVal === $key ? 'checked' : '' }}>
-                                                <div class="option-key">{{ $key }}</div>
-                                                <div class="option-label render-math {{ $q->is_arabic ? 'arabic-text' : '' }}">{!! $val !!}</div>
-                                            </label>
-                                        @endforeach
-                                    </div>
+                                <div class="options-list">
+                                    @foreach($optionsArray as $key => $val)
+                                        <label class="option-item {{ $savedVal === $key ? 'selected' : '' }}" onclick="selectOption({{ $q->id }}, '{{ $key }}')">
+                                            <input type="radio" name="jawaban[{{ $q->id }}]" value="{{ $key }}" id="opt-{{ $q->id }}-{{ $key }}" {{ $savedVal === $key ? 'checked' : '' }}>
+                                            <div class="option-key">{{ $key }}</div>
+                                            <div class="option-label {{ $q->is_math ? 'render-math' : '' }} {{ $q->is_arabic ? 'arabic-text' : '' }}"><bdi>{!! $val !!}</bdi></div>
+                                        </label>
+                                    @endforeach
                                 </div>
-                            @endforeach
-                        </div>
+
+                                <!-- CBT Navigation Action Bar -->
+                                <div class="q-actions-bar">
+                                    <button type="button" class="btn-cbt-nav btn-prev" onclick="prevQuestion()" {{ $globalNum === 1 ? 'disabled style=opacity:0.4;cursor:not-allowed;' : '' }}>
+                                        <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                        <span>Sebelumnya</span>
+                                    </button>
+                                    @php
+                                        $isDoubtfulSaved = in_array($q->id, $savedRagu ?? []);
+                                    @endphp
+                                    <button type="button" class="btn-cbt-nav btn-doubt {{ $isDoubtfulSaved ? 'is-doubtful' : '' }}" onclick="toggleDoubtfulCurrent()">
+                                        <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                        <span class="doubt-label-text">{{ $isDoubtfulSaved ? 'Ragu-Ragu (Ditandai)' : 'Ragu-Ragu' }}</span>
+                                    </button>
+                                    <button type="button" class="btn-cbt-nav btn-next {{ $globalNum === count($questions) ? 'btn-finish-direct' : '' }}" onclick="nextQuestion()">
+                                        <span>{{ $globalNum === count($questions) ? 'Selesai & Kumpulkan' : 'Selanjutnya' }}</span>
+                                        <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
                     @endforeach
                 @else
                     @foreach($questions as $index => $q)
-                        @php $savedVal = $savedAnswers[$q->id] ?? null; @endphp
-                        <div class="question-card" id="q-block-{{ $q->id }}">
+                        @php
+                            $globalNum = $index + 1;
+                            $savedVal = $savedAnswers[$q->id] ?? null;
+                        @endphp
+                        <div class="question-card question-pane" id="q-block-{{ $q->id }}" data-global-index="{{ $globalNum }}" data-category="{{ $q->kategori }}" style="{{ $globalNum === 1 ? '' : 'display: none;' }}">
                             <div class="q-header">
-                                <span class="q-num">Nomor {{ $index + 1 }}</span>
+                                <span class="q-num">Nomor {{ $globalNum }} <span style="font-size: 13px; font-weight: 400; color: #64748b;">/ {{ count($questions) }}</span></span>
                                 <span class="q-tag">{{ $q->kategori }}</span>
                             </div>
 
-                            <div class="q-text render-math {{ $q->is_arabic ? 'arabic-text' : '' }}">
-                                {!! nl2br(e(\App\Models\Question::cleanFormattingText($q->soal))) !!}
+                            <div class="q-text {{ $q->is_math ? 'render-math' : '' }} {{ $q->is_arabic ? 'arabic-text' : '' }}">
+                                <bdi>{!! nl2br(e(\App\Models\Question::cleanFormattingText($q->soal))) !!}</bdi>
                             </div>
 
                             @if(!empty($q->gambar))
                                 <div class="q-image-wrap" style="margin: 14px 0 18px 0;">
-                                    <img src="{{ asset($q->gambar) }}" alt="Gambar Soal Nomor {{ $index + 1 }}" 
+                                    <img src="{{ asset($q->gambar) }}" alt="Gambar Soal Nomor {{ $globalNum }}" 
                                          style="max-height: 280px; max-width: 100%; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #ffffff; padding: 4px; object-fit: contain; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
                                          onclick="window.open(this.src, '_blank')" title="Klik untuk membuka gambar ukuran penuh">
                                     <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">🔍 Klik gambar untuk memperbesar</span>
@@ -695,9 +932,27 @@
                                     <label class="option-item {{ $savedVal === $key ? 'selected' : '' }}" onclick="selectOption({{ $q->id }}, '{{ $key }}')">
                                         <input type="radio" name="jawaban[{{ $q->id }}]" value="{{ $key }}" id="opt-{{ $q->id }}-{{ $key }}" {{ $savedVal === $key ? 'checked' : '' }}>
                                         <div class="option-key">{{ $key }}</div>
-                                        <div class="option-label render-math {{ $q->is_arabic ? 'arabic-text' : '' }}">{!! $val !!}</div>
+                                        <div class="option-label {{ $q->is_math ? 'render-math' : '' }} {{ $q->is_arabic ? 'arabic-text' : '' }}"><bdi>{!! $val !!}</bdi></div>
                                     </label>
                                 @endforeach
+                            </div>
+
+                            <div class="q-actions-bar">
+                                <button type="button" class="btn-cbt-nav btn-prev" onclick="prevQuestion()" {{ $globalNum === 1 ? 'disabled style=opacity:0.4;cursor:not-allowed;' : '' }}>
+                                    <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                    <span>Sebelumnya</span>
+                                </button>
+                                @php
+                                    $isDoubtfulSaved = in_array($q->id, $savedRagu ?? []);
+                                @endphp
+                                <button type="button" class="btn-cbt-nav btn-doubt {{ $isDoubtfulSaved ? 'is-doubtful' : '' }}" onclick="toggleDoubtfulCurrent()">
+                                    <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                    <span class="doubt-label-text">{{ $isDoubtfulSaved ? 'Ragu-Ragu (Ditandai)' : 'Ragu-Ragu' }}</span>
+                                </button>
+                                <button type="button" class="btn-cbt-nav btn-next {{ $globalNum === count($questions) ? 'btn-finish-direct' : '' }}" onclick="nextQuestion()">
+                                    <span>{{ $globalNum === count($questions) ? 'Selesai & Kumpulkan' : 'Selanjutnya' }}</span>
+                                    <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
                             </div>
                         </div>
                     @endforeach
@@ -712,38 +967,53 @@
                         <span class="progress-indicator" id="progressCount">0 / {{ count($questions) }} Terjawab</span>
                     </h3>
 
+                    <!-- Nav Legend -->
+                    <div class="nav-legend">
+                        <div class="legend-item"><span class="legend-box" style="background:#ffffff; border:1px solid #cbd5e1;"></span> Belum</div>
+                        <div class="legend-item"><span class="legend-box" style="background:#15803d;"></span> Dijawab</div>
+                        <div class="legend-item"><span class="legend-box" style="background:#fef08a; border:1px solid #eab308;"></span> Ragu</div>
+                    </div>
+
                     @if(isset($categoriesGrouped) && count($categoriesGrouped) > 0)
                         <div class="sidebar-categories">
                             @foreach($categoriesGrouped as $catName => $grp)
                                 <div class="sidebar-cat-group">
-                                    <div class="sidebar-cat-title">
+                                    <div class="sidebar-cat-title" onclick="goToQuestion({{ $grp['startIndex'] }})" style="cursor:pointer;" title="Klik untuk lompat ke {{ $catName }}">
                                         <span>{{ $catName }}</span>
-                                        <span style="font-size: 10px; color: #94a3b8;">{{ count($grp['items']) }} Soal</span>
+                                        <span style="font-size: 10px; color: #94a3b8;">{{ count($grp['items']) }} Soal &bull; No {{ $grp['startIndex'] }}-{{ $grp['endIndex'] }}</span>
                                     </div>
                                     <div class="grid-nav">
                                         @foreach($grp['items'] as $item)
-                                            <a href="#q-block-{{ $item['question']->id }}" class="nav-btn {{ isset($savedAnswers[$item['question']->id]) ? 'answered' : '' }}" id="nav-btn-{{ $item['question']->id }}">
+                                            <button type="button"
+                                                    onclick="goToQuestion({{ $item['globalIndex'] }})"
+                                                    class="nav-btn {{ isset($savedAnswers[$item['question']->id]) ? 'answered' : '' }} {{ in_array($item['question']->id, $savedRagu ?? []) ? 'doubtful' : '' }} {{ $item['globalIndex'] === 1 ? 'current-active' : '' }}"
+                                                    id="nav-btn-{{ $item['question']->id }}"
+                                                    data-global-num="{{ $item['globalIndex'] }}">
                                                 {{ $item['globalIndex'] }}
-                                            </a>
+                                            </button>
                                         @endforeach
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                     @else
-                        <div class="grid-nav" style="max-height: 280px; overflow-y: auto; margin-bottom: 20px;">
+                        <div class="grid-nav" style="max-height: 320px; overflow-y: auto; margin-bottom: 20px;">
                             @foreach($questions as $index => $q)
-                                <a href="#q-block-{{ $q->id }}" class="nav-btn {{ isset($savedAnswers[$q->id]) ? 'answered' : '' }}" id="nav-btn-{{ $q->id }}">
+                                <button type="button"
+                                        onclick="goToQuestion({{ $index + 1 }})"
+                                        class="nav-btn {{ isset($savedAnswers[$q->id]) ? 'answered' : '' }} {{ in_array($q->id, $savedRagu ?? []) ? 'doubtful' : '' }} {{ $index === 0 ? 'current-active' : '' }}"
+                                        id="nav-btn-{{ $q->id }}"
+                                        data-global-num="{{ $index + 1 }}">
                                     {{ $index + 1 }}
-                                </a>
+                                </button>
                             @endforeach
                         </div>
                     @endif
 
-                    <div style="font-size: 11.5px; color: var(--slate-600); margin-bottom: 18px; line-height: 1.5; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-                        <span style="font-weight:700; color:#0f172a; display:block; margin-bottom:2px;">Aturan Selama Ujian:</span>
-                        &bull; Dilarang berpindah tab atau membuka aplikasi lain.<br>
-                        &bull; Ujian otomatis disubmit saat waktu habis atau jika batas peringatan terlampaui.
+                    <div style="font-size: 11px; color: var(--slate-600); margin-bottom: 14px; line-height: 1.5; background:#f8fafc; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <span style="font-weight:700; color:#0f172a; display:block; margin-bottom:2px;">Petunjuk Cepat:</span>
+                        &bull; Tombol <strong>[←]</strong> dan <strong>[→]</strong> di keyboard untuk pindah soal.<br>
+                        &bull; Tekan huruf <strong>A, B, C, D, E</strong> untuk memilih jawaban langsung.
                     </div>
 
                     <button type="button" onclick="openConfirmFinishModal()" class="btn-finish">
@@ -815,15 +1085,25 @@
     <!-- KaTeX Scripts for live formula rendering -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-            onload="renderMathInElement(document.getElementById('questionsContainer'), {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                throwOnError: false
-            });"></script>
+            onload="renderMathSafely();"></script>
+    <script>
+        function renderMathSafely() {
+            const container = document.getElementById('questionsContainer') || document.getElementById('examForm') || document.body;
+            if (typeof renderMathInElement === 'function' && container) {
+                renderMathInElement(container, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    ignoredClasses: ['arabic-text', 'arabic-inline', 'katex-ignore'],
+                    throwOnError: false
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', renderMathSafely);
+    </script>
 
     <!-- ANTI-CHEAT & TIMER JAVASCRIPT CORE -->
     <script>
@@ -832,6 +1112,10 @@
         const totalQuestions = {{ count($questions) }};
         let examStarted = false;
         let isAutoSubmitting = false;
+
+        // CBT Single Question Navigation State
+        let currentGlobalIndex = {{ max(1, min(count($questions), ($currentIndex ?? 0) + 1)) }};
+        const doubtfulQuestions = new Set(@json(array_values(array_map('intval', $savedRagu ?? []))));
 
         // 1. COUNTDOWN TIMER
         function updateTimer() {
@@ -860,9 +1144,168 @@
         setInterval(updateTimer, 1000);
         updateTimer();
 
-        // 2. QUESTION SELECTION & PROGRESS
+        // 2. CBT SINGLE QUESTION & JUMP NAVIGATION
+        function goToQuestion(targetIndex) {
+            if (targetIndex < 1 || targetIndex > totalQuestions) return;
+
+            // Hide all questions, display target question
+            const allPanes = document.querySelectorAll('.question-pane');
+            let targetPane = null;
+            allPanes.forEach(pane => {
+                const idx = parseInt(pane.getAttribute('data-global-index'), 10);
+                if (idx === targetIndex) {
+                    pane.style.display = 'block';
+                    targetPane = pane;
+                } else {
+                    pane.style.display = 'none';
+                }
+            });
+
+            currentGlobalIndex = targetIndex;
+
+            // Update top progress & category banner
+            if (targetPane) {
+                const catName = targetPane.getAttribute('data-category') || 'Umum';
+                const activeCatText = document.getElementById('activeCategoryName');
+                if (activeCatText) activeCatText.innerText = 'Mata Pelajaran: ' + catName;
+
+                const qNumText = document.getElementById('currentQNumText');
+                if (qNumText) qNumText.innerText = targetIndex;
+
+                // Sync category tab pills
+                document.querySelectorAll('.cat-pill').forEach(pill => {
+                    if (pill.getAttribute('data-category') === catName) {
+                        pill.classList.add('active-cat');
+                        pill.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+                    } else {
+                        pill.classList.remove('active-cat');
+                    }
+                });
+            }
+
+            // Sync sidebar button active state
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const num = parseInt(btn.getAttribute('data-global-num'), 10);
+                if (num === targetIndex) {
+                    btn.classList.add('current-active');
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    btn.classList.remove('current-active');
+                }
+            });
+
+            // Smooth scroll back to top of question banner
+            const banner = document.getElementById('activeSubjectBanner');
+            if (banner) {
+                const bannerTop = banner.getBoundingClientRect().top + window.pageYOffset - 80;
+                window.scrollTo({
+                    top: Math.max(0, bannerTop),
+                    behavior: 'smooth'
+                });
+            }
+
+            // Autosave current index position in background
+            sendAutosave(null, null, false, currentGlobalIndex - 1);
+        }
+
+        function nextQuestion() {
+            if (currentGlobalIndex < totalQuestions) {
+                goToQuestion(currentGlobalIndex + 1);
+            } else {
+                openConfirmFinishModal();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentGlobalIndex > 1) {
+                goToQuestion(currentGlobalIndex - 1);
+            }
+        }
+
+        function toggleDoubtfulCurrent() {
+            const curPane = document.querySelector(`.question-pane[data-global-index="${currentGlobalIndex}"]`);
+            if (!curPane) return;
+
+            const qIdMatch = curPane.id.match(/^q-block-(\d+)$/);
+            if (!qIdMatch) return;
+            const qId = parseInt(qIdMatch[1], 10);
+
+            const isCurrentlyDoubtful = doubtfulQuestions.has(qId);
+            const newDoubtful = !isCurrentlyDoubtful;
+
+            if (newDoubtful) {
+                doubtfulQuestions.add(qId);
+            } else {
+                doubtfulQuestions.delete(qId);
+            }
+
+            // Update button UI on question card
+            const doubtBtn = curPane.querySelector('.btn-doubt');
+            if (doubtBtn) {
+                if (newDoubtful) {
+                    doubtBtn.classList.add('is-doubtful');
+                    const lbl = doubtBtn.querySelector('.doubt-label-text');
+                    if (lbl) lbl.innerText = 'Ragu-Ragu (Ditandai)';
+                } else {
+                    doubtBtn.classList.remove('is-doubtful');
+                    const lbl = doubtBtn.querySelector('.doubt-label-text');
+                    if (lbl) lbl.innerText = 'Ragu-Ragu';
+                }
+            }
+
+            // Update sidebar nav button badge
+            const navBtn = document.getElementById('nav-btn-' + qId);
+            if (navBtn) {
+                if (newDoubtful) {
+                    navBtn.classList.add('doubtful');
+                } else {
+                    navBtn.classList.remove('doubtful');
+                }
+            }
+
+            // Determine selected answer if any
+            const checkedRadio = curPane.querySelector('input[type="radio"]:checked');
+            const answer = checkedRadio ? checkedRadio.value : null;
+
+            sendAutosave(qId, answer, newDoubtful, currentGlobalIndex - 1);
+        }
+
+        // Autosave dispatcher
+        function sendAutosave(qId, answer, isRagu, curIdx) {
+            if (isAutoSubmitting) return;
+
+            const payload = {
+                current_index: curIdx !== undefined ? curIdx : (currentGlobalIndex - 1)
+            };
+            if (qId) {
+                payload.question_id = qId;
+                payload.answer = answer;
+                payload.ragu = isRagu;
+            }
+
+            fetch('{{ route("ujian.autosave") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.force_finish) {
+                    isAutoSubmitting = true;
+                    window.location.href = data.redirect || '{{ route("ujian.result") }}';
+                }
+            })
+            .catch(err => console.log('Autosave notice:', err));
+        }
+
+        // 3. QUESTION SELECTION & PROGRESS
         function selectOption(qId, key) {
             const card = document.getElementById('q-block-' + qId);
+            if (!card) return;
             const items = card.querySelectorAll('.option-item');
             items.forEach(el => el.classList.remove('selected'));
 
@@ -876,6 +1319,10 @@
             if (navBtn) navBtn.classList.add('answered');
 
             updateAnswerProgress();
+
+            // Trigger background autosave
+            const isRagu = doubtfulQuestions.has(parseInt(qId, 10));
+            sendAutosave(qId, key, isRagu, currentGlobalIndex - 1);
         }
 
         function updateAnswerProgress() {
@@ -886,7 +1333,12 @@
 
         function openConfirmFinishModal() {
             const answeredCount = document.querySelectorAll('.nav-btn.answered').length;
-            const text = `Anda telah menjawab ${answeredCount} dari ${totalQuestions} soal. Apakah Anda yakin ingin mengumpulkan ujian sekarang?`;
+            const doubtfulCount = document.querySelectorAll('.nav-btn.doubtful').length;
+            let text = `Anda telah menjawab ${answeredCount} dari ${totalQuestions} soal.`;
+            if (doubtfulCount > 0) {
+                text += ` Perhatian: Masih ada ${doubtfulCount} soal yang ditandai Ragu-Ragu.`;
+            }
+            text += ` Apakah Anda yakin ingin mengumpulkan ujian sekarang?`;
             document.getElementById('finishModalText').innerText = text;
             document.getElementById('confirmFinishModal').style.display = 'flex';
         }
@@ -896,7 +1348,7 @@
             document.getElementById('examForm').submit();
         }
 
-        // 3. FULLSCREEN MODE
+        // 4. FULLSCREEN MODE
         function startExamFullscreen() {
             examStarted = true;
             document.getElementById('startModal').style.display = 'none';
@@ -915,7 +1367,7 @@
             }
         }
 
-        // 4. ANTI-CHEAT DETECTION (Tab switch, Blur, Exit Fullscreen)
+        // 5. ANTI-CHEAT DETECTION (Tab switch, Blur, Exit Fullscreen)
         function reportCheatViolation(type, message) {
             if (!examStarted || isAutoSubmitting) return;
 
@@ -964,7 +1416,7 @@
             }
         });
 
-        // 5. BLOCK CHEAT KEYS & CONTEXT MENU
+        // 6. BLOCK CHEAT KEYS & CBT SHORTCUT KEYS
         document.addEventListener('contextmenu', e => e.preventDefault());
 
         document.addEventListener('keydown', e => {
@@ -975,7 +1427,7 @@
                 return false;
             }
 
-            // Block Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+X (Cut), Ctrl+U (View Source), Ctrl+P (Print)
+            // Block Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+U, Ctrl+P
             if (e.ctrlKey || e.metaKey) {
                 const k = e.key.toLowerCase();
                 if (['c', 'v', 'x', 'u', 'p', 's', 'a'].includes(k)) {
@@ -989,10 +1441,57 @@
                     return false;
                 }
             }
+
+            // Keyboard Shortcuts for CBT
+            const isModalOpen = (document.getElementById('confirmFinishModal') && document.getElementById('confirmFinishModal').style.display === 'flex') ||
+                                (document.getElementById('cheatWarningModal') && document.getElementById('cheatWarningModal').style.display === 'flex') ||
+                                (document.getElementById('startModal') && document.getElementById('startModal').style.display === 'flex');
+            if (isModalOpen) return;
+
+            if (e.target && ((e.target.tagName === 'INPUT' && e.target.type !== 'radio') || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+                return;
+            }
+
+            // Arrow Left / Right navigation
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevQuestion();
+                return;
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextQuestion();
+                return;
+            }
+
+            // Keys A, B, C, D, E (without Ctrl, Alt, Meta)
+            if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+                const keyUpper = e.key.toUpperCase();
+                if (['A', 'B', 'C', 'D', 'E'].includes(keyUpper)) {
+                    const curPane = document.querySelector(`.question-pane[data-global-index="${currentGlobalIndex}"]`);
+                    if (curPane) {
+                        const qIdMatch = curPane.id.match(/^q-block-(\d+)$/);
+                        if (qIdMatch) {
+                            const qId = parseInt(qIdMatch[1], 10);
+                            const radio = document.getElementById('opt-' + qId + '-' + keyUpper);
+                            if (radio) {
+                                e.preventDefault();
+                                selectOption(qId, keyUpper);
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         // Block drag and select
         document.addEventListener('dragstart', e => e.preventDefault());
+
+        // Resume initial question position on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (currentGlobalIndex > 1) {
+                goToQuestion(currentGlobalIndex);
+            }
+        });
     </script>
 </body>
 

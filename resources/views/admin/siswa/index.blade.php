@@ -214,11 +214,11 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="w-full min-w-[850px] text-left text-sm">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50/70">
                         <th class="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Santri</th>
-                        <th class="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">NIS / NISN</th>
+                        <th class="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">NIS / No. Stambuk</th>
                         <th class="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kelas &amp; Jenjang</th>
                         <th class="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Angkatan</th>
                         <th class="px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
@@ -250,13 +250,30 @@
                                                 {{ $student->jenis_kelamin }}
                                             </span>
                                             @if($student->tanggal_lahir)
+                                                @php
+                                                    $displayTgl = $student->tanggal_lahir;
+                                                    try {
+                                                        $rawTgl = trim($student->tanggal_lahir);
+                                                        if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $rawTgl)) {
+                                                            $displayTgl = \Carbon\Carbon::createFromFormat('d/m/Y', $rawTgl)->translatedFormat('d M Y');
+                                                        } elseif (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $rawTgl, $m)) {
+                                                            $displayTgl = \Carbon\Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1])->translatedFormat('d M Y');
+                                                        } else {
+                                                            $displayTgl = \Carbon\Carbon::parse($rawTgl)->translatedFormat('d M Y');
+                                                        }
+                                                    } catch (\Throwable $e) {
+                                                        $displayTgl = explode(' ', trim($student->tanggal_lahir))[0];
+                                                    }
+                                                @endphp
                                                 <span class="text-gray-300">•</span>
-                                                <span>{{ $student->tanggal_lahir }}</span>
+                                                <span>{{ $displayTgl }}</span>
                                             @endif
                                         </div>
-                                        <div class="text-[11px] text-gray-400 font-mono mt-0.5">
-                                            {{ $student->username ?: $student->nis }}
-                                        </div>
+                                        @if($student->username && $student->username !== $student->nis)
+                                            <div class="text-[11px] text-gray-400 font-mono mt-0.5">
+                                                Login: {{ $student->username }}
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -368,9 +385,6 @@
     </div>
 
 </div>
-</div>
-
-</div>
 
 <!-- MODAL 1: IMPORT MASSAL SANTRI DENGAN TEMPLATE EXCEL / CSV BESERTA TUNGGAKAN LALU -->
 <div id="modalImportExcel" class="ta-modal-backdrop hidden">
@@ -383,43 +397,44 @@
             <button type="button" onclick="document.getElementById('modalImportExcel').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
 
-        <form action="{{ route('admin.siswa.importExcel') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.siswa.importExcel') }}" method="POST" enctype="multipart/form-data" class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
-            <div class="ta-modal-body space-y-4 text-xs">
+            <div class="ta-modal-body space-y-4 text-xs overflow-y-auto flex-1 min-h-0">
                 <!-- Download Template Step -->
                 <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-emerald-950 block">Langkah 1: Unduh Format Template Excel Resmi (.xlsx)</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-600 text-white uppercase tracking-wider">Format Baru</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-600 text-white uppercase tracking-wider">Satu Template</span>
                     </div>
                     <p class="text-gray-600 leading-relaxed text-[11px]">
-                        Gunakan file template Microsoft Excel resmi yang sudah disederhanakan (Hanya 10 Kolom Praktis). Sangat cepat dan mudah diisi dari data pembukuan manual lama:
+                        Template ini berlaku untuk semua kebutuhan import: santri baru, santri lama, alumni bertagihan, dll. Isi sesuai kolom yang tersedia:
                     </p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-700 bg-white p-2.5 rounded-lg border border-emerald-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-700 bg-white p-3 rounded-lg border border-emerald-100">
                         <div class="flex items-start gap-1.5">
                             <span class="text-emerald-600 font-bold">✓</span>
-                            <span><strong>Kolom A-G:</strong> Data Pokok (Nama, NIS, L/P, Tgl Lahir, Kelas, Wali, WA)</span>
+                            <span><strong>Kolom A-F (Hijau):</strong> Data Pokok Wajib (Nama, NIS, L/P, Tgl Lahir <code class="bg-gray-100 px-1 rounded text-[10px]">YYYY-MM-DD</code>, Tahun Masuk, Kelas)</span>
                         </div>
                         <div class="flex items-start gap-1.5">
-                            <span class="text-amber-600 font-bold">✓</span>
-                            <span><strong>Kolom H:</strong> Sisa Uang Pangkal / Daftar Ulang Lalu</span>
+                            <span class="text-blue-600 font-bold">✓</span>
+                            <span><strong>Kolom G-L (Biru):</strong> Biodata &amp; Alamat (Tempat Lahir, NIK, NISN, Gol. Darah, Alamat Lengkap, Kamar/Asrama) <span class="text-gray-400">(Opsional)</span></span>
                         </div>
                         <div class="flex items-start gap-1.5">
-                            <span class="text-amber-600 font-bold">✓</span>
-                            <span><strong>Kolom I:</strong> Tunggakan SPP Bulanan</span>
+                            <span class="text-purple-600 font-bold">✓</span>
+                            <span><strong>Kolom M-Q (Ungu):</strong> Orang Tua &amp; Sekolah (Nama Wali/Ayah, WhatsApp, Pekerjaan, Nama Ibu, Asal Sekolah) <span class="text-gray-400">(Opsional)</span></span>
                         </div>
-                        <div class="flex items-start gap-1.5">
+                        <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-amber-600 font-bold">✓</span>
-                            <span><strong>Kolom J:</strong> Keterangan / Rincian Tunggakan</span>
+                            <span><strong>Kolom R-AB (Oranye):</strong> Rincian Tagihan per Kategori (Syahriyah Rp 30.000, SOT MTs Rp 55k/MA Rp 75k, Uang Makan, Tabungan, Daftar Ulang, Gedung, Seragam, Kitab, Kegiatan, Lainnya) <span class="text-gray-400">(Isi 0 jika lunas / tidak ada)</span></span>
                         </div>
                     </div>
                     <div class="pt-1">
                         <a href="{{ route('admin.siswa.downloadTemplate') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-theme-xs transition">
                             <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M8.5 13.5l2 2.5-2 2.5h1.5l1.25-1.75L12.5 18.5H14l-2-2.5 2-2.5h-1.5l-1.25 1.75L10 13.5H8.5z"/></svg>
-                            <span>Unduh Template Excel Praktis (10 Kolom)</span>
+                            <span>Unduh Template Excel Lengkap (Biodata, Alamat &amp; Tagihan)</span>
                         </a>
                     </div>
                 </div>
+
 
                 <!-- Upload File Step -->
                 <div class="space-y-2">

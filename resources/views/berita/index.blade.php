@@ -195,16 +195,100 @@
         .views-count { color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-size: 11px; }
 
         /* PAGINATION */
-        .pagination-wrap { display: flex; justify-content: center; margin: 40px 0 60px; }
-        .pagination-wrap .pagination { display: flex; gap: 6px; }
+        .pagination-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 48px 0 64px;
+        }
+        .pagination-wrap nav {
+            display: flex;
+            justify-content: center;
+        }
+        .pagination-wrap .pagination {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .pagination-wrap .page-item {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
         .pagination-wrap .page-item .page-link {
-            padding: 8px 14px; border: 1px solid var(--border);
-            border-radius: var(--radius-xs); background: #fff;
-            color: var(--text-secondary); font-size: 13px; font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            user-select: none;
+        }
+        .pagination-wrap .page-item:not(.active):not(.disabled) .page-link:hover {
+            background: var(--green-50);
+            border-color: var(--green-300);
+            color: var(--green-800);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
         .pagination-wrap .page-item.active .page-link {
-            background: var(--green-800); color: #fff; border-color: var(--green-800);
+            background: var(--gradient-primary);
+            color: #fff;
+            border-color: var(--green-700);
+            box-shadow: 0 4px 12px rgba(20, 90, 46, 0.25);
+            font-weight: 700;
+            cursor: default;
         }
+        .pagination-wrap .page-item.disabled .page-link {
+            background: #f8faf9;
+            color: #b0bcba;
+            border-color: var(--border-light);
+            cursor: not-allowed;
+            box-shadow: none;
+            pointer-events: none;
+        }
+        .pagination-wrap .page-link.dots {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            color: var(--text-muted);
+            min-width: 24px;
+            padding: 0;
+        }
+        @media (max-width: 640px) {
+            .pagination-wrap .d-none-sm {
+                display: none;
+            }
+            .pagination-wrap .page-item .page-link {
+                min-width: 36px;
+                height: 36px;
+                padding: 0 10px;
+                font-size: 12px;
+            }
+        }
+        /* Fallback safety: constrain any SVG or tailwind pagination elements */
+        .pagination-wrap svg {
+            width: 16px !important;
+            height: 16px !important;
+            max-width: 16px !important;
+            max-height: 16px !important;
+        }
+
 
         /* EMPTY STATE */
         .empty-state {
@@ -333,7 +417,7 @@
 
             <!-- PAGINATION -->
             <div class="pagination-wrap">
-                {{ $articles->links() }}
+                {{ $articles->links('partials.pagination') }}
             </div>
         @else
             <div class="empty-state">

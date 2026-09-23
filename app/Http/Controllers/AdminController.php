@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Services\PhotoVerificationService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class AdminController extends Controller
 {
@@ -56,15 +57,32 @@ class AdminController extends Controller
         }
 
         $articles = $query->paginate(10)->withQueryString();
-        $categories = ['Kajian Subuh', 'Prestasi', 'Literasi Turats', 'Informasi PSB', 'Warta Kampus'];
+        $categories = ['Kajian', 'Prestasi', 'Literasi Turats', 'Informasi PSB', 'Warta Kampus'];
 
         return view('admin.berita.index', compact('articles', 'categories'));
     }
 
     public function articleCreate()
     {
-        $categories = ['Kajian Subuh', 'Prestasi', 'Literasi Turats', 'Informasi PSB', 'Warta Kampus'];
+        $categories = ['Kajian', 'Prestasi', 'Literasi Turats', 'Informasi PSB', 'Warta Kampus'];
         return view('admin.berita.create', compact('categories'));
+    }
+
+    private function normalizeImageUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        $url = trim($url);
+
+        // Convert Google Drive share link to direct Google User Content CDN
+        if (preg_match('/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=|thumbnail\?id=)([a-zA-Z0-9_-]+)/i', $url, $matches)) {
+            $fileId = $matches[1];
+            return "https://lh3.googleusercontent.com/d/{$fileId}";
+        }
+
+        return $url;
     }
 
     public function articleStore(Request $request)
@@ -80,7 +98,14 @@ class AdminController extends Controller
             'status' => 'required|string|in:published,draft',
         ]);
 
-        $imagePath = $request->image;
+        $rawImage = $request->input('image');
+        if (!empty($rawImage) && str_contains($rawImage, 'instagram.com/p/')) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Tautan Instagram yang Anda masukkan adalah halaman postingan web (bukan file gambar langsung). Instagram memblokir penayangan langsung foto di website lain. Silakan simpan / screenshot foto dari Instagram tersebut, lalu upload menggunakan menu "Upload File Gambar" di atas.');
+        }
+
+        $imagePath = $this->normalizeImageUrl($rawImage);
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
@@ -96,13 +121,15 @@ class AdminController extends Controller
             $slug = $originalSlug . '-' . $count++;
         }
 
+        $content = $this->formatArticleContent($request->content);
+
         Article::create([
             'title' => $request->title,
             'slug' => $slug,
             'category' => $request->category,
             'image' => $imagePath,
-            'excerpt' => $request->excerpt ?: Str::limit(strip_tags($request->content), 150),
-            'content' => $request->content,
+            'excerpt' => $request->excerpt ?: Str::limit(strip_tags($content), 150),
+            'content' => $content,
             'author' => $request->author ?: 'Humas Pesantren',
             'status' => $request->status,
             'published_at' => $request->status === 'published' ? now() : null,
@@ -114,7 +141,7 @@ class AdminController extends Controller
     public function articleEdit($id)
     {
         $article = Article::findOrFail($id);
-        $categories = ['Kajian Subuh', 'Prestasi', 'Literasi Turats', 'Informasi PSB', 'Warta Kampus'];
+        $categories = ['Kajian', 'Prestasi', 'Literasi Turats', 'Informasi PSB', 'Warta Kampus'];
         return view('admin.berita.edit', compact('article', 'categories'));
     }
 
@@ -141,15 +168,23 @@ class AdminController extends Controller
             $file->move(public_path('uploads/berita'), $filename);
             $imagePath = '/uploads/berita/' . $filename;
         } elseif ($request->filled('image')) {
-            $imagePath = $request->image;
+            $rawImage = $request->input('image');
+            if (str_contains($rawImage, 'instagram.com/p/')) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Tautan Instagram yang Anda masukkan adalah halaman postingan web (bukan file gambar langsung). Instagram memblokir penayangan langsung foto di website lain. Silakan simpan / screenshot foto dari Instagram tersebut, lalu upload menggunakan menu "Ganti dengan Upload File".');
+            }
+            $imagePath = $this->normalizeImageUrl($rawImage);
         }
+
+        $content = $this->formatArticleContent($request->content);
 
         $article->update([
             'title' => $request->title,
             'category' => $request->category,
             'image' => $imagePath,
-            'excerpt' => $request->excerpt ?: Str::limit(strip_tags($request->content), 150),
-            'content' => $request->content,
+            'excerpt' => $request->excerpt ?: Str::limit(strip_tags($content), 150),
+            'content' => $content,
             'author' => $request->author ?: 'Humas Pesantren',
             'status' => $request->status,
             'published_at' => ($request->status === 'published' && !$article->published_at) ? now() : $article->published_at,
@@ -164,6 +199,35 @@ class AdminController extends Controller
         $article->delete();
 
         return redirect()->route('admin.berita.index')->with('success', 'Berita berhasil dihapus!');
+    }
+
+    /**
+     * Otomatis memformat teks berita biasa ber-Enter menjadi paragraf <p>...</p>
+     */
+    private function formatArticleContent(?string $content): string
+    {
+        $content = $content ?? '';
+        if (trim($content) === '') {
+            return '';
+        }
+
+        // Jika sudah mengandung tag block HTML seperti <p>, <div>, <h1-6>, <ul>, <ol>, <blockquote>, <table>
+        if (preg_match('/<\s*(p|div|ul|ol|h[1-6]|blockquote|table)\b[^>]*>/i', $content)) {
+            return $content;
+        }
+
+        // Pisahkan teks berdasarkan Enter ganda / kosong
+        $paragraphs = array_filter(array_map('trim', preg_split('/\r\n\r\n|\n\n|\r\r/', $content)));
+        if (empty($paragraphs)) {
+            return '<p>' . nl2br($content) . '</p>';
+        }
+
+        $formatted = '';
+        foreach ($paragraphs as $para) {
+            $formatted .= '<p>' . nl2br($para) . '</p>' . "\n\n";
+        }
+
+        return trim($formatted) ?: $content;
     }
 
     public function psbIndex(Request $request)
@@ -196,6 +260,27 @@ class AdminController extends Controller
             $query->whereYear('created_at', $request->tahun);
         }
 
+        $hasGelombangCol = Schema::hasColumn('psb_registrations', 'gelombang');
+
+        if ($hasGelombangCol && $request->filled('gelombang')) {
+            $query->where('gelombang', $request->gelombang);
+        }
+
+        $statusPenempatan = $request->query('status_penempatan', 'belum_kelas');
+        if ($statusPenempatan === 'belum_kelas') {
+            $query->whereDoesntHave('student', function($sq) {
+                $sq->whereNotNull('kelas')
+                   ->where('kelas', '!=', '')
+                   ->where('kelas', 'not like', '%Belum%');
+            });
+        } elseif ($statusPenempatan === 'sudah_kelas') {
+            $query->whereHas('student', function($sq) {
+                $sq->whereNotNull('kelas')
+                   ->where('kelas', '!=', '')
+                   ->where('kelas', 'not like', '%Belum%');
+            });
+        }
+
         $years = PsbRegistration::selectRaw('YEAR(created_at) as year')
             ->distinct()
             ->orderBy('year', 'desc')
@@ -207,9 +292,22 @@ class AdminController extends Controller
             $years = collect([date('Y')]);
         }
 
-        $registrations = $query->paginate(12)->withQueryString();
+        $dbGelombangs = collect();
+        if ($hasGelombangCol) {
+            $dbGelombangs = PsbRegistration::whereNotNull('gelombang')
+                ->distinct()
+                ->pluck('gelombang')
+                ->filter()
+                ->values();
+        }
 
-        return view('admin.psb.index', compact('registrations', 'years'));
+        $defaultGelombangs = collect(['Gelombang 1', 'Gelombang 2', 'Gelombang 3']);
+        $activeGelombang = Setting::get('psb_gelombang_aktif', 'Gelombang 1');
+        $gelombangs = $defaultGelombangs->merge($dbGelombangs)->push($activeGelombang)->unique()->values();
+
+        $registrations = $query->with('student')->paginate(12)->withQueryString();
+
+        return view('admin.psb.index', compact('registrations', 'years', 'gelombangs', 'statusPenempatan'));
     }
 
     public function psbUpdateStatus(Request $request, $id)
@@ -305,6 +403,42 @@ class AdminController extends Controller
         return redirect()->back()->with('success', $msg);
     }
 
+    public function psbToggleStatus(Request $request)
+    {
+        $request->validate([
+            'psb_mode' => 'nullable|in:jadwal,buka,tutup',
+            'psb_status' => 'nullable|in:buka,tutup',
+            'psb_start_date' => 'nullable|string',
+            'psb_end_date' => 'nullable|string',
+        ]);
+
+        if ($request->has('psb_start_date')) {
+            Setting::set('psb_start_date', $request->input('psb_start_date') ?: '', 'psb');
+        }
+        if ($request->has('psb_end_date')) {
+            Setting::set('psb_end_date', $request->input('psb_end_date') ?: '', 'psb');
+        }
+        if ($request->filled('psb_mode')) {
+            Setting::set('psb_mode', $request->input('psb_mode'), 'psb');
+        }
+        if ($request->filled('psb_status')) {
+            Setting::set('psb_status', $request->input('psb_status'), 'psb');
+        }
+        if ($request->filled('psb_gelombang_aktif')) {
+            Setting::set('psb_gelombang_aktif', trim($request->input('psb_gelombang_aktif')), 'psb');
+        }
+
+        foreach (['psb_g1_start', 'psb_g1_end', 'psb_g2_start', 'psb_g2_end', 'psb_g3_start', 'psb_g3_end', 'psb_gkhusus_start', 'psb_gkhusus_end'] as $gKey) {
+            if ($request->has($gKey)) {
+                Setting::set($gKey, $request->input($gKey) ?: '', 'psb');
+            }
+        }
+
+        $sched = Setting::getPsbSchedule();
+        $statusText = $sched['is_open'] ? 'DIBUKA (' . $sched['title'] . ')' : 'DITUTUP (' . $sched['title'] . ')';
+        return redirect()->back()->with('success', "Pengaturan status jadwal PSB publik berhasil diperbarui: {$statusText}.");
+    }
+
     public function psbDestroy($id)
     {
         $registration = PsbRegistration::findOrFail($id);
@@ -343,6 +477,10 @@ class AdminController extends Controller
 
         if ($request->filled('tahun')) {
             $query->whereYear('created_at', $request->tahun);
+        }
+
+        if ($request->filled('gelombang')) {
+            $query->where('gelombang', $request->gelombang);
         }
 
         if ($request->filled('ids')) {
@@ -411,6 +549,7 @@ class AdminController extends Controller
             echo '<tr>';
             echo '<th>No</th>';
             echo '<th>No. Registrasi</th>';
+            echo '<th>Gelombang</th>';
             echo '<th>Status Seleksi</th>';
             echo '<th>Jalur</th>';
             echo '<th>Jenjang</th>';
@@ -458,6 +597,7 @@ class AdminController extends Controller
                 echo '<tr>';
                 echo '<td class="text-center">' . $no++ . '</td>';
                 echo '<td class="txt text-center" style="font-weight:bold;">' . ($r->no_registrasi ? "'" . htmlspecialchars($r->no_registrasi) : '-') . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($r->gelombang ?: 'Gelombang 1') . '</td>';
                 echo '<td class="' . $statusClass . '">' . htmlspecialchars($r->status ?: 'Menunggu') . '</td>';
                 echo '<td class="text-center">' . htmlspecialchars($r->jalur ?: 'Reguler') . '</td>';
                 echo '<td class="text-center">' . htmlspecialchars($r->jenjang) . '</td>';
@@ -534,6 +674,9 @@ class AdminController extends Controller
             if ($request->filled('tahun')) {
                 $query->whereYear('created_at', $request->tahun);
             }
+            if ($request->filled('gelombang')) {
+                $query->where('gelombang', $request->gelombang);
+            }
         }
 
         $years = PsbRegistration::selectRaw('YEAR(created_at) as year')
@@ -587,6 +730,67 @@ class AdminController extends Controller
     }
 
     /**
+     * Verifikasi manual berkas dokumen santri oleh admin (Sesuai / Perlu Perbaikan).
+     */
+    public function psbUpdateBerkasStatus(Request $request, $id)
+    {
+        $registration = PsbRegistration::findOrFail($id);
+        $validated = $request->validate([
+            'berkas_status' => 'required|string|in:Sesuai,Perlu Perbaikan,Belum Diperiksa',
+            'berkas_catatan' => 'nullable|string',
+        ]);
+
+        $registration->update($validated);
+
+        return redirect()->back()->with('success', 'Status verifikasi berkas santri ' . $registration->nama_lengkap . ' berhasil disimpan: ' . $validated['berkas_status']);
+    }
+
+    /**
+     * Unggah pengganti berkas dokumen santri langsung oleh admin.
+     */
+    public function psbAdminUploadBerkas(Request $request, $id)
+    {
+        $registration = PsbRegistration::findOrFail($id);
+        $validated = $request->validate([
+            'jenis_berkas' => 'required|in:file_akta_kelahiran,file_kk,file_ktp_ortu',
+            'file_dokumen' => 'required|file|mimes:jpeg,png,jpg,webp,pdf|max:10240',
+        ]);
+
+        $field = $validated['jenis_berkas'];
+        $type = match($field) {
+            'file_akta_kelahiran' => 'akta',
+            'file_kk' => 'kk',
+            'file_ktp_ortu' => 'ktp',
+            default => 'generic'
+        };
+
+        $file = $request->file('file_dokumen');
+        $filename = time() . '_admin_uploaded_' . $type . '_' . Str::slug($registration->nama_lengkap) . '.' . $file->getClientOriginalExtension();
+        $dest = public_path('uploads/psb/berkas');
+        if (!file_exists($dest)) {
+            mkdir($dest, 0777, true);
+        }
+        $file->move($dest, $filename);
+        $newPath = '/uploads/psb/berkas/' . $filename;
+
+        $detail = json_decode($registration->berkas_detail_json ?? '[]', true) ?: [];
+        $detail[$type] = [
+            'status' => 'Sesuai',
+            'catatan' => 'Diverifikasi & diunggah oleh admin (' . date('d/m/Y H:i') . ')',
+            'verified_at' => date('Y-m-d H:i:s'),
+        ];
+
+        $registration->update([
+            $field => $newPath,
+            'berkas_status' => 'Sesuai',
+            'berkas_catatan' => 'Berkas telah ditinjau & diverifikasi oleh admin.',
+            'berkas_detail_json' => json_encode($detail),
+        ]);
+
+        return redirect()->back()->with('success', 'Berkas dokumen santri berhasil diperbarui dan diverifikasi oleh admin!');
+    }
+
+    /**
      * Jalankan verifikasi otomatis aspek rasio (3x4) dan background merah untuk seluruh pas foto santri.
      */
     public function psbAutoVerifyAll()
@@ -635,10 +839,11 @@ class AdminController extends Controller
             ['komponen' => 'TOTAL BIAYA AWAL MASUK', 'mts_mukim' => 'Rp 3.420.000', 'mts_laju' => 'Rp 3.040.000', 'ma_mukim' => 'Rp 3.640.000', 'ma_laju' => 'Rp 3.360.000', 'is_total' => true],
         ];
 
-        // Data default Tabel Biaya Bulanan (SPP)
+        // Data default Tabel Biaya Bulanan (SPP & SOT)
         $defaultBiayaBulanan = [
             ['komponen' => 'Uang Makan 3x Sehari', 'mts_mukim' => 'Rp 300.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 300.000', 'ma_laju' => '—', 'is_total' => false],
-            ['komponen' => 'Syahriyah Pendidikan', 'mts_mukim' => 'Rp 85.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 105.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
+            ['komponen' => 'Syahriyah Pendidikan', 'mts_mukim' => 'Rp 30.000', 'mts_laju' => '—', 'ma_mukim' => 'Rp 30.000', 'ma_laju' => '—', 'is_total' => false],
+            ['komponen' => 'Iuran SOT', 'mts_mukim' => 'Rp 55.000', 'mts_laju' => 'Rp 55.000', 'ma_mukim' => 'Rp 75.000', 'ma_laju' => 'Rp 75.000', 'is_total' => false],
             ['komponen' => 'Tabungan Wajib Santri', 'mts_mukim' => 'Rp 25.000', 'mts_laju' => 'Rp 25.000', 'ma_mukim' => 'Rp 25.000', 'ma_laju' => 'Rp 25.000', 'is_total' => false],
             ['komponen' => 'TOTAL IURAN BULANAN', 'mts_mukim' => 'Rp 410.000 / bln', 'mts_laju' => 'Rp 80.000 / bln', 'ma_mukim' => 'Rp 430.000 / bln', 'ma_laju' => 'Rp 100.000 / bln', 'is_total' => true],
         ];
@@ -709,13 +914,66 @@ class AdminController extends Controller
             ['id' => 5, 'image' => '/uploads/settings/hero_slide_5.jpg', 'caption' => 'Laboratorium CBT & Penunjang Digital', 'subcaption' => 'Fasilitas ujian mandiri dan penguasaan sains teknologi modern', 'active' => true],
         ];
 
+        $defaultPrestasi = [
+            [
+                'tag' => "Tahfidzul Qur'an",
+                'level' => 'Tingkat Nasional',
+                'judul' => "Juara 1 Musabaqah Hifdzil Qur'an (MHQ) 30 Juz",
+                'deskripsi' => "Santri Pondok Pesantren Hidayatullah berhasil meraih predikat Juara 1 dalam ajang bergengsi seleksi MHQ 30 Juz Tingkat Nasional yang diselenggarakan oleh LPTQ.",
+                'image' => 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop',
+            ],
+            [
+                'tag' => 'Sains & Riset Madrasah',
+                'level' => 'Tingkat Provinsi',
+                'judul' => 'Medali Emas Kompetisi Sains Madrasah (KSM)',
+                'deskripsi' => 'Prestasi gemilang santri MA Hidayatullah meraih medali emas pada KSM bidang Matematika Terintegrasi & Biologi Terpadu tingkat Jawa Tengah.',
+                'image' => 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop',
+            ],
+            [
+                'tag' => 'Bahasa Arab Aktif',
+                'level' => 'Tingkat Nasional',
+                'judul' => 'Juara Umum Khitobah Pidato Bahasa Arab',
+                'deskripsi' => 'Penguasaan balaghah dan kefasihan kalam santri mengantarkan kontingen pondok memboyong piala bergilir Festival Bahasa Arab antar-pesantren nasional.',
+                'image' => 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=800&auto=format&fit=crop',
+            ],
+            [
+                'tag' => 'Seni & Olahraga Santri',
+                'level' => 'Juara Umum',
+                'judul' => 'Juara Umum POSPEDA Kaligrafi Islam & Pencak Silat',
+                'deskripsi' => "Sinergi ketangkasan fisik pendekar santri melalui pencak silat serta keindahan estetika mushaf Al-Qur'an lewat goresan khath kaligrafi murni.",
+                'image' => 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop',
+            ],
+            [
+                'tag' => 'Kiprah & Studi Alumni',
+                'level' => 'Internasional',
+                'judul' => 'Kelulusan Santri Tembus Al-Azhar Mesir & PTKIN Favorit',
+                'deskripsi' => 'Lulusan 6 tahun TMI Hidayatullah berhasil lolos seleksi beasiswa kuliah ke Universitas Al-Azhar Kairo serta perguruan tinggi keagamaan negeri bergengsi di Indonesia.',
+                'image' => 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+            ],
+            [
+                'tag' => 'Standarisasi Mutu',
+                'level' => 'Terakreditasi',
+                'judul' => "Akreditasi Unggul Madrasah & Sanad Tahfidz Muttashil",
+                'deskripsi' => "Standarisasi kurikulum formal Kemenag untuk MTs & MA Hidayatullah serta legalitas ijazah sanad tahfidz Al-Qur'an 30 juz bersambung sanadnya hingga Rasulullah SAW.",
+                'image' => 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop',
+            ],
+        ];
+
+        $defaultPrestasiStats = [
+            ['angka' => '150+', 'label' => 'Juara & Penghargaan Prestasi'],
+            ['angka' => '35+', 'label' => 'Santri Mutqin Hafidz 30 Juz'],
+            ['angka' => '100%', 'label' => 'Alumni Lolos Kuliah & Khidmat'],
+        ];
+
         $pancaJiwa = json_decode($settings['panca_jiwa_json'] ?? 'null', true) ?: $defaultPancaJiwa;
         $filosofiLambang = json_decode($settings['filosofi_lambang_json'] ?? 'null', true) ?: $defaultFilosofiLambang;
         $pilarPendidikan = json_decode($settings['pilar_pendidikan_json'] ?? 'null', true) ?: $defaultPilarPendidikan;
         $agendaBerkala = json_decode($settings['agenda_berkala_json'] ?? 'null', true) ?: $defaultAgendaBerkala;
         $heroSlides = json_decode($settings['hero_slides_json'] ?? 'null', true) ?: $defaultHeroSlides;
+        $prestasiItems = json_decode($settings['prestasi_items_json'] ?? 'null', true) ?: $defaultPrestasi;
+        $prestasiStats = json_decode($settings['prestasi_stats_json'] ?? 'null', true) ?: $defaultPrestasiStats;
 
-        return view('admin.pengaturan.index', compact('settings', 'jadwalSantri', 'biayaAwal', 'biayaBulanan', 'pancaJiwa', 'filosofiLambang', 'pilarPendidikan', 'agendaBerkala', 'heroSlides'));
+        return view('admin.pengaturan.index', compact('settings', 'jadwalSantri', 'biayaAwal', 'biayaBulanan', 'pancaJiwa', 'filosofiLambang', 'pilarPendidikan', 'agendaBerkala', 'heroSlides', 'prestasiItems', 'prestasiStats'));
     }
 
     public function settingsUpdate(Request $request)
@@ -1174,6 +1432,69 @@ class AdminController extends Controller
             Setting::set('biaya_bulanan_json', json_encode($biayaBulananList, JSON_PRETTY_PRINT), 'biaya');
         }
 
+        // 11b. Handle Prestasi Santri & Lembaga
+        if ($request->has('prestasi_judul_item') || $sectionName === 'Prestasi Santri & Lembaga') {
+            $prestasiList = [];
+            $tagArr = (array) $request->prestasi_tag;
+            $levelArr = (array) $request->prestasi_level;
+            $judulArr = (array) $request->prestasi_judul_item;
+            $descArr = (array) $request->prestasi_deskripsi;
+            $imgArr = (array) $request->prestasi_image;
+
+            $dest = public_path('uploads/settings');
+            if (!file_exists($dest)) {
+                mkdir($dest, 0777, true);
+            }
+
+            for ($i = 0; $i < count($judulArr); $i++) {
+                if (!empty(trim($judulArr[$i]))) {
+                    $imgUrl = trim($imgArr[$i] ?? '');
+                    if ($request->hasFile("prestasi_file_{$i}")) {
+                        $f = $request->file("prestasi_file_{$i}");
+                        if ($f->isValid()) {
+                            $fname = 'prestasi_' . ($i + 1) . '_' . time() . '.' . $f->getClientOriginalExtension();
+                            $f->move($dest, $fname);
+                            $imgUrl = '/uploads/settings/' . $fname;
+                        }
+                    }
+                    $prestasiList[] = [
+                        'tag' => trim($tagArr[$i] ?? 'Prestasi Santri'),
+                        'level' => trim($levelArr[$i] ?? 'Tingkat Nasional'),
+                        'judul' => trim($judulArr[$i]),
+                        'deskripsi' => trim($descArr[$i] ?? ''),
+                        'image' => $imgUrl ?: 'https://images.unsplash.com/photo-1585036156171-384164a8c675?q=80&w=800&auto=format&fit=crop',
+                    ];
+                }
+            }
+            Setting::set('prestasi_items_json', json_encode($prestasiList, JSON_PRETTY_PRINT), 'prestasi');
+
+            // Handle Statistik Prestasi
+            if ($request->has('prestasi_stat_angka')) {
+                $statsList = [];
+                $angkaArr = (array) $request->prestasi_stat_angka;
+                $labelArr = (array) $request->prestasi_stat_label;
+                for ($s = 0; $s < count($angkaArr); $s++) {
+                    if (!empty(trim($angkaArr[$s]))) {
+                        $statsList[] = [
+                            'angka' => trim($angkaArr[$s]),
+                            'label' => trim($labelArr[$s] ?? ''),
+                        ];
+                    }
+                }
+                Setting::set('prestasi_stats_json', json_encode($statsList, JSON_PRETTY_PRINT), 'prestasi');
+            }
+
+            if ($request->filled('prestasi_badge')) {
+                Setting::set('prestasi_badge', trim($request->prestasi_badge), 'prestasi');
+            }
+            if ($request->filled('prestasi_judul')) {
+                Setting::set('prestasi_judul', trim($request->prestasi_judul), 'prestasi');
+            }
+            if ($request->filled('prestasi_subjudul')) {
+                Setting::set('prestasi_subjudul', trim($request->prestasi_subjudul), 'prestasi');
+            }
+        }
+
         // 12. Simpan field text & konfigurasi lainnya
         $exclude = [
             '_token', '_method', 'section_name', 'active_tab',
@@ -1188,6 +1509,8 @@ class AdminController extends Controller
             'pilar_judul', 'pilar_deskripsi', 'pilar_tag',
             'biaya_awal_komponen', 'biaya_awal_mts_mukim', 'biaya_awal_mts_laju', 'biaya_awal_ma_mukim', 'biaya_awal_ma_laju', 'biaya_awal_is_total',
             'biaya_bulanan_komponen', 'biaya_bulanan_mts_mukim', 'biaya_bulanan_mts_laju', 'biaya_bulanan_ma_mukim', 'biaya_bulanan_ma_laju', 'biaya_bulanan_is_total',
+            'prestasi_tag', 'prestasi_level', 'prestasi_judul_item', 'prestasi_deskripsi', 'prestasi_image',
+            'prestasi_stat_angka', 'prestasi_stat_label', 'prestasi_badge', 'prestasi_judul', 'prestasi_subjudul',
             'ttd_digital_pengurus_file', 'ttd_digital_pengurus_canvas', 'ttd_digital_stempel_file',
             'hero_slide_file_1', 'hero_slide_file_2', 'hero_slide_file_3', 'hero_slide_file_4', 'hero_slide_file_5',
             'hero_slide_image_1', 'hero_slide_image_2', 'hero_slide_image_3', 'hero_slide_image_4', 'hero_slide_image_5',
@@ -1205,6 +1528,8 @@ class AdminController extends Controller
                 $group = 'kontak';
             } elseif (str_starts_with($key, 'profil_') || str_starts_with($key, 'sejarah_') || str_starts_with($key, 'sambutan_') || str_starts_with($key, 'quran_') || in_array($key, ['visi', 'misi', 'nspp', 'mts_npsn', 'ma_npsn', 'status_tanah', 'falsafah_judul', 'falsafah_subjudul', 'filosofi_judul', 'filosofi_subjudul', 'pilar_title', 'pilar_subtitle'])) {
                 $group = 'profil';
+            } elseif (str_starts_with($key, 'psb_')) {
+                $group = 'psb';
             }
             Setting::set($key, $val, $group);
         }
@@ -1419,7 +1744,7 @@ class AdminController extends Controller
             'signature_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'signature_canvas' => 'nullable|string',
             'stempel_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
-            'current_password' => 'required_with:password|string',
+            'current_password' => 'nullable|required_with:password|string',
             'password' => 'nullable|string|min:6|confirmed',
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
@@ -1456,9 +1781,13 @@ class AdminController extends Controller
             if ($user->signature_image && file_exists(public_path($user->signature_image))) {
                 @unlink(public_path($user->signature_image));
             }
+            $targetDir = public_path('uploads/signatures');
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0755, true);
+            }
             $file = $request->file('signature_file');
             $filename = 'ttd_user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/signatures'), $filename);
+            $file->move($targetDir, $filename);
             $user->signature_image = '/uploads/signatures/' . $filename;
         }
         // Atau simpan dari Canvas Pad
@@ -1471,8 +1800,12 @@ class AdminController extends Controller
                     if ($user->signature_image && file_exists(public_path($user->signature_image))) {
                         @unlink(public_path($user->signature_image));
                     }
+                    $targetDir = public_path('uploads/signatures');
+                    if (!file_exists($targetDir)) {
+                        @mkdir($targetDir, 0755, true);
+                    }
                     $filename = 'ttd_canvas_user_' . $user->id . '_' . time() . '.png';
-                    file_put_contents(public_path('uploads/signatures/' . $filename), $decoded);
+                    file_put_contents($targetDir . '/' . $filename, $decoded);
                     $user->signature_image = '/uploads/signatures/' . $filename;
                 }
             }
@@ -1490,9 +1823,13 @@ class AdminController extends Controller
             if ($user->stempel_image && file_exists(public_path($user->stempel_image))) {
                 @unlink(public_path($user->stempel_image));
             }
+            $targetDir = public_path('uploads/signatures');
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0755, true);
+            }
             $file = $request->file('stempel_file');
             $filename = 'stempel_user_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/signatures'), $filename);
+            $file->move($targetDir, $filename);
             $user->stempel_image = '/uploads/signatures/' . $filename;
         }
 

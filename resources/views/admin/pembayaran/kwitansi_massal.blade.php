@@ -351,18 +351,31 @@ $totalJumlahKwitansi = $payments->count();
                                 
                                 <div class="relative w-44 h-16 flex items-center justify-between">
                                     <!-- Stempel Cap Pondok Tuksongo -->
-                                    <div class="w-16 h-16 flex items-center justify-center shrink-0 pointer-events-none transform -rotate-6 z-0">
-                                        <img src="{{ $stempelImgItem }}" alt="Cap Stempel Pondok" class="w-16 h-16 object-contain opacity-85 mix-blend-multiply" onerror="this.style.display='none'">
-                                        <svg class="w-16 h-16 text-[#208075] opacity-60 absolute" viewBox="0 0 100 100" fill="none" stroke="currentColor">
-                                            <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
-                                            <circle cx="50" cy="50" r="39" stroke-width="1.5"/>
-                                            <circle cx="50" cy="50" r="26" stroke-width="1"/>
-                                            <path id="curveTop_{{ $payment->id }}" d="M 18,50 A 32,32 0 1,1 82,50" fill="none"/>
-                                            <text font-size="7" font-weight="bold" fill="currentColor"><textPath href="#curveTop_{{ $payment->id }}" startOffset="50%" text-anchor="middle">PP HIDAYATULLAH</textPath></text>
-                                            <path id="curveBot_{{ $payment->id }}" d="M 82,50 A 32,32 0 0,1 18,50" fill="none"/>
-                                            <text font-size="6.5" font-weight="bold" fill="currentColor"><textPath href="#curveBot_{{ $payment->id }}" startOffset="50%" text-anchor="middle">TUKSONGO TEMANGGUNG</textPath></text>
-                                            <text x="50" y="53" font-size="8" font-weight="black" fill="currentColor" text-anchor="middle">LUNAS</text>
-                                        </svg>
+                                    <div class="w-16 h-16 flex items-center justify-center shrink-0 pointer-events-none transform -rotate-6 z-0 relative">
+                                        @if($stempelImgItem)
+                                            <img src="{{ $stempelImgItem }}" alt="Cap Stempel Pondok" class="w-16 h-16 object-contain opacity-85 mix-blend-multiply" onerror="this.style.display='none'; const el = document.getElementById('svgStempelBackup_{{ $payment->id }}'); if (el) el.style.display='block';">
+                                            <svg id="svgStempelBackup_{{ $payment->id }}" style="display: none;" class="w-16 h-16 text-[#208075] opacity-60 absolute" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                                                <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
+                                                <circle cx="50" cy="50" r="39" stroke-width="1.5"/>
+                                                <circle cx="50" cy="50" r="26" stroke-width="1"/>
+                                                <path id="curveTop_{{ $payment->id }}" d="M 18,50 A 32,32 0 1,1 82,50" fill="none"/>
+                                                <text font-size="7" font-weight="bold" fill="currentColor"><textPath href="#curveTop_{{ $payment->id }}" startOffset="50%" text-anchor="middle">PP HIDAYATULLAH</textPath></text>
+                                                <path id="curveBot_{{ $payment->id }}" d="M 82,50 A 32,32 0 0,1 18,50" fill="none"/>
+                                                <text font-size="6.5" font-weight="bold" fill="currentColor"><textPath href="#curveBot_{{ $payment->id }}" startOffset="50%" text-anchor="middle">TUKSONGO TEMANGGUNG</textPath></text>
+                                                <text x="50" y="53" font-size="8" font-weight="black" fill="currentColor" text-anchor="middle">LUNAS</text>
+                                            </svg>
+                                        @else
+                                            <svg class="w-16 h-16 text-[#208075] opacity-60" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                                                <circle cx="50" cy="50" r="46" stroke-width="2.5" stroke-dasharray="2,2"/>
+                                                <circle cx="50" cy="50" r="39" stroke-width="1.5"/>
+                                                <circle cx="50" cy="50" r="26" stroke-width="1"/>
+                                                <path id="curveTop_{{ $payment->id }}" d="M 18,50 A 32,32 0 1,1 82,50" fill="none"/>
+                                                <text font-size="7" font-weight="bold" fill="currentColor"><textPath href="#curveTop_{{ $payment->id }}" startOffset="50%" text-anchor="middle">PP HIDAYATULLAH</textPath></text>
+                                                <path id="curveBot_{{ $payment->id }}" d="M 82,50 A 32,32 0 0,1 18,50" fill="none"/>
+                                                <text font-size="6.5" font-weight="bold" fill="currentColor"><textPath href="#curveBot_{{ $payment->id }}" startOffset="50%" text-anchor="middle">TUKSONGO TEMANGGUNG</textPath></text>
+                                                <text x="50" y="53" font-size="8" font-weight="black" fill="currentColor" text-anchor="middle">LUNAS</text>
+                                            </svg>
+                                        @endif
                                     </div>
 
                                     <!-- Tanda Tangan Asli Digital -->

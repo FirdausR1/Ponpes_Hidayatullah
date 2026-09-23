@@ -93,6 +93,12 @@
                         <span>Atur TTD &amp; Stempel</span>
                     </a>
 
+                    <!-- Atur Buka/Tutup PSB -->
+                    <a href="{{ route('admin.settings.index') }}" onclick="localStorage.setItem('admin_settings_active_tab', 'tab-psb')" class="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition">
+                        <svg class="w-4 h-4 text-emerald-600 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v2H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1V6a4 4 0 00-4-4zm2 6V6a2 2 0 10-4 0v2h4z" clip-rule="evenodd"/></svg>
+                        <span>Pengaturan Buka/Tutup PSB</span>
+                    </a>
+
                     <div class="my-1 border-t border-gray-100"></div>
 
                     <!-- Buka Data Siswa Induk -->
@@ -108,6 +114,82 @@
                     </a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    @php
+        $psbSchedule = \App\Models\Setting::getPsbSchedule();
+        $adminPsbMode = \App\Models\Setting::get('psb_mode', 'jadwal');
+        $adminPsbStart = \App\Models\Setting::get('psb_start_date', '');
+        $adminPsbEnd = \App\Models\Setting::get('psb_end_date', '');
+        $adminPsbGelombang = \App\Models\Setting::get('psb_gelombang_aktif', 'Gelombang 1');
+    @endphp
+
+    <!-- PSB Client Status Banner & Quick Schedule Controls -->
+    <div class="rounded-2xl border p-4 shadow-theme-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 {{ $psbSchedule['is_open'] ? 'bg-emerald-50/80 border-emerald-200' : ($psbSchedule['status'] === 'belum_buka' ? 'bg-amber-50/80 border-amber-200' : 'bg-rose-50/80 border-rose-200') }}">
+        <div class="flex items-start sm:items-center gap-3.5">
+            <span class="relative flex h-3.5 w-3.5 shrink-0 mt-1 sm:mt-0">
+                @if($psbSchedule['is_open'])
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                @elseif($psbSchedule['status'] === 'belum_buka')
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500"></span>
+                @else
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500"></span>
+                @endif
+            </span>
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold uppercase tracking-wider {{ $psbSchedule['is_open'] ? 'text-emerald-950' : ($psbSchedule['status'] === 'belum_buka' ? 'text-amber-950' : 'text-rose-950') }}">
+                        Status PSB Publik: {{ $psbSchedule['title'] }}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase {{ $psbSchedule['badge_class'] }}">
+                        {{ $psbSchedule['badge'] }}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        🌊 {{ $adminPsbGelombang }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white/80 border text-gray-700 shadow-2xs">
+                        Mode: {{ $adminPsbMode === 'jadwal' ? '📅 Otomatis Tanggal' : ($adminPsbMode === 'buka' ? '🟢 Paksa Buka' : '🔴 Paksa Tutup') }}
+                    </span>
+                </div>
+                <p class="text-xs mt-0.5 {{ $psbSchedule['is_open'] ? 'text-emerald-800' : ($psbSchedule['status'] === 'belum_buka' ? 'text-amber-800' : 'text-rose-800') }}">
+                    @if($adminPsbMode === 'jadwal' && ($psbSchedule['start_formatted'] || $psbSchedule['end_formatted']))
+                        Masa Pendaftaran: <strong>{{ $psbSchedule['start_formatted'] ?? '—' }}</strong> s/d <strong>{{ $psbSchedule['end_formatted'] ?? '—' }}</strong>. (Sistem otomatis buka/tutup menurut tanggal).
+                    @else
+                        {{ $psbSchedule['pesan'] }}
+                    @endif
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 flex-wrap">
+            <!-- Tombol Buka Modal Atur Tanggal Cepat -->
+            <button type="button" onclick="document.getElementById('modalQuickPsbSchedule').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold shadow-theme-xs transition cursor-pointer" title="Atur tanggal dan jam buka tutup PSB secara cepat">
+                <svg class="w-3.5 h-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Atur Tanggal / Jadwal</span>
+            </button>
+
+            <!-- Quick 1-Click Toggle Form -->
+            <form action="{{ route('admin.psb.toggleStatus') }}" method="POST" class="inline">
+                @csrf
+                <input type="hidden" name="psb_mode" value="{{ $psbSchedule['is_open'] ? 'tutup' : 'jadwal' }}">
+                <input type="hidden" name="psb_status" value="{{ $psbSchedule['is_open'] ? 'tutup' : 'buka' }}">
+                <button type="submit" onclick="return confirm('Apakah Anda yakin ingin {{ $psbSchedule['is_open'] ? 'menutup PSB sekarang (Paksa Tutup)' : 'mengaktifkan kembali pendaftaran PSB' }}?')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-theme-xs transition cursor-pointer {{ $psbSchedule['is_open'] ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white' }}">
+                    @if($psbSchedule['is_open'])
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <span>Tutup PSB Sekarang</span>
+                    @else
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                        <span>Buka / Jadwalkan</span>
+                    @endif
+                </button>
+            </form>
+
+            <!-- Link ke Pengaturan Lengkap -->
+            <a href="{{ route('admin.settings.index') }}" onclick="localStorage.setItem('admin_settings_active_tab', 'tab-psb')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 text-xs font-medium shadow-theme-xs transition" title="Kelola pesan tutup & pengaturan lengkap di CMS">
+                <svg class="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Pengaturan Lengkap</span>
+            </a>
         </div>
     </div>
 
@@ -192,8 +274,33 @@
                 </span>
             </div>
 
+            <!-- Filter Gelombang -->
+            <div class="relative">
+                <select name="gelombang" onchange="this.form.submit()" class="h-11 appearance-none text-xs sm:text-sm rounded-lg px-3.5 pr-8 border border-gray-300 outline-none transition cursor-pointer shadow-theme-xs {{ request('gelombang') ? 'bg-emerald-50 border-emerald-300 text-emerald-700 font-bold' : 'bg-white text-gray-700' }}">
+                    <option value="">Semua Gelombang</option>
+                    @foreach($gelombangs ?? ['Gelombang 1', 'Gelombang 2', 'Gelombang 3'] as $gel)
+                        <option value="{{ $gel }}" {{ request('gelombang') == $gel ? 'selected' : '' }}>{{ $gel }}</option>
+                    @endforeach
+                </select>
+                <span class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </span>
+            </div>
+
+            <!-- Filter Status Penempatan Kelas (Santri Aktif vs Belum Ada Kelas) -->
+            <div class="relative">
+                <select name="status_penempatan" onchange="this.form.submit()" class="h-11 appearance-none text-xs sm:text-sm rounded-lg px-3.5 pr-8 border border-gray-300 outline-none transition cursor-pointer shadow-theme-xs {{ request('status_penempatan', 'belum_kelas') !== 'belum_kelas' ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-bold' : 'bg-white text-gray-700 font-medium' }}">
+                    <option value="belum_kelas" {{ request('status_penempatan', 'belum_kelas') == 'belum_kelas' ? 'selected' : '' }}>📌 Belum Ada Kelas (Aktif PSB)</option>
+                    <option value="sudah_kelas" {{ request('status_penempatan') == 'sudah_kelas' ? 'selected' : '' }}>✅ Sudah Masuk Kelas &amp; Santri</option>
+                    <option value="all" {{ request('status_penempatan') == 'all' ? 'selected' : '' }}>Semua Pendaftar PSB</option>
+                </select>
+                <span class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </span>
+            </div>
+
             <!-- Tombol Reset Filter jika aktif -->
-            @if(request()->filled('q') || request()->filled('jenjang') || request()->filled('status') || request()->filled('jenis_kelamin') || request()->filled('tahun'))
+            @if(request()->filled('q') || request()->filled('jenjang') || request()->filled('status') || request()->filled('jenis_kelamin') || request()->filled('tahun') || request()->filled('gelombang') || (request()->filled('status_penempatan') && request('status_penempatan') !== 'belum_kelas'))
                 <a href="{{ route('admin.psb.index') }}" class="inline-flex items-center gap-1.5 h-11 px-3 text-xs font-medium text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg transition shadow-theme-xs" title="Reset Semua Filter">
                     <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M4.29289 4.29289C4.68342 3.90237 5.31658 3.90237 5.70711 4.29289L10 8.58579L14.2929 4.29289C14.6834 3.90237 15.3166 3.90237 15.7071 4.29289C16.0976 4.68342 16.0976 5.31658 15.7071 5.70711L11.4142 10L15.7071 14.2929C16.0976 14.6834 16.0976 15.3166 15.7071 15.7071C15.3166 16.0976 14.6834 16.0976 14.2929 15.7071L10 11.4142L5.70711 15.7071C5.31658 16.0976 4.68342 16.0976 4.29289 15.7071C3.90237 15.3166 3.90237 14.6834 4.29289 14.2929L8.58579 10L4.29289 5.70711C3.90237 5.31658 3.90237 4.68342 4.29289 4.29289Z" fill="currentColor"/>
@@ -269,7 +376,12 @@
                                             {{ $reg->nama_lengkap }}
                                         </button>
                                         <span class="text-[11px] font-mono text-emerald-700 font-semibold block mt-0.5">{{ $reg->no_registrasi ?: ('ID #' . $reg->id) }}</span>
-                                        <span class="text-[11px] text-gray-400 block truncate">NISN: {{ $reg->nisn ?: '—' }} &bull; NIK: {{ $reg->nik ?: '—' }}</span>
+                                        @if($reg->student && $reg->student->kelas)
+                                            <span class="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                <span>✓ Santri Kelas {{ $reg->student->kelas }}</span>
+                                            </span>
+                                        @endif
+                                        <span class="text-[11px] text-gray-400 block truncate">No. Stambuk: {{ $reg->nisn ?: '—' }} &bull; NIK: {{ $reg->nik ?: '—' }}</span>
                                     </div>
                                 </div>
                             </td>
@@ -277,12 +389,17 @@
                             <!-- Jalur & Jenjang -->
                             <td class="px-4 py-4">
                                 <div class="space-y-1">
-                                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ 
-                                        $reg->jalur === 'Prestasi' ? 'bg-amber-100 text-amber-800' : 
-                                        ($reg->jalur === 'Tahfidz' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700') 
-                                    }}">
-                                        Jalur {{ $reg->jalur ?: 'Reguler' }}
-                                    </span>
+                                    <div class="flex flex-wrap items-center gap-1">
+                                        <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold {{ 
+                                            $reg->jalur === 'Prestasi' ? 'bg-amber-100 text-amber-800' : 
+                                            ($reg->jalur === 'Tahfidz' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700') 
+                                        }}">
+                                            Jalur {{ $reg->jalur ?: 'Reguler' }}
+                                        </span>
+                                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            {{ $reg->gelombang ?: 'Gelombang 1' }}
+                                        </span>
+                                    </div>
                                     <span class="text-xs font-bold text-gray-800 block">
                                         {{ $reg->jenjang }}
                                     </span>
@@ -296,11 +413,12 @@
                             <td class="px-4 py-4">
                                 @php
                                     $docCount = 0;
-                                    if (!empty($reg->berkas_akta)) $docCount++;
-                                    if (!empty($reg->berkas_kk)) $docCount++;
-                                    if (!empty($reg->berkas_ktp_ayah)) $docCount++;
-                                    if (!empty($reg->berkas_ktp_ibu)) $docCount++;
+                                    if (!empty($reg->file_akta_kelahiran) || !empty($reg->berkas_akta)) $docCount++;
+                                    if (!empty($reg->file_kk) || !empty($reg->berkas_kk)) $docCount++;
+                                    if (!empty($reg->file_ktp_ortu) || !empty($reg->berkas_ktp_ayah) || !empty($reg->berkas_ktp_ibu)) $docCount++;
+                                    if (!empty($reg->pas_foto)) $docCount++;
                                     $isLunas = ($reg->status_pembayaran === 'Lunas' || $reg->pembayaran_status === 'Lunas');
+                                    $berkasPerluRevisi = ($reg->berkas_status === 'Perlu Perbaikan');
                                 @endphp
                                 <div class="space-y-1.5">
                                     <!-- Status Pembayaran 200rb -->
@@ -328,11 +446,16 @@
                                     </div>
 
                                     <!-- Indikator Berkas Dokumen & Slip TF -->
-                                    <div class="flex items-center gap-1.5 text-[11px]">
+                                    <div class="flex items-center gap-1.5 text-[11px] flex-wrap">
                                         <button type="button" onclick="showApplicantModal({{ json_encode($reg) }})" class="inline-flex items-center gap-1 text-gray-600 hover:text-emerald-700 font-medium transition" title="Lihat detail dokumen persyaratan">
                                             <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                             <span>{{ $docCount > 0 ? "{$docCount}/4 Berkas" : 'Berkas Kosong' }}</span>
                                         </button>
+                                        @if($berkasPerluRevisi)
+                                            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200" title="{{ $reg->berkas_catatan }}">Revisi Berkas</span>
+                                        @elseif($reg->berkas_status === 'Sesuai')
+                                            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200" title="Terverifikasi otomatis">Berkas OK</span>
+                                        @endif
                                         @if($reg->bukti_transfer)
                                             <span class="text-gray-300">&bull;</span>
                                             <a href="{{ $reg->bukti_transfer }}" target="_blank" class="text-emerald-700 hover:text-emerald-800 font-medium hover:underline" title="Lihat Bukti Transfer Bank">
@@ -821,13 +944,60 @@
 
             <!-- HASIL UPLOAD DOKUMEN & BERKAS (VISUAL LIGHTBOX / THUMBNAILS) -->
             <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
-                <span class="font-bold text-slate-900 uppercase tracking-wider block flex items-center gap-2">
-                    <svg class="icon-svg w-4 h-4 text-brand-600" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    Hasil Upload Dokumen & Berkas Santri
-                </span>
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <span class="font-bold text-slate-900 uppercase tracking-wider block flex items-center gap-2">
+                        <svg class="icon-svg w-4 h-4 text-brand-600" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        Hasil Upload Dokumen &amp; Berkas Santri
+                    </span>
+                    <span id="modalBerkasBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
+                </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="modalDokumenCards">
                     <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Panel Verifikasi Manual Dokumen oleh Admin -->
+                <div class="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 mt-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-800 text-xs block">Verifikasi Manual Berkas Dokumen (Admin):</span>
+                        <span class="text-[11px] text-slate-400">Pilih status kelayakan &amp; beri catatan perbaikan jika perlu</span>
+                    </div>
+
+                    <form id="formUpdateBerkasStatus" action="" method="POST" class="flex flex-wrap items-center gap-2">
+                        @csrf
+                        @method('PATCH')
+                        <select name="berkas_status" id="modalInputBerkasStatus" class="text-xs font-bold rounded-lg border border-slate-200 px-3 py-2 outline-none bg-slate-50">
+                            <option value="Sesuai">✓ Berkas Lengkap &amp; Sesuai</option>
+                            <option value="Perlu Perbaikan">⚠ Perlu Perbaikan (Buram / Salah Dokumen)</option>
+                            <option value="Belum Diperiksa">⏳ Belum Diperiksa</option>
+                        </select>
+                        <input type="text" name="berkas_catatan" id="modalInputBerkasCatatan" placeholder="Tulis catatan perbaikan untuk santri / panitia..." class="text-xs border border-slate-200 rounded-lg px-3 py-2 flex-1 min-w-[220px] bg-slate-50 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500">
+                        <button type="submit" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition shadow-xs">
+                            Simpan Status Berkas
+                        </button>
+                    </form>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <a id="modalBtnWaBerkas" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold text-xs transition">
+                            <svg class="icon-svg w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>Kirim Catatan Berkas via WA ke Wali</span>
+                        </a>
+
+                        <!-- Upload Pengganti Berkas oleh Admin jika dikirim via WA -->
+                        <form id="formAdminUploadBerkas" action="" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                            @csrf
+                            <select name="jenis_berkas" class="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 outline-none">
+                                <option value="file_ktp_ortu">KTP Ortu</option>
+                                <option value="file_kk">Kartu Keluarga (KK)</option>
+                                <option value="file_akta_kelahiran">Akta Kelahiran</option>
+                            </select>
+                            <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition">
+                                <svg class="icon-svg w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <span>Upload File Pengganti</span>
+                                <input type="file" name="file_dokumen" accept="image/*,application/pdf" class="hidden" onchange="this.form.submit()">
+                            </label>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -857,7 +1027,7 @@
 function showApplicantModal(reg) {
     document.getElementById('modalNoReg').textContent = reg.no_registrasi || ('ID #' + reg.id);
     document.getElementById('modalNama').textContent = reg.nama_lengkap;
-    document.getElementById('modalJalurJenjang').textContent = (reg.jalur || 'Reguler') + ' • ' + reg.jenjang;
+    document.getElementById('modalJalurJenjang').textContent = (reg.jalur || 'Reguler') + ' • ' + reg.jenjang + ' • ' + (reg.gelombang || 'Gelombang 1');
     document.getElementById('modalStatus').textContent = reg.status || 'Menunggu';
     document.getElementById('modalNisnNik').textContent = (reg.nisn || '—') + ' / ' + (reg.nik || '—');
     document.getElementById('modalKk').textContent = reg.nomor_kk || '—';
@@ -937,6 +1107,34 @@ function showApplicantModal(reg) {
         `Terima kasih. Jazakumullahu khairan.`
     );
     document.getElementById('modalBtnWaFoto').href = cleanWa ? `https://wa.me/${cleanWa}?text=${waMsg}` : '#';
+
+    // POPULATE VERIFIKASI BERKAS DOKUMEN (MANUAL ADMIN)
+    document.getElementById('formUpdateBerkasStatus').action = '/admin/psb/' + reg.id + '/berkas-status';
+    document.getElementById('formAdminUploadBerkas').action = '/admin/psb/' + reg.id + '/upload-berkas';
+    document.getElementById('modalInputBerkasStatus').value = reg.berkas_status || 'Belum Diperiksa';
+    document.getElementById('modalInputBerkasCatatan').value = reg.berkas_catatan || '';
+
+    const berkasBadge = document.getElementById('modalBerkasBadge');
+    if (reg.berkas_status === 'Perlu Perbaikan') {
+        berkasBadge.textContent = 'Perlu Revisi Berkas';
+        berkasBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300';
+    } else if (reg.berkas_status === 'Sesuai') {
+        berkasBadge.textContent = 'Berkas Sesuai Ketentuan';
+        berkasBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+    } else {
+        berkasBadge.textContent = 'Belum Diperiksa';
+        berkasBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200';
+    }
+
+    const waBerkasMsg = encodeURIComponent(
+        `Assalamu'alaikum Wr. Wb. Bapak/Ibu Wali dari ananda ${reg.nama_lengkap} (${reg.no_registrasi || 'Calon Santri'}).\n\n` +
+        `Kami dari Panitia PSB Pondok Pesantren Hidayatullah Tuksongo menginformasikan perihal Berkas Dokumen Pendaftaran (KK / KTP / Akta Kelahiran).\n\n` +
+        `Catatan Panitia: ${reg.berkas_catatan || 'Mohon berkenan untuk mengunggah ulang dokumen fisik yang jelas, tidak buram, dan sesuai ketentuan.'}\n\n` +
+        `Bapak/Ibu dapat mengunggah ulang dokumen langsung melalui link Cek Status Pendaftaran berikut:\n` +
+        `https://hidayatullahtuksongo.id/pendaftaran/cek-status?identifier=${encodeURIComponent(reg.no_registrasi || reg.nama_lengkap)}\n\n` +
+        `Terima kasih. Jazakumullahu khairan.`
+    );
+    document.getElementById('modalBtnWaBerkas').href = cleanWa ? `https://wa.me/${cleanWa}?text=${waBerkasMsg}` : '#';
 
     // POPULATE HASIL UJIAN CBT & STATUS KELULUSAN
     const cbtNilai = document.getElementById('modalCbtNilai');
@@ -1022,7 +1220,14 @@ function showApplicantModal(reg) {
     const docContainer = document.getElementById('modalDokumenCards');
     docContainer.innerHTML = '';
 
-    const renderDocCard = (title, fileUrl, colorTheme, emptyText) => {
+    let berkasDetail = {};
+    try {
+        berkasDetail = typeof reg.berkas_detail_json === 'string' ? JSON.parse(reg.berkas_detail_json) : (reg.berkas_detail_json || {});
+    } catch (e) {
+        berkasDetail = {};
+    }
+
+    const renderDocCard = (title, fileUrl, colorTheme, emptyText, verifyObj = null) => {
         if (!fileUrl) {
             return `
                 <div class="bg-white p-3 rounded-lg border border-dashed border-slate-200 text-center flex flex-col items-center justify-center min-h-[120px]">
@@ -1039,14 +1244,32 @@ function showApplicantModal(reg) {
                </div>`
             : `<img src="${fileUrl}" alt="${title}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 text-xs\\'>Gambar tidak termuat</div>';">`;
 
+        let statusBadge = '';
+        if (verifyObj && verifyObj.status) {
+            if (verifyObj.status === 'Sesuai') {
+                statusBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Sesuai</span>`;
+            } else if (verifyObj.status === 'Perlu Perbaikan') {
+                statusBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-300" title="${verifyObj.catatan || ''}">⚠ Revisi</span>`;
+            }
+        }
+
+        let noteText = '';
+        if (verifyObj && verifyObj.status === 'Perlu Perbaikan' && verifyObj.catatan) {
+            noteText = `<p class="text-[10px] text-rose-600 leading-tight line-clamp-2 mt-0.5" title="${verifyObj.catatan}">${verifyObj.catatan}</p>`;
+        }
+
         return `
             <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between space-y-2">
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-${colorTheme}-700 block mb-1">${title}</span>
+                    <div class="flex items-center justify-between gap-1 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-${colorTheme}-700 truncate">${title}</span>
+                        ${statusBadge}
+                    </div>
                     <a href="${fileUrl}" target="_blank" class="block aspect-video rounded-md overflow-hidden bg-slate-100 border border-slate-200 relative group">
                         ${previewContent}
                         <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-semibold text-xs transition">Buka Dokumen</span>
                     </a>
+                    ${noteText}
                 </div>
                 <a href="${fileUrl}" target="_blank" class="w-full text-center px-2 py-1 bg-${colorTheme}-50 text-${colorTheme}-700 hover:bg-${colorTheme}-100 rounded text-[11px] font-semibold transition">
                     Lihat ${title}
@@ -1059,13 +1282,13 @@ function showApplicantModal(reg) {
     docContainer.innerHTML += renderDocCard('Bukti Transfer Rp 200rb', reg.bukti_transfer, 'emerald', 'Belum ada bukti transfer');
 
     // 2. Akta Kelahiran
-    docContainer.innerHTML += renderDocCard('Akta Kelahiran', reg.file_akta_kelahiran, 'blue', 'Akta kelahiran belum diunggah');
+    docContainer.innerHTML += renderDocCard('Akta Kelahiran', reg.file_akta_kelahiran, 'blue', 'Akta kelahiran belum diunggah', berkasDetail.akta);
 
     // 3. Kartu Keluarga (KK)
-    docContainer.innerHTML += renderDocCard('Kartu Keluarga (KK)', reg.file_kk, 'indigo', 'KK belum diunggah');
+    docContainer.innerHTML += renderDocCard('Kartu Keluarga (KK)', reg.file_kk, 'indigo', 'KK belum diunggah', berkasDetail.kk);
 
     // 4. KTP Orang Tua / Wali
-    docContainer.innerHTML += renderDocCard('KTP Orang Tua / Wali', reg.file_ktp_ortu, 'purple', 'KTP orang tua belum diunggah');
+    docContainer.innerHTML += renderDocCard('KTP Orang Tua / Wali', reg.file_ktp_ortu, 'purple', 'KTP orang tua belum diunggah', berkasDetail.ktp);
 
     // 5. Bukti Prestasi / Tahfidz
     docContainer.innerHTML += renderDocCard('Sertifikat Prestasi / Tahfidz', reg.bukti_prestasi_tahfidz, 'amber', 'Tidak ada bukti prestasi');
@@ -1268,5 +1491,131 @@ function clearPsbSelection() {
         </form>
     </div>
 </div>
+
+<!-- MODAL 3: PENGATURAN CEPAT JADWAL PSB (BUKA MENURUT TANGGAL) -->
+<div id="modalQuickPsbSchedule" class="ta-modal-backdrop hidden">
+    <div class="ta-modal max-w-lg">
+        <div class="ta-modal-header">
+            <div>
+                <h3 class="font-bold text-gray-800 text-base">Atur Tanggal &amp; Jadwal PSB</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Atur jadwal pembukaan dan penutupan pendaftaran santri baru secara otomatis.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('modalQuickPsbSchedule').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <form action="{{ route('admin.psb.toggleStatus') }}" method="POST">
+            @csrf
+            <div class="ta-modal-body space-y-4 text-xs">
+                <!-- Mode Pilihan -->
+                <div>
+                    <label class="block font-semibold text-gray-700 uppercase tracking-wider mb-2">Mode Operasional PSB</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="p-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 flex flex-col items-center text-center gap-1">
+                            <input type="radio" name="psb_mode" value="jadwal" {{ $adminPsbMode === 'jadwal' ? 'checked' : '' }} class="text-emerald-600">
+                            <span class="font-bold text-gray-800 text-[11px]">📅 Otomatis Tanggal</span>
+                            <span class="text-[10px] text-gray-400">Ikuti jadwal</span>
+                        </label>
+                        <label class="p-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 flex flex-col items-center text-center gap-1">
+                            <input type="radio" name="psb_mode" value="buka" {{ $adminPsbMode === 'buka' ? 'checked' : '' }} class="text-emerald-600">
+                            <span class="font-bold text-gray-800 text-[11px]">🟢 Paksa Buka</span>
+                            <span class="text-[10px] text-gray-400">Selalu buka</span>
+                        </label>
+                        <label class="p-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 flex flex-col items-center text-center gap-1">
+                            <input type="radio" name="psb_mode" value="tutup" {{ $adminPsbMode === 'tutup' ? 'checked' : '' }} class="text-rose-600">
+                            <span class="font-bold text-gray-800 text-[11px]">🔴 Paksa Tutup</span>
+                            <span class="text-[10px] text-gray-400">Kunci form</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Input Tanggal Mulai & Selesai -->
+                <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-gray-700 uppercase tracking-wider text-[11px]">Periode Tanggal Pendaftaran</span>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="setQuickPsbPreset(1)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 cursor-pointer">+1 Bulan</button>
+                            <button type="button" onclick="setQuickPsbPreset(3)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 cursor-pointer">+3 Bulan</button>
+                            <button type="button" onclick="setQuickPsbPreset(6)" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 cursor-pointer">+6 Bulan</button>
+                            <button type="button" onclick="clearQuickPsbDates()" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 cursor-pointer">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Mulai Dibuka (Start)</label>
+                            <input type="datetime-local" name="psb_start_date" id="quick_psb_start_date" value="{{ $adminPsbStart }}" class="ta-input text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Selesai / Ditutup (Deadline)</label>
+                            <input type="datetime-local" name="psb_end_date" id="quick_psb_end_date" value="{{ $adminPsbEnd }}" class="ta-input text-xs">
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-gray-500">
+                        💡 Pada mode <strong>Otomatis Tanggal</strong>: Sebelum tanggal mulai status "Belum Dibuka", dalam rentang tanggal status "Dibuka (Aktif)", dan setelah deadline status otomatis "Ditutup".
+                    </p>
+                </div>
+
+                <!-- Gelombang Pendaftaran Aktif -->
+                <div class="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block font-bold text-indigo-950 uppercase tracking-wider text-[11px]">Gelombang Pendaftaran Aktif</label>
+                        <span class="text-[10px] text-indigo-600 font-semibold">Otomatis dilabelkan ke pendaftar baru</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" name="psb_gelombang_aktif" id="quick_psb_gelombang_aktif" value="{{ $adminPsbGelombang }}" class="ta-input text-xs font-bold text-indigo-900 bg-white" placeholder="Contoh: Gelombang 1, Gelombang 2">
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        <span class="text-[10px] text-gray-500 font-medium">Pilih Cepat:</span>
+                        <button type="button" onclick="document.getElementById('quick_psb_gelombang_aktif').value='Gelombang 1'" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 cursor-pointer">Gelombang 1</button>
+                        <button type="button" onclick="document.getElementById('quick_psb_gelombang_aktif').value='Gelombang 2'" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 cursor-pointer">Gelombang 2</button>
+                        <button type="button" onclick="document.getElementById('quick_psb_gelombang_aktif').value='Gelombang 3'" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 cursor-pointer">Gelombang 3</button>
+                        <button type="button" onclick="document.getElementById('quick_psb_gelombang_aktif').value='Gelombang Khusus / Inden'" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-gray-200 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 cursor-pointer">Khusus / Inden</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ta-modal-footer">
+                <button type="button" onclick="document.getElementById('modalQuickPsbSchedule').classList.add('hidden')" class="ta-btn-sm-outline">
+                    Batal
+                </button>
+                <button type="submit" class="ta-btn-sm-primary">
+                    Simpan Perubahan Jadwal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    function setQuickPsbPreset(months) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const startStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        const future = new Date(now.getTime() + months * 30 * 24 * 60 * 60 * 1000);
+        const fYear = future.getFullYear();
+        const fMonth = String(future.getMonth() + 1).padStart(2, '0');
+        const fDay = String(future.getDate()).padStart(2, '0');
+        const endStr = `${fYear}-${fMonth}-${fDay}T23:59`;
+
+        const sInput = document.getElementById('quick_psb_start_date');
+        const eInput = document.getElementById('quick_psb_end_date');
+        if (sInput) sInput.value = startStr;
+        if (eInput) eInput.value = endStr;
+    }
+
+    function clearQuickPsbDates() {
+        const sInput = document.getElementById('quick_psb_start_date');
+        const eInput = document.getElementById('quick_psb_end_date');
+        if (sInput) sInput.value = '';
+        if (eInput) eInput.value = '';
+    }
+</script>
 @endsection
 

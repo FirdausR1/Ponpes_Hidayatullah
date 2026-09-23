@@ -152,8 +152,10 @@
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 bg-slate-100 py-1 px-4 rounded-md inline-block border border-slate-200">
                     Biodata Calon Santri Baru (CV Santri) — TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }}
                 </h3>
-                <div class="flex items-center justify-center gap-4 text-[10.5px] text-slate-600 mt-1.5">
+                <div class="flex items-center justify-center gap-3 text-[10.5px] text-slate-600 mt-1.5 flex-wrap">
                     <span>No. Reg: <strong class="font-mono text-emerald-800">{{ $reg->no_registrasi }}</strong></span>
+                    <span>&bull;</span>
+                    <span>Gelombang: <strong class="text-indigo-800">{{ $reg->gelombang ?: 'Gelombang 1' }}</strong></span>
                     <span>&bull;</span>
                     <span>Jalur: <strong>{{ $reg->jalur ?: 'Reguler' }}</strong></span>
                     <span>&bull;</span>

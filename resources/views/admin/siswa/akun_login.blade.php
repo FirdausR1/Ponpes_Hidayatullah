@@ -55,7 +55,7 @@
         <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <div class="text-xs leading-relaxed space-y-1">
             <p><span class="font-bold text-gray-800">Petunjuk Login Santri:</span> Santri dapat mengakses portal login di alamat <code>{{ url('/santri/login') }}</code>.</p>
-            <p><strong>Username Santri:</strong> Bebas, bisa menggunakan <strong>NIS</strong> (Nomor Induk Santri), <strong>Username Kustom</strong>, atau <strong>NISN</strong>.</p>
+            <p><strong>Username Santri:</strong> Bebas, bisa menggunakan <strong>NIS</strong> (Nomor Induk Santri), <strong>Username Kustom</strong>, atau <strong>Nomor Stambuk</strong>.</p>
             <p><strong>Kata Sandi:</strong> Secara default otomatis dari <strong>tanggal lahir</strong> format <code>DDMMYYYY</code> (contoh: lahir 15 Mei 2010 maka passwordnya <code>15052010</code>). Admin kini dapat <strong>mengubah kata sandi santri kapan saja</strong> atau meresetnya kembali.</p>
         </div>
     </div>
@@ -93,7 +93,7 @@
                     <tr class="bg-gray-50 border-b border-gray-100 text-gray-600 font-bold uppercase text-[11px]">
                         <th class="p-4">Nama Lengkap Santri</th>
                         <th class="p-4">Username Login</th>
-                        <th class="p-4">NIS &amp; NISN</th>
+                        <th class="p-4">NIS &amp; No. Stambuk</th>
                         <th class="p-4">Kelas</th>
                         <th class="p-4">Format Tgl Lahir</th>
                         <th class="p-4">Terakhir Login</th>
@@ -112,7 +112,7 @@
                             </td>
                             <td class="p-4 font-mono text-gray-700">
                                 <div>NIS: <strong>{{ $st->nis }}</strong></div>
-                                <div class="text-gray-400 text-[11px]">NISN: {{ $st->nisn ?: '-' }}</div>
+                                <div class="text-gray-400 text-[11px]">No. Stambuk: {{ $st->nisn ?: '-' }}</div>
                             </td>
                             <td class="p-4">
                                 <span class="badge-primary">Kelas {{ $st->kelas }}</span>
