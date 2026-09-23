@@ -13,6 +13,7 @@ use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\MadrasahExamController;
 use App\Models\Article;
 
 /*
@@ -249,6 +250,22 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::put('/cbt/kategori', [AdminCbtController::class, 'kategoriUpdate'])->name('cbt.kategori.update');
         Route::delete('/cbt/kategori', [AdminCbtController::class, 'kategoriDestroy'])->name('cbt.kategori.destroy');
         Route::post('/cbt/soal/import', [AdminCbtController::class, 'soalImport'])->name('cbt.soal.import');
+
+        // CBT Ujian Madrasah / Siswa Akhir (Kelas 9 MTs & 12 MA)
+        Route::get('/cbt/madrasah', [MadrasahExamController::class, 'index'])->name('cbt.madrasah.index');
+        Route::get('/cbt/madrasah/create', [MadrasahExamController::class, 'create'])->name('cbt.madrasah.create');
+        Route::post('/cbt/madrasah', [MadrasahExamController::class, 'store'])->name('cbt.madrasah.store');
+        Route::get('/cbt/madrasah/{id}', [MadrasahExamController::class, 'show'])->name('cbt.madrasah.show');
+        Route::get('/cbt/madrasah/{id}/edit', [MadrasahExamController::class, 'edit'])->name('cbt.madrasah.edit');
+        Route::put('/cbt/madrasah/{id}', [MadrasahExamController::class, 'update'])->name('cbt.madrasah.update');
+        Route::delete('/cbt/madrasah/{id}', [MadrasahExamController::class, 'destroy'])->name('cbt.madrasah.destroy');
+        Route::post('/cbt/madrasah/{id}/tarik-santri', [MadrasahExamController::class, 'tarikSantri'])->name('cbt.madrasah.tarikSantri');
+        Route::post('/cbt/madrasah/{id}/peserta', [MadrasahExamController::class, 'storePeserta'])->name('cbt.madrasah.storePeserta');
+        Route::post('/cbt/madrasah/{id}/nilai-bulk', [MadrasahExamController::class, 'simpanNilaiBulk'])->name('cbt.madrasah.simpanNilaiBulk');
+        Route::delete('/cbt/madrasah/{id}/peserta/{resultId}', [MadrasahExamController::class, 'destroyPeserta'])->name('cbt.madrasah.destroyPeserta');
+        Route::post('/cbt/madrasah/{id}/import-excel', [MadrasahExamController::class, 'importExcel'])->name('cbt.madrasah.importExcel');
+        Route::get('/cbt/madrasah/{id}/download-template', [MadrasahExamController::class, 'downloadTemplate'])->name('cbt.madrasah.downloadTemplate');
+        Route::get('/cbt/madrasah/{id}/cetak', [MadrasahExamController::class, 'cetak'])->name('cbt.madrasah.cetak');
 
         // Pengaturan Konten Web (CMS)
         Route::get('/pengaturan', [AdminController::class, 'settingsIndex'])->name('settings.index');

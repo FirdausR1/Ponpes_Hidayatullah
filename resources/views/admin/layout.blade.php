@@ -276,30 +276,43 @@
             @endif
 
             @if($currentRole !== 'bendahara')
-            {{-- ===== UJIAN CBT (Dropdown) ===== --}}
+            {{-- ===== UJIAN CBT & MADRASAH (Dropdown) ===== --}}
             <div class="mb-2" x-data="{ open: {{ request()->routeIs('admin.cbt.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors duration-150 group">
                     <span class="mi-icon-inactive group-hover:text-gray-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-                    <span class="flex-1 text-left">Ujian Seleksi (CBT)</span>
+                    <span class="flex-1 text-left">Ujian &amp; CBT Portal</span>
                     <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
                 <div x-show="open" x-collapse x-cloak>
                     <ul class="flex flex-col gap-0.5 mt-1 ml-3 pl-3 border-l-2 border-gray-100">
+                        <!-- Sesi Ujian Madrasah Kls 9 & 12 -->
+                        <li class="pt-1 pb-1 px-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-700">Ujian Madrasah (Kls 9 &amp; 12)</span>
+                        </li>
+                        <li><a href="{{ route('admin.cbt.madrasah.index') }}" class="menu-item {{ request()->routeIs('admin.cbt.madrasah.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ request()->routeIs('admin.cbt.madrasah.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/><path d="M5 21h14"/></svg></span>
+                            <span class="font-bold">Ujian Kelas 9 &amp; 12</span>
+                        </a></li>
+
+                        <!-- Sesi CBT PSB Calon Santri Baru -->
+                        <li class="pt-2.5 pb-1 px-1 border-t border-gray-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">CBT Seleksi Masuk (PSB)</span>
+                        </li>
                         <li><a href="{{ route('admin.cbt.soal.index') }}" class="menu-item {{ request()->routeIs('admin.cbt.soal.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.cbt.soal.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
                             Bank &amp; Template Soal
                         </a></li>
                         <li><a href="{{ route('admin.cbt.pengaturan') }}" class="menu-item {{ request()->routeIs('admin.cbt.pengaturan*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.cbt.pengaturan*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                            Pengaturan Ujian
+                            Pengaturan CBT PSB
                         </a></li>
                         <li><a href="{{ route('admin.cbt.monitoring.index') }}" class="menu-item {{ request()->routeIs('admin.cbt.monitoring.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.cbt.monitoring.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-                            <span class="flex items-center gap-2">Live Monitor <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-green-500 text-white animate-pulse">LIVE</span></span>
+                            <span class="flex items-center gap-2">Live Monitor PSB <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-green-500 text-white animate-pulse">LIVE</span></span>
                         </a></li>
                         <li><a href="{{ route('admin.cbt.hasil.index') }}" class="menu-item {{ request()->routeIs('admin.cbt.hasil.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.cbt.hasil.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
-                            Rekap Hasil &amp; Nilai
+                            Rekap Hasil PSB
                         </a></li>
                         <li><a href="{{ route('admin.cbt.dongkrak.index') }}" class="menu-item {{ request()->routeIs('admin.cbt.dongkrak.*') ? 'bg-yellow-50 text-yellow-600' : 'text-yellow-600 hover:bg-yellow-50' }}">
                             <span class="flex-shrink-0 text-yellow-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
