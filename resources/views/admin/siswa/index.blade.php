@@ -424,7 +424,7 @@
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-teal-600 font-bold">✓</span>
-                            <span><strong>Kolom R-U (Teal):</strong> 4 Pos Bulanan Rutin Seragam Sistem (Syahriyah SPP, SOT MTs 55k / MA 75k, Uang Makan Mukim 300k, Tabungan 25k)</span>
+                            <span><strong>Kolom R-U (Teal):</strong> 4 Pos Bulanan Rutin Resmi: <strong>Uang Makan 3x Sehari</strong> (Mukim 300k), <strong>Syahriyah Pendidikan</strong> (SPP), <strong>Iuran SOT</strong> (MTs 55k / MA 75k), <strong>Tabungan Wajib</strong> (25k)</span>
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-amber-600 font-bold">✓</span>

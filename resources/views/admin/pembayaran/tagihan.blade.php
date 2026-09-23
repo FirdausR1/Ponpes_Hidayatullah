@@ -1257,7 +1257,7 @@
                             <div><strong class="text-emerald-700">✓ Kolom A-F:</strong> Data Pokok Wajib (Nama, NIS, L/P, Tgl Lahir, Thn Masuk, Kelas)</div>
                             <div><strong class="text-blue-700">✓ Kolom G-L:</strong> Biodata &amp; Alamat (Tempat Lahir, NIK, Alamat, Asrama)</div>
                             <div><strong class="text-purple-700">✓ Kolom M-Q:</strong> Orang Tua &amp; Sekolah (Wali, WA, Pekerjaan, Ibu, Asal SD/MI)</div>
-                            <div><strong class="text-teal-700">✓ Kolom R-U:</strong> 4 Pos Bulanan Rutin (Syahriyah SPP, SOT, Uang Makan, Tabungan Wajib)</div>
+                            <div><strong class="text-teal-700">✓ Kolom R-U:</strong> 4 Pos Bulanan (Uang Makan 3x Sehari, Syahriyah Pendidikan, Iuran SOT, Tabungan Wajib)</div>
                             <div class="sm:col-span-2"><strong class="text-amber-700">✓ Kolom V-AD:</strong> Tagihan Tambahan / Insidental (Daftar Ulang, Gedung, Infaq Pengembangan Pondok, Wisuda, Ziarah, Kitab, Kegiatan, Pos Lain &amp; Catatan Rincian)</div>
                         </div>
                         <div class="pt-1">
