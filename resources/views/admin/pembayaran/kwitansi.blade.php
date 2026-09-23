@@ -158,7 +158,7 @@ if (!empty($payment->catatan)) {
     <style id="page-print-style">
         @page {
             size: A4 portrait;
-            margin: 5mm 6mm;
+            margin: 4mm 6mm;
         }
     </style>
     
@@ -169,6 +169,42 @@ if (!empty($payment->catatan)) {
         }
         .font-arabic { font-family: 'Amiri', serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* KUNCI TATA LETAK SAMA PERSIS: LAYAR & PRINT DIJAMIN 100% SAMA */
+        .receipt-card {
+            border: 1.5px solid #1a685f;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .receipt-card-arsip {
+            border: 1.5px solid #334155;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        /* 2 KOLOM KUNCI: SELALU BERDAMPINGAN KIRI-KANAN (TIDAK BOLEH MENUMPUK KE BAWAH) */
+        .receipt-body-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 14px !important;
+            padding: 12px 16px !important;
+        }
+        .receipt-col-left {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            border-right: 1px solid #e2e8f0 !important;
+            padding-right: 14px !important;
+            min-width: 0 !important;
+        }
+        .receipt-col-right {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            min-width: 0 !important;
+        }
 
         @media print {
             .no-print { display: none !important; }
@@ -186,20 +222,35 @@ if (!empty($payment->catatan)) {
             }
             .print-sheet {
                 width: 100% !important;
-                max-width: 196mm !important;
+                max-width: 100% !important;
                 margin: 0 auto !important;
                 padding: 0 !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
-            .receipt-card {
-                border: 1.5px solid #1a685f !important;
-                border-radius: 6px !important;
-                background: #ffffff !important;
+            .receipt-card, .receipt-card-arsip {
                 box-shadow: none !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 overflow: hidden !important;
+            }
+            .receipt-body-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 14px !important;
+                padding: 10px 14px !important;
+            }
+            .receipt-col-left {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                border-right: 1px solid #cbd5e1 !important;
+                padding-right: 14px !important;
+            }
+            .receipt-col-right {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
             .cut-line {
                 page-break-inside: avoid !important;
@@ -221,7 +272,7 @@ if (!empty($payment->catatan)) {
               } else if (mode === 'a4_single') {
                   styleTag.innerHTML = '@page { size: A4 portrait; margin: 8mm 10mm; }';
               } else {
-                  styleTag.innerHTML = '@page { size: A4 portrait; margin: 5mm 6mm; }';
+                  styleTag.innerHTML = '@page { size: A4 portrait; margin: 4mm 6mm; }';
               }
           }
       }"
@@ -311,13 +362,13 @@ if (!empty($payment->catatan)) {
                     </div>
                     <div>
                         <div class="font-arabic text-[11px] leading-tight text-white/95">مَعْهَدُ هِدَايَةِ اللهِ لِلتَّرْبِيَةِ الإِسْلَامِيَّةِ</div>
-                        <h1 class="text-xs sm:text-sm font-black tracking-wider uppercase leading-none mt-0.5">PONDOK PESANTREN HIDAYATULLAH TUKSONGO</h1>
+                        <h1 class="text-xs font-black tracking-wider uppercase leading-none mt-0.5">PONDOK PESANTREN HIDAYATULLAH TUKSONGO</h1>
                         <p class="text-[9px] text-emerald-100/90 leading-tight">Desa Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah &bull; Telp/WA: 0812-3456-7890</p>
                     </div>
                 </div>
 
                 <div class="text-right shrink-0">
-                    <div class="text-xs sm:text-sm font-black tracking-widest uppercase leading-tight">
+                    <div class="text-xs font-black tracking-widest uppercase leading-tight">
                         {{ $isPenarikanTabungan ? 'BUKTI PENARIKAN TABUNGAN' : 'BUKTI SETORAN PEMBAYARAN' }}
                     </div>
                     <div class="inline-block mt-0.5 px-2 py-0.5 rounded bg-white/20 text-[9px] font-bold tracking-wider uppercase border border-white/30">
@@ -326,11 +377,11 @@ if (!empty($payment->catatan)) {
                 </div>
             </div>
 
-            <!-- BODY KWITANSI: 2 KOLOM RAPI & SEIMBANG -->
-            <div class="p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-12 gap-3.5 text-xs">
+            <!-- BODY KWITANSI: 2 KOLOM MUTLAK BERDAMPINGAN (SAMA PERSIS DI LAYAR MAUPUN PRINT) -->
+            <div class="receipt-body-grid text-xs">
                 
-                <!-- KOLOM KIRI (6/12): DATA TRANSAKSI & TANDA TANGAN -->
-                <div class="md:col-span-6 flex flex-col justify-between space-y-2 border-r-0 md:border-r border-slate-200 pr-0 md:pr-3">
+                <!-- KOLOM KIRI: DATA TRANSAKSI & TANDA TANGAN -->
+                <div class="receipt-col-left space-y-2">
                     
                     <div class="space-y-1">
                         <div class="flex items-baseline text-[11px]">
@@ -360,7 +411,7 @@ if (!empty($payment->catatan)) {
                         </div>
                     </div>
 
-                    <!-- TANDA TANGAN BERDAMPINGAN DENGAN LEBAR SEIMBANG (TIDAK AKAN BERTUMPUK) -->
+                    <!-- TANDA TANGAN BERDAMPINGAN DENGAN LEBAR SEIMBANG -->
                     <div class="pt-2 border-t border-slate-200 flex items-end justify-between gap-3 text-center">
                         <!-- Penyetor -->
                         <div class="w-[48%] flex flex-col items-center">
@@ -394,8 +445,8 @@ if (!empty($payment->catatan)) {
 
                 </div>
 
-                <!-- KOLOM KANAN (6/12): TANGGAL, TABEL POS PEMBAYARAN, TOTAL & TERBILANG -->
-                <div class="md:col-span-6 flex flex-col justify-between space-y-2">
+                <!-- KOLOM KANAN: TANGGAL, TABEL POS PEMBAYARAN, TOTAL & TERBILANG -->
+                <div class="receipt-col-right space-y-2">
                     <div>
                         <!-- Tanggal & Metode Bayar -->
                         <div class="flex items-center justify-between text-[11px] mb-1.5 pb-1 border-b border-slate-200">
@@ -463,7 +514,7 @@ if (!empty($payment->catatan)) {
         <!-- GARIS POTONG PEMBATAS (HANYA MUNCUL DI MODE 2 RANGKAP)        -->
         <!-- ============================================================ -->
         <div x-show="printMode === 'a4_double'" 
-             class="cut-line w-full my-2.5 flex items-center justify-center text-slate-400 font-mono text-[9px] print:my-2">
+             class="cut-line w-full my-2 flex items-center justify-center text-slate-400 font-mono text-[9px] print:my-1.5">
             <div class="border-b border-dashed border-slate-400 flex-1"></div>
             <div class="px-3 bg-white text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
                 ✂️ POTONG DI SINI &bull; LEMBAR ARSIP BENDAHARA
@@ -475,7 +526,7 @@ if (!empty($payment->catatan)) {
         <!-- LEMBAR 2: UNTUK ARSIP BENDAHARA / KASIR (HANYA 2 RANGKAP)    -->
         <!-- ============================================================ -->
         <div x-show="printMode === 'a4_double'" 
-             class="receipt-card bg-white rounded-xl shadow-md border-2 border-slate-600 overflow-hidden relative">
+             class="receipt-card-arsip bg-white rounded-xl shadow-md border-2 border-slate-600 overflow-hidden relative">
             
             <!-- HEADER STRIP KOP LEMBAR ARSIP -->
             <div class="bg-slate-700 text-white px-4 py-2 flex items-center justify-between border-b-2 border-slate-900">
@@ -485,13 +536,13 @@ if (!empty($payment->catatan)) {
                     </div>
                     <div>
                         <div class="font-arabic text-[11px] leading-tight text-white/95">مَعْهَدُ هِدَايَةِ اللهِ لِلتَّرْبِيَةِ الإِسْلَامِيَّةِ</div>
-                        <h2 class="text-xs sm:text-sm font-black tracking-wider uppercase leading-none mt-0.5">PONDOK PESANTREN HIDAYATULLAH TUKSONGO</h2>
+                        <h2 class="text-xs font-black tracking-wider uppercase leading-none mt-0.5">PONDOK PESANTREN HIDAYATULLAH TUKSONGO</h2>
                         <p class="text-[9px] text-slate-200/90 leading-tight">Desa Tuksongo, Kec. Pringsurat, Kab. Temanggung, Jawa Tengah &bull; Telp/WA: 0812-3456-7890</p>
                     </div>
                 </div>
 
                 <div class="text-right shrink-0">
-                    <div class="text-xs sm:text-sm font-black tracking-widest uppercase leading-tight">
+                    <div class="text-xs font-black tracking-widest uppercase leading-tight">
                         {{ $isPenarikanTabungan ? 'BUKTI PENARIKAN TABUNGAN' : 'BUKTI SETORAN PEMBAYARAN' }}
                     </div>
                     <div class="inline-block mt-0.5 px-2 py-0.5 rounded bg-white/20 text-[9px] font-bold tracking-wider uppercase border border-white/30">
@@ -500,11 +551,11 @@ if (!empty($payment->catatan)) {
                 </div>
             </div>
 
-            <!-- BODY KWITANSI SALINAN ARSIP -->
-            <div class="p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-12 gap-3.5 text-xs">
+            <!-- BODY KWITANSI SALINAN ARSIP (2 KOLOM MUTLAK BERDAMPINGAN) -->
+            <div class="receipt-body-grid text-xs">
                 
-                <!-- KOLOM KIRI (6/12): DATA TRANSAKSI & TANDA TANGAN -->
-                <div class="md:col-span-6 flex flex-col justify-between space-y-2 border-r-0 md:border-r border-slate-200 pr-0 md:pr-3">
+                <!-- KOLOM KIRI: DATA TRANSAKSI & TANDA TANGAN -->
+                <div class="receipt-col-left space-y-2">
                     
                     <div class="space-y-1">
                         <div class="flex items-baseline text-[11px]">
@@ -568,8 +619,8 @@ if (!empty($payment->catatan)) {
 
                 </div>
 
-                <!-- KOLOM KANAN (6/12): TANGGAL, TABEL POS PEMBAYARAN, TOTAL & TERBILANG -->
-                <div class="md:col-span-6 flex flex-col justify-between space-y-2">
+                <!-- KOLOM KANAN: TANGGAL, TABEL POS PEMBAYARAN, TOTAL & TERBILANG -->
+                <div class="receipt-col-right space-y-2">
                     <div>
                         <!-- Tanggal & Metode Bayar -->
                         <div class="flex items-center justify-between text-[11px] mb-1.5 pb-1 border-b border-slate-200">
