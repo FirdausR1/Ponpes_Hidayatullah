@@ -1004,6 +1004,14 @@ class PaymentController extends Controller
         $classrooms = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->get();
         $activeStudents = Student::whereIn('status', ['Aktif', 'Alumni'])->orderBy('nama_lengkap')->get(['id', 'nis', 'nama_lengkap', 'kelas', 'jenjang', 'status']);
         $posBiayaList = self::POS_BIAYA_LIST;
+        // Tambahkan pos biaya kustom yang ada di tagihan agar otomatis muncul di filter
+        $customPosInBills = StudentBill::distinct()->pluck('pos_biaya')->filter();
+        foreach ($customPosInBills as $cp) {
+            $cpNorm = self::normalizePosName($cp);
+            if (!isset($posBiayaList[$cpNorm])) {
+                $posBiayaList[$cpNorm] = self::getPosLabel($cpNorm);
+            }
+        }
 
         return view('admin.pembayaran.tagihan', compact(
             'bills',
@@ -1499,6 +1507,16 @@ class PaymentController extends Controller
 
         // Siapkan Kolom Pos Biaya yang Aktif / Memiliki Transaksi di Periode Ini
         $posBiayaList = self::POS_BIAYA_LIST;
+        foreach ($payments as $p) {
+            foreach ($p->items as $it) {
+                if ($it->pos_biaya) {
+                    $normPos = self::normalizePosName($it->pos_biaya);
+                    if (!isset($posBiayaList[$normPos])) {
+                        $posBiayaList[$normPos] = self::getPosLabel($normPos);
+                    }
+                }
+            }
+        }
 
         // Hitung total per kolom pos biaya
         $colTotals = [];
@@ -3175,6 +3193,14 @@ class PaymentController extends Controller
 
         $classrooms = Classroom::orderBy('jenjang')->orderBy('nama_kelas')->get();
         $posBiayaList = self::POS_BIAYA_LIST;
+        // Tambahkan pos biaya kustom yang ada di tagihan agar otomatis muncul di filter
+        $customPosInBills = StudentBill::distinct()->pluck('pos_biaya')->filter();
+        foreach ($customPosInBills as $cp) {
+            $cpNorm = self::normalizePosName($cp);
+            if (!isset($posBiayaList[$cpNorm])) {
+                $posBiayaList[$cpNorm] = self::getPosLabel($cpNorm);
+            }
+        }
 
         return view('admin.pembayaran.rekap_tunggakan', compact(
             'totalTunggakan',
