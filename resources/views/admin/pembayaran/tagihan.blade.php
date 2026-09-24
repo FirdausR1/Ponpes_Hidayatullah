@@ -37,10 +37,20 @@
     },
     autoFillJudul() {
         let posLabel = {
-            'MAKAN': 'Uang Makan',
-            'TAB': 'Tabungan Wajib',
+            'MAKAN': 'Uang Makan 3x Sehari',
+            'SYAHRIYAH': 'Syahriyah Pendidikan (SPP)',
             'SOT': 'Iuran SOT',
-            'SYAHRIYAH': 'Syahriyah Pendidikan'
+            'TAB': 'Tabungan Wajib Santri',
+            'PANGKAL': 'Uang Pangkal',
+            'GEDUNG': 'Uang Gedung',
+            'KERTAS': 'Kertas / Evaluasi Belajar',
+            'KESEHATAN': 'Kesehatan Santri',
+            'KEGIATAN': 'Kegiatan Santri',
+            'PG': 'PG',
+            'ALMARI': 'Almari & Fasilitas Asrama',
+            'PENDAFTARAN': 'Pendaftaran Santri Baru',
+            'KENAIKAN': 'Kenaikan Kelas',
+            'PENGEMBANGAN PONDOK': 'Infaq Pengembangan Pondok'
         }[this.selectedPosTambahan] || this.selectedPosTambahan;
         if (this.selectedKategori === 'bulanan') {
             this.judulTagihan = posLabel + ' (' + this.selectedBulan + ' ' + this.selectedTahun + ')';
@@ -1257,8 +1267,9 @@
                             <div><strong class="text-emerald-700">✓ Kolom A-F:</strong> Data Pokok Wajib (Nama, NIS, L/P, Tgl Lahir, Thn Masuk, Kelas)</div>
                             <div><strong class="text-blue-700">✓ Kolom G-L:</strong> Biodata &amp; Alamat (Tempat Lahir, NIK, Alamat, Asrama)</div>
                             <div><strong class="text-purple-700">✓ Kolom M-Q:</strong> Orang Tua &amp; Sekolah (Wali, WA, Pekerjaan, Ibu, Asal SD/MI)</div>
-                            <div><strong class="text-teal-700">✓ Kolom R-U:</strong> 4 Pos Bulanan (Uang Makan 3x Sehari, Syahriyah Pendidikan, Iuran SOT, Tabungan Wajib)</div>
-                            <div class="sm:col-span-2"><strong class="text-amber-700">✓ Kolom V-AD:</strong> Tagihan Tambahan / Insidental (Daftar Ulang, Gedung, Infaq Pengembangan Pondok, Wisuda, Ziarah, Kitab, Kegiatan, Pos Lain &amp; Catatan Rincian)</div>
+                            <div><strong class="text-teal-700">✓ Kolom R-U:</strong> 4 Pos Bulanan (Makan, Syahriyah, Sot, Tabungan)</div>
+                            <div class="sm:col-span-2"><strong class="text-amber-700">✓ Kolom V-AE:</strong> 10 Pos Tagihan Resmi (Pangkal, Gedung, Kertas, Kesehatan, Kegiatan, Pg, Almari, Pendaftaran, Kenaikan, Pengembangan Pondok)</div>
+                            <div class="sm:col-span-2"><strong class="text-slate-700">✓ Kolom AF dst:</strong> Catatan Tagihan. <em>✨ Bisa tambah kolom sendiri di kolom AG, AH, dst jika ada pos biaya baru!</em></div>
                         </div>
                         <div class="pt-1">
                             <a href="{{ route('admin.siswa.downloadTemplate') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-theme-xs transition">

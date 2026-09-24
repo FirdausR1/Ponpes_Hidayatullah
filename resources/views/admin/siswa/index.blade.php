@@ -424,11 +424,15 @@
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-teal-600 font-bold">✓</span>
-                            <span><strong>Kolom R-U (Teal):</strong> 4 Pos Bulanan Rutin Resmi: <strong>Uang Makan 3x Sehari</strong> (Mukim 300k), <strong>Syahriyah Pendidikan</strong> (SPP), <strong>Iuran SOT</strong> (MTs 55k / MA 75k), <strong>Tabungan Wajib</strong> (25k)</span>
+                            <span><strong>Kolom R-U (Teal):</strong> 4 Pos Bulanan: <strong>Makan</strong> (300k), <strong>Syahriyah</strong> (SPP 30k), <strong>Sot</strong> (MTs 55k / MA 75k), <strong>Tabungan</strong> (25k)</span>
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-amber-600 font-bold">✓</span>
-                            <span><strong>Kolom V-AD (Oranye):</strong> Tagihan Tambahan / Insidental (Uang Pangkal/DU, Gedung, Infaq Pengembangan Pondok, Wisuda, Ziarah, Kitab, Kegiatan, Pos Lain &amp; Catatan Rincian) <span class="text-gray-400">(Isi 0 jika lunas / tidak ada)</span></span>
+                            <span><strong>Kolom V-AE (Oranye):</strong> 10 Pos Tagihan Resmi: <strong>Pangkal, Gedung, Kertas, Kesehatan, Kegiatan, Pg, Almari, Pendaftaran, Kenaikan, Pengembangan Pondok</strong> <span class="text-gray-400">(Isi 0 jika lunas/tidak ada)</span></span>
+                        </div>
+                        <div class="flex items-start gap-1.5 sm:col-span-2">
+                            <span class="text-slate-600 font-bold">✓</span>
+                            <span><strong>Kolom AF (Abu-abu):</strong> Keterangan / Catatan Tagihan (misal: "Mei-Juni 2 Bulan"). <em>✨ Bisa tambah kolom sendiri di kolom AG, AH, dst jika ada pos biaya baru!</em></span>
                         </div>
                     </div>
                     <div class="pt-1">

@@ -305,7 +305,19 @@ class ExpenseController extends Controller
                     $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%KENAIKAN%'));
                     break;
                 case 'Uang Pangkal':
-                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%PANGKAL%')->orWhere('pos_biaya', 'like', '%DAFTAR%')) + $psbIncome();
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%PANGKAL%'));
+                    break;
+                case 'Pendaftaran':
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%PENDAFTARAN%')->orWhere('pos_biaya', 'like', '%DAFTAR%')) + $psbIncome();
+                    break;
+                case 'Kertas':
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%KERTAS%')->orWhere('pos_biaya', 'like', '%KTS%'));
+                    break;
+                case 'PG':
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'PG')->orWhere('pos_biaya', 'like', '%PG%'));
+                    break;
+                case 'Almari':
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%ALMARI%')->orWhere('pos_biaya', 'like', '%FASILITAS%'));
                     break;
                 case 'Kesehatan':
                     $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%KESEHATAN%')->orWhere('pos_biaya', 'like', '%UKS%'));
@@ -321,6 +333,9 @@ class ExpenseController extends Controller
                     break;
                 case 'Kas Umum':
                     $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', '%KAS UMUM%')->orWhere('pos_biaya', 'like', '%INFAQ UMUM%')->orWhere('pos_biaya', 'like', '%DONASI%'));
+                    break;
+                default:
+                    $masuk = $paymentItemsQuery(fn($q) => $q->where('pos_biaya', 'like', "%{$key}%"));
                     break;
             }
 

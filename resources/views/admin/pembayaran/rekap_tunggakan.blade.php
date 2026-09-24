@@ -64,7 +64,7 @@
 
     <!-- 4 KARTU STATISTIK KEUANGAN -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card 1: Total Tunggakan Aktif -->
+        <!-- Card 1: Total Kekurangan Aktif -->
         <div class="rounded-2xl border border-rose-100 bg-white p-5 shadow-theme-xs">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Kekurangan Aktif</span>
@@ -84,7 +84,27 @@
             </div>
         </div>
 
-        <!-- Card 2: Jumlah Santri Menunggak -->
+        <!-- Card 2: Total Uang Masuk (Terbayar) -->
+        <div class="rounded-2xl border border-emerald-100 bg-white p-5 shadow-theme-xs">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Uang Masuk (Terbayar)</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+            </div>
+            <div class="text-2xl font-bold font-mono text-emerald-600">
+                Rp {{ number_format($totalUangMasukGlobal ?? 0, 0, ',', '.') }}
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Total Tagihan:</span>
+                </span>
+                <span class="font-mono font-semibold text-gray-700">Rp {{ number_format($totalTagihanGlobal ?? 0, 0, ',', '.') }}</span>
+            </div>
+        </div>
+
+        <!-- Card 3: Jumlah Santri Menunggak -->
         <div class="rounded-2xl border border-amber-100 bg-white p-5 shadow-theme-xs">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Santri Menunggak</span>
@@ -98,26 +118,9 @@
             <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
                 <span class="flex items-center gap-1">
                     <span class="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
-                    <span>Tingkat Akhir (9 &amp; 12):</span>
+                    <span>Tingkat Akhir:</span>
                 </span>
                 <span class="font-bold text-purple-700">{{ $totalSantriTingkatAkhir ?? 0 }} Santri</span>
-            </div>
-        </div>
-
-        <!-- Card 3: Lembar Tagihan Belum Lunas -->
-        <div class="rounded-2xl border border-blue-100 bg-white p-5 shadow-theme-xs">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Item Tagihan</span>
-                <span class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </span>
-            </div>
-            <div class="text-2xl font-bold font-mono text-blue-600">
-                {{ number_format($totalItemTagihan, 0, ',', '.') }} <span class="text-sm font-normal text-gray-500 font-sans">Tagihan</span>
-            </div>
-            <div class="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
-                <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
-                <span>Belum lunas / dicicil sebagian</span>
             </div>
         </div>
 
@@ -244,40 +247,70 @@
                         <span>Rekapitulasi Per Pos Biaya</span>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">{{ $rekapPerPos->count() }} Pos</span>
                     </h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Pos pengeluaran santri dengan kekurangan tertinggi</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Rincian per pos: Tagihan, Uang Masuk (Terbayar), dan Sisa Kekurangan</p>
                 </div>
             </div>
             <div class="overflow-x-auto max-h-80 overflow-y-auto">
-                <table class="w-full text-xs text-left">
+                <table class="w-full text-xs text-left whitespace-nowrap">
                     <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-semibold sticky top-0 z-10 border-b border-gray-100">
                         <tr>
-                            <th class="px-4 py-2.5">Pos Biaya</th>
-                            <th class="px-3 py-2.5 text-center">Santri</th>
-                            <th class="px-3 py-2.5 text-center">Tagihan</th>
-                            <th class="px-4 py-2.5 text-right">Total Kekurangan</th>
+                            <th class="px-3.5 py-2.5">Pos Biaya</th>
+                            <th class="px-2 py-2.5 text-center">Santri</th>
+                            <th class="px-3 py-2.5 text-right">Tagihan (Rp)</th>
+                            <th class="px-3 py-2.5 text-right text-emerald-700 bg-emerald-50/50">Uang Masuk (Rp)</th>
+                            <th class="px-3 py-2.5 text-right text-rose-700 bg-rose-50/50">Kekurangan (Rp)</th>
+                            <th class="px-2 py-2.5 text-center">% Lunas</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($rekapPerPos as $item)
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-2.5 font-bold text-gray-900 flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono text-[11px]">{{ $item['pos'] }}</span>
-                                <span class="text-gray-500 font-normal text-[11px]">{{ $posBiayaList[$item['pos']] ?? '' }}</span>
+                            <td class="px-3.5 py-2.5 font-bold text-gray-900">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-800 font-mono text-[11px] font-bold border border-gray-200">{{ $item['pos'] }}</span>
+                                    <span class="text-gray-500 font-normal text-[11px] truncate max-w-[150px]" title="{{ $item['pos_label'] }}">{{ $item['pos_label'] }}</span>
+                                </div>
                             </td>
-                            <td class="px-3 py-2.5 text-center text-gray-600 font-medium">{{ $item['count_santri'] }}</td>
-                            <td class="px-3 py-2.5 text-center text-gray-600 font-medium">{{ $item['count_tagihan'] }}</td>
-                            <td class="px-4 py-2.5 text-right font-mono font-bold text-rose-600">
+                            <td class="px-2 py-2.5 text-center text-gray-600 font-medium">
+                                {{ $item['count_santri'] }}
+                            </td>
+                            <td class="px-3 py-2.5 text-right font-mono text-gray-700 font-medium">
+                                Rp {{ number_format($item['total_tagihan'], 0, ',', '.') }}
+                            </td>
+                            <td class="px-3 py-2.5 text-right font-mono font-bold text-emerald-600 bg-emerald-50/30">
+                                Rp {{ number_format($item['total_masuk'], 0, ',', '.') }}
+                            </td>
+                            <td class="px-3 py-2.5 text-right font-mono font-bold text-rose-600 bg-rose-50/30">
                                 Rp {{ number_format($item['total_sisa'], 0, ',', '.') }}
+                            </td>
+                            <td class="px-2 py-2.5 text-center">
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold {{ $item['persen_lunas'] >= 100 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : ($item['persen_lunas'] > 0 ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200') }}">
+                                    {{ $item['persen_lunas'] }}%
+                                </span>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-6 text-center text-gray-400">
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-400">
                                 Tidak ada data tunggakan untuk pos biaya ini.
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
+                    @if($rekapPerPos->count() > 0)
+                    <tfoot class="bg-gray-50 border-t border-gray-200 font-bold text-gray-800 sticky bottom-0">
+                        <tr>
+                            <td class="px-3.5 py-2.5 uppercase text-[10px] tracking-wider">TOTAL</td>
+                            <td class="px-2 py-2.5 text-center font-mono">{{ $totalSantriMenunggak }}</td>
+                            <td class="px-3 py-2.5 text-right font-mono">Rp {{ number_format($totalTagihanGlobal, 0, ',', '.') }}</td>
+                            <td class="px-3 py-2.5 text-right font-mono text-emerald-700">Rp {{ number_format($totalUangMasukGlobal, 0, ',', '.') }}</td>
+                            <td class="px-3 py-2.5 text-right font-mono text-rose-600">Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</td>
+                            <td class="px-2 py-2.5 text-center font-mono text-[10px] text-emerald-700">
+                                {{ $totalTagihanGlobal > 0 ? round(($totalUangMasukGlobal / $totalTagihanGlobal) * 100, 1) : 100 }}%
+                            </td>
+                        </tr>
+                    </tfoot>
+                    @endif
                 </table>
             </div>
         </div>
@@ -324,6 +357,93 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- REKAPITULASI ARUS UANG MASUK KASIR & BANK PER POS BIAYA -->
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-xs overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50/20">
+            <div>
+                <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Rekapitulasi Penerimaan Uang Masuk Kas Per Pos Biaya</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">{{ $rekapUangMasukPerPos->count() }} Pos</span>
+                </h3>
+                <p class="text-xs text-gray-500 mt-0.5">Catatan seluruh arus uang masuk pembayaran santri terkelompok per pos biaya resmi (Kas Tunai &amp; Transfer Bank)</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">Total Masuk Kasir:</span>
+                <span class="font-mono font-black text-sm text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-lg border border-emerald-200">
+                    Rp {{ number_format($totalPenerimaanKasir ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-80 overflow-y-auto">
+            <table class="w-full text-xs text-left whitespace-nowrap">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider font-semibold sticky top-0 z-10 border-b border-gray-100">
+                    <tr>
+                        <th class="px-4 py-2.5">Pos Biaya</th>
+                        <th class="px-4 py-2.5 text-right">Total Uang Masuk (Rp)</th>
+                        <th class="px-3 py-2.5 text-right text-blue-700">Kas Tunai (Rp)</th>
+                        <th class="px-3 py-2.5 text-right text-indigo-700">Transfer Bank (Rp)</th>
+                        <th class="px-3 py-2.5 text-center">Jml Transaksi</th>
+                        <th class="px-3 py-2.5 text-center">Santri Bayar</th>
+                        <th class="px-4 py-2.5 text-center no-print">Aksi Laporan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($rekapUangMasukPerPos as $item)
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-2.5 font-bold text-gray-900">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono text-[11px] font-bold border border-emerald-200">{{ $item['pos'] }}</span>
+                                <span class="text-gray-600 font-normal text-xs">{{ $item['pos_label'] }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-2.5 text-right font-mono font-black text-emerald-700 text-sm">
+                            Rp {{ number_format($item['total_masuk'], 0, ',', '.') }}
+                        </td>
+                        <td class="px-3 py-2.5 text-right font-mono font-semibold text-blue-700">
+                            Rp {{ number_format($item['nominal_tunai'], 0, ',', '.') }}
+                        </td>
+                        <td class="px-3 py-2.5 text-right font-mono font-semibold text-indigo-700">
+                            Rp {{ number_format($item['nominal_bank'], 0, ',', '.') }}
+                        </td>
+                        <td class="px-3 py-2.5 text-center font-medium text-gray-600">
+                            {{ $item['count_transaksi'] }} kuitansi
+                        </td>
+                        <td class="px-3 py-2.5 text-center font-medium text-gray-600">
+                            {{ $item['count_santri'] }} orang
+                        </td>
+                        <td class="px-4 py-2.5 text-center no-print">
+                            <a href="{{ route('admin.pembayaran.jurnal.index') }}" class="text-[11px] text-brand-600 hover:text-brand-800 font-semibold hover:underline">
+                                Buka Jurnal &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-4 py-6 text-center text-gray-400">
+                            Belum ada catatan uang masuk pada filter yang dipilih.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                @if($rekapUangMasukPerPos->count() > 0)
+                <tfoot class="bg-emerald-50/40 border-t border-emerald-200 font-bold text-gray-900 sticky bottom-0">
+                    <tr>
+                        <td class="px-4 py-2.5 uppercase text-[10px] tracking-wider text-emerald-900">TOTAL ARUS UANG MASUK</td>
+                        <td class="px-4 py-2.5 text-right font-mono font-black text-emerald-800 text-sm">Rp {{ number_format($totalPenerimaanKasir, 0, ',', '.') }}</td>
+                        <td class="px-3 py-2.5 text-right font-mono font-bold text-blue-800">Rp {{ number_format($rekapUangMasukPerPos->sum('nominal_tunai'), 0, ',', '.') }}</td>
+                        <td class="px-3 py-2.5 text-right font-mono font-bold text-indigo-800">Rp {{ number_format($rekapUangMasukPerPos->sum('nominal_bank'), 0, ',', '.') }}</td>
+                        <td class="px-3 py-2.5 text-center font-mono font-bold text-gray-700">{{ $rekapUangMasukPerPos->sum('count_transaksi') }}</td>
+                        <td class="px-3 py-2.5 text-center font-mono font-bold text-gray-700">-</td>
+                        <td class="px-4 py-2.5 no-print"></td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
         </div>
     </div>
 

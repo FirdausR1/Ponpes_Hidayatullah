@@ -23,22 +23,27 @@ class PaymentController extends Controller
 {
     /**
      * Daftar Pos Biaya Standar Spreadsheet Pembukuan Bendahara
+     * Prioritas 14 Pos Biaya Utama sesuai format resmi pesantren
      */
     public const POS_BIAYA_LIST = [
+        // 14 POS BIAYA UTAMA
         'MAKAN' => 'Uang Makan 3x Sehari',
         'SYAHRIYAH' => 'Syahriyah Pendidikan (SPP)',
         'SOT' => 'Iuran SOT',
         'TAB' => 'Tabungan Wajib Santri',
-        'KENAIKAN' => 'Kenaikan Kelas',
-        'KESEHATAN' => 'Kesehatan Santri (1 Thn)',
-        'KEGIATAN' => 'Kegiatan Santri (1 Thn)',
-        'PENDAFTARAN' => 'Pendaftaran Santri Baru',
-        'PG' => 'PG',
         'PANGKAL' => 'Uang Pangkal',
         'GEDUNG' => 'Uang Gedung',
         'KERTAS' => 'Kertas / Evaluasi Belajar',
-        'SERAGAM' => 'Seragam Santri',
+        'KESEHATAN' => 'Kesehatan Santri (1 Thn)',
+        'KEGIATAN' => 'Kegiatan Santri (1 Thn)',
+        'PG' => 'PG',
         'ALMARI' => 'Almari & Fasilitas Asrama',
+        'PENDAFTARAN' => 'Pendaftaran Santri Baru',
+        'KENAIKAN' => 'Kenaikan Kelas',
+        'PENGEMBANGAN PONDOK' => 'Infaq Pengembangan Pondok',
+
+        // POS BIAYA EKSTRAKURIKULER & INSIDENTAL LAINNYA
+        'SERAGAM' => 'Seragam Santri',
         'IJAZAH' => 'Ijazah',
         'LKS' => 'Buku LKS',
         'KITAB' => 'Kitab Turats / Diniyah',
@@ -59,13 +64,57 @@ class PaymentController extends Controller
         'DA' => 'Dewan Ambalan Pramuka',
         'KALENDER' => 'Kalender Pesantren',
         'OUTING CLASS' => 'Outing Class',
-        'PENGEMBANGAN PONDOK' => 'Infaq Pengembangan Pondok',
         'JUZ AMMA' => 'Ujian Juz Amma',
         'BINADZOR' => 'Ujian Binadzor',
         'BILGHOIB' => 'Ujian Bilghoib',
         'SUMUR BUR' => 'Infaq Fasilitas Sumur Bor',
         'KUNJUNGAN GONTOR' => 'Kunjungan Pondok Gontor',
+        'TAMBAHAN' => 'Biaya Tambahan Santri',
+        'DAFTAR ULANG' => 'Pendaftaran / Daftar Ulang',
+        'UANG GEDUNG' => 'Uang Gedung',
+        'KTS' => 'Kertas / Evaluasi Belajar',
     ];
+
+    /**
+     * Normalisasi kode pos biaya ke kode standar resmi
+     */
+    public static function normalizePosName(?string $pos): string
+    {
+        $raw = strtoupper(trim($pos ?? ''));
+        if (empty($raw)) return 'LAINNYA';
+
+        $map = [
+            'DAFTAR ULANG' => 'PENDAFTARAN',
+            'UANG GEDUNG' => 'GEDUNG',
+            'KTS' => 'KERTAS',
+            'SPP' => 'SYAHRIYAH',
+            'TABUNGAN' => 'TAB',
+            'UANG MAKAN' => 'MAKAN',
+            'UANG PANGKAL' => 'PANGKAL',
+            'INFAQ PENGEMBANGAN PONDOK' => 'PENGEMBANGAN PONDOK',
+            'INFAQ PENGEMBANGAN' => 'PENGEMBANGAN PONDOK',
+            'PENGEMBANGAN' => 'PENGEMBANGAN PONDOK',
+            'KENAIKAN KELAS' => 'KENAIKAN',
+        ];
+
+        return $map[$raw] ?? $raw;
+    }
+
+    /**
+     * Dapatkan label deskriptif pos biaya
+     */
+    public static function getPosLabel(?string $pos): string
+    {
+        $normalized = self::normalizePosName($pos);
+        if (isset(self::POS_BIAYA_LIST[$normalized])) {
+            return self::POS_BIAYA_LIST[$normalized];
+        }
+        $raw = strtoupper(trim($pos ?? ''));
+        if (isset(self::POS_BIAYA_LIST[$raw])) {
+            return self::POS_BIAYA_LIST[$raw];
+        }
+        return ucwords(strtolower(str_replace('_', ' ', $pos ?? '')));
+    }
 
     /**
      * Dashboard & Kasir Pembayaran Santri
@@ -2880,11 +2929,72 @@ class PaymentController extends Controller
 
         $unpaidBills = $unpaidQuery->get();
 
+        // Query seluruh tagihan sesuai filter aktif (untuk mendapatkan Total Kewajiban & Uang Masuk per Pos)
+        $allBillsQuery = StudentBill::with(['student.classroom'])
+            ->where('penangguhan_wisuda', false);
+
+        if ($statusSantri === 'aktif') {
+            $allBillsQuery->whereHas('student', fn($q) => $q->where('status', 'Aktif'));
+        } elseif ($statusSantri === 'arsip') {
+            $allBillsQuery->whereHas('student', fn($q) => $q->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']));
+        }
+        if (!empty($posFilter)) {
+            $allBillsQuery->where('pos_biaya', $posFilter);
+        }
+        if (!empty($kelasFilter)) {
+            $allBillsQuery->whereHas('student', fn($q) => $q->where('kelas', $kelasFilter));
+        }
+        if (!empty($jenjangFilter)) {
+            $allBillsQuery->whereHas('student', fn($q) => $q->where('jenjang', 'like', "%{$jenjangFilter}%"));
+        }
+        if (!empty($tingkatAkhirFilter)) {
+            if ($tingkatAkhirFilter === '9' || $tingkatAkhirFilter === '9_mts') {
+                $allBillsQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%IX%')
+                           ->orWhere('kelas', 'like', '%9%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['IX', '9']));
+                    });
+                });
+            } elseif ($tingkatAkhirFilter === '12' || $tingkatAkhirFilter === '12_ma') {
+                $allBillsQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%XII%')
+                           ->orWhere('kelas', 'like', '%12%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['XII', '12']));
+                    });
+                });
+            } elseif ($tingkatAkhirFilter === 'all_final' || $tingkatAkhirFilter === '1') {
+                $allBillsQuery->whereHas('student', function($q) {
+                    $q->where(function($sq) {
+                        $sq->where('kelas', 'like', '%IX%')
+                           ->orWhere('kelas', 'like', '%9%')
+                           ->orWhere('kelas', 'like', '%XII%')
+                           ->orWhere('kelas', 'like', '%12%')
+                           ->orWhereHas('classroom', fn($cq) => $cq->whereIn('tingkat', ['IX', '9', 'XII', '12']));
+                    });
+                });
+            }
+        }
+        if (!empty($search)) {
+            $allBillsQuery->where(function($w) use ($search) {
+                $w->where('judul_tagihan', 'like', "%{$search}%")
+                  ->orWhere('pos_biaya', 'like', "%{$search}%")
+                  ->orWhereHas('student', function($sq) use ($search) {
+                      $sq->where('nama_lengkap', 'like', "%{$search}%")
+                         ->orWhere('nis', 'like', "%{$search}%");
+                  });
+            });
+        }
+        $allBills = $allBillsQuery->get();
+
         // 1. Ringkasan Global
         $totalTunggakan = (float) $unpaidBills->sum('sisa_tagihan');
         $totalSantriMenunggak = $unpaidBills->pluck('student_id')->unique()->count();
         $totalItemTagihan = $unpaidBills->count();
         $totalDitangguhkan = (float) StudentBill::where('penangguhan_wisuda', true)->sum('sisa_tagihan');
+        $totalTagihanGlobal = (float) $allBills->sum('nominal_tagihan');
+        $totalUangMasukGlobal = (float) $allBills->sum('nominal_bayar');
 
         // Statistik Tingkat Akhir (Kelas 9 & 12)
         $tingkatAkhirBills = $unpaidBills->filter(function($b) {
@@ -2895,15 +3005,76 @@ class PaymentController extends Controller
         $totalTunggakanTingkatAkhir = (float) $tingkatAkhirBills->sum('sisa_tagihan');
         $totalSantriTingkatAkhir = $tingkatAkhirBills->pluck('student_id')->unique()->count();
 
-        // 2. Rekap Tunggakan Per Pos Biaya
-        $rekapPerPos = $unpaidBills->groupBy('pos_biaya')->map(function($items, $pos) {
+        // 2. Rekap Tagihan & Uang Masuk Per Pos Biaya
+        $rekapPerPos = $allBills->groupBy(function($b) {
+            return self::normalizePosName($b->pos_biaya);
+        })->map(function($items, $pos) {
+            $unpaidItems = $items->where('status', '!=', 'Lunas')->where('sisa_tagihan', '>', 0);
+            $totalTagihan = (float) $items->sum('nominal_tagihan');
+            $totalMasuk = (float) $items->sum('nominal_bayar'); // Uang Masuk yang telah dibayar
+            $totalSisa = (float) $unpaidItems->sum('sisa_tagihan'); // Total Kekurangan
+            $pctLunas = $totalTagihan > 0 ? round(($totalMasuk / $totalTagihan) * 100, 1) : ($totalSisa <= 0 ? 100 : 0);
+
             return [
                 'pos' => $pos,
-                'total_sisa' => (float) $items->sum('sisa_tagihan'),
-                'count_tagihan' => $items->count(),
-                'count_santri' => $items->pluck('student_id')->unique()->count(),
+                'pos_label' => self::getPosLabel($pos),
+                'total_tagihan' => $totalTagihan,
+                'total_masuk' => $totalMasuk,
+                'total_sisa' => $totalSisa,
+                'count_tagihan' => $unpaidItems->count(),
+                'count_tagihan_total' => $items->count(),
+                'count_santri' => $unpaidItems->pluck('student_id')->unique()->count(),
+                'count_santri_total' => $items->pluck('student_id')->unique()->count(),
+                'persen_lunas' => $pctLunas,
             ];
         })->sortByDesc('total_sisa');
+
+        // 2b. Rekapitulasi Arus Uang Masuk Kasir & Bank Per Pos Biaya (StudentPaymentItem)
+        $paymentItemsQuery = StudentPaymentItem::whereHas('payment', function($pq) use ($statusSantri, $kelasFilter, $jenjangFilter) {
+            $pq->where(function ($pqq) {
+                $pqq->whereNull('status')->orWhere('status', '!=', 'Ditolak');
+            });
+            if ($statusSantri === 'aktif') {
+                $pq->whereHas('student', fn($sq) => $sq->where('status', 'Aktif'));
+            } elseif ($statusSantri === 'arsip') {
+                $pq->whereHas('student', fn($sq) => $sq->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']));
+            }
+            if (!empty($kelasFilter)) {
+                $pq->whereHas('student', fn($sq) => $sq->where('kelas', $kelasFilter));
+            }
+            if (!empty($jenjangFilter)) {
+                $pq->whereHas('student', fn($sq) => $sq->where('jenjang', 'like', "%{$jenjangFilter}%"));
+            }
+        });
+
+        $paymentItems = $paymentItemsQuery->with('payment.student')->get();
+        $rekapUangMasukPerPos = $paymentItems->groupBy(function($it) {
+            return self::normalizePosName($it->pos_biaya);
+        })->map(function($items, $pos) {
+            $nominalTunai = (float) $items->filter(function($it) {
+                $metode = strtolower($it->payment?->metode_pembayaran ?? 'tunai');
+                return str_contains($metode, 'tunai') || (!str_contains($metode, 'transfer') && !str_contains($metode, 'bank'));
+            })->sum('nominal');
+
+            $nominalBank = (float) $items->filter(function($it) {
+                $metode = strtolower($it->payment?->metode_pembayaran ?? '');
+                return str_contains($metode, 'transfer') || str_contains($metode, 'bank');
+            })->sum('nominal');
+
+            $totalMasuk = (float) $items->sum('nominal');
+
+            return [
+                'pos' => $pos,
+                'pos_label' => self::getPosLabel($pos),
+                'total_masuk' => $totalMasuk,
+                'nominal_tunai' => $nominalTunai,
+                'nominal_bank' => $nominalBank,
+                'count_transaksi' => $items->pluck('student_payment_id')->unique()->count(),
+                'count_santri' => $items->pluck('payment.student_id')->filter()->unique()->count(),
+            ];
+        })->sortByDesc('total_masuk');
+
+        $totalPenerimaanKasir = (float) $paymentItems->sum('nominal');
 
         // 3. Rekap Tunggakan Per Kelas
         $rekapPerKelas = $unpaidBills->groupBy(function($b) {
@@ -3010,9 +3181,13 @@ class PaymentController extends Controller
             'totalSantriMenunggak',
             'totalItemTagihan',
             'totalDitangguhkan',
+            'totalTagihanGlobal',
+            'totalUangMasukGlobal',
             'totalTunggakanTingkatAkhir',
             'totalSantriTingkatAkhir',
             'rekapPerPos',
+            'rekapUangMasukPerPos',
+            'totalPenerimaanKasir',
             'rekapPerKelas',
             'santriList',
             'classrooms',
@@ -3191,6 +3366,202 @@ class PaymentController extends Controller
         foreach ($colLetters as $c) {
             $sheet->getColumnDimension($c)->setAutoSize(true);
         }
+
+        // =========================================================================
+        // SHEET 2: REKAPITULASI PER POS BIAYA (TAGIHAN, MASUK & SISA)
+        // =========================================================================
+        $allBillsExcel = StudentBill::where('penangguhan_wisuda', false);
+        if ($statusSantri === 'aktif') {
+            $allBillsExcel->whereHas('student', fn($q) => $q->where('status', 'Aktif'));
+        } elseif ($statusSantri === 'arsip') {
+            $allBillsExcel->whereHas('student', fn($q) => $q->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']));
+        }
+        if (!empty($posFilter)) $allBillsExcel->where('pos_biaya', $posFilter);
+        if (!empty($kelasFilter)) $allBillsExcel->whereHas('student', fn($q) => $q->where('kelas', $kelasFilter));
+        if (!empty($jenjangFilter)) $allBillsExcel->whereHas('student', fn($q) => $q->where('jenjang', 'like', "%{$jenjangFilter}%"));
+
+        $rekapPerPosExcel = $allBillsExcel->get()->groupBy(function($b) {
+            return self::normalizePosName($b->pos_biaya);
+        })->map(function($items, $pos) {
+            $unpaid = $items->where('status', '!=', 'Lunas')->where('sisa_tagihan', '>', 0);
+            $totalTagihan = (float) $items->sum('nominal_tagihan');
+            $totalMasuk = (float) $items->sum('nominal_bayar');
+            $totalSisa = (float) $unpaid->sum('sisa_tagihan');
+            $persen = $totalTagihan > 0 ? round(($totalMasuk / $totalTagihan) * 100, 1) : 100;
+
+            return [
+                'pos' => $pos,
+                'label' => self::getPosLabel($pos),
+                'santri' => $unpaid->pluck('student_id')->unique()->count(),
+                'tagihan_lembar' => $unpaid->count(),
+                'total_tagihan' => $totalTagihan,
+                'total_masuk' => $totalMasuk,
+                'total_sisa' => $totalSisa,
+                'persen' => $persen,
+            ];
+        })->sortByDesc('total_sisa');
+
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Rekap Per Pos Biaya');
+        $sheet2->setCellValue('A1', 'REKAPITULASI TAGIHAN & UANG MASUK PER POS BIAYA');
+        $sheet2->setCellValue('A2', 'PONDOK PESANTREN HIDAYATULLAH TUKSONGO');
+        $sheet2->setCellValue('A3', 'Tanggal Unduh: ' . date('d F Y, H:i') . ' WIB' . ($kelasFilter ? " | Kelas: {$kelasFilter}" : ''));
+        $sheet2->getStyle('A1:A2')->getFont()->setBold(true)->setSize(13);
+
+        $headersPos = ['No', 'Kode Pos', 'Nama Pos Biaya', 'Santri Menunggak', 'Jml Tagihan Belum Lunas', 'Total Tagihan (Rp)', 'Total Uang Masuk (Rp)', 'Total Kekurangan (Rp)', '% Pelunasan'];
+        $colsPos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+        foreach ($headersPos as $idx => $h) {
+            $sheet2->setCellValue($colsPos[$idx] . '5', $h);
+            $sheet2->getStyle($colsPos[$idx] . '5')->getFont()->setBold(true);
+            $sheet2->getStyle($colsPos[$idx] . '5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFD1FAE5');
+        }
+
+        $rowNum2 = 6;
+        $no2 = 1;
+        $sumTagihan2 = 0;
+        $sumMasuk2 = 0;
+        $sumSisa2 = 0;
+
+        foreach ($rekapPerPosExcel as $rp) {
+            $sheet2->setCellValue('A' . $rowNum2, $no2++);
+            $sheet2->setCellValue('B' . $rowNum2, $rp['pos']);
+            $sheet2->setCellValue('C' . $rowNum2, $rp['label']);
+            $sheet2->setCellValue('D' . $rowNum2, $rp['santri']);
+            $sheet2->setCellValue('E' . $rowNum2, $rp['tagihan_lembar']);
+            $sheet2->setCellValue('F' . $rowNum2, $rp['total_tagihan']);
+            $sheet2->setCellValue('G' . $rowNum2, $rp['total_masuk']);
+            $sheet2->setCellValue('H' . $rowNum2, $rp['total_sisa']);
+            $sheet2->setCellValue('I' . $rowNum2, $rp['persen'] . '%');
+
+            $sheet2->getStyle('F' . $rowNum2)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet2->getStyle('G' . $rowNum2)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet2->getStyle('H' . $rowNum2)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet2->getStyle('D' . $rowNum2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet2->getStyle('E' . $rowNum2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet2->getStyle('I' . $rowNum2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sumTagihan2 += $rp['total_tagihan'];
+            $sumMasuk2 += $rp['total_masuk'];
+            $sumSisa2 += $rp['total_sisa'];
+            $rowNum2++;
+        }
+
+        $sheet2->setCellValue('A' . $rowNum2, 'TOTAL KESELURUHAN');
+        $sheet2->mergeCells("A{$rowNum2}:E{$rowNum2}");
+        $sheet2->setCellValue('F' . $rowNum2, $sumTagihan2);
+        $sheet2->setCellValue('G' . $rowNum2, $sumMasuk2);
+        $sheet2->setCellValue('H' . $rowNum2, $sumSisa2);
+        $pctTotal2 = $sumTagihan2 > 0 ? round(($sumMasuk2 / $sumTagihan2) * 100, 1) : 100;
+        $sheet2->setCellValue('I' . $rowNum2, $pctTotal2 . '%');
+        $sheet2->getStyle("A{$rowNum2}:I{$rowNum2}")->getFont()->setBold(true);
+        $sheet2->getStyle("A{$rowNum2}:I{$rowNum2}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFDCFCE7');
+        $sheet2->getStyle('F' . $rowNum2)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet2->getStyle('G' . $rowNum2)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet2->getStyle('H' . $rowNum2)->getNumberFormat()->setFormatCode('#,##0');
+
+        foreach ($colsPos as $c) {
+            $sheet2->getColumnDimension($c)->setAutoSize(true);
+        }
+
+        // =========================================================================
+        // SHEET 3: REKAP UANG MASUK KASIR & BANK PER POS
+        // =========================================================================
+        $paymentItemsExcel = StudentPaymentItem::whereHas('payment', function($pq) use ($statusSantri, $kelasFilter, $jenjangFilter) {
+            $pq->where(function ($pqq) {
+                $pqq->whereNull('status')->orWhere('status', '!=', 'Ditolak');
+            });
+            if ($statusSantri === 'aktif') $pq->whereHas('student', fn($sq) => $sq->where('status', 'Aktif'));
+            elseif ($statusSantri === 'arsip') $pq->whereHas('student', fn($sq) => $sq->whereIn('status', ['Alumni', 'Lulus', 'Mutasi Keluar', 'Keluar', 'Non-Aktif', 'DO']));
+            if (!empty($kelasFilter)) $pq->whereHas('student', fn($sq) => $sq->where('kelas', $kelasFilter));
+            if (!empty($jenjangFilter)) $pq->whereHas('student', fn($sq) => $sq->where('jenjang', 'like', "%{$jenjangFilter}%"));
+        })->with('payment')->get();
+
+        $rekapMasukPos = $paymentItemsExcel->groupBy(function($it) {
+            return self::normalizePosName($it->pos_biaya);
+        })->map(function($items, $pos) {
+            $tunai = (float) $items->filter(function($it) {
+                $m = strtolower($it->payment?->metode_pembayaran ?? 'tunai');
+                return str_contains($m, 'tunai') || (!str_contains($m, 'transfer') && !str_contains($m, 'bank'));
+            })->sum('nominal');
+
+            $bank = (float) $items->filter(function($it) {
+                $m = strtolower($it->payment?->metode_pembayaran ?? '');
+                return str_contains($m, 'transfer') || str_contains($m, 'bank');
+            })->sum('nominal');
+
+            $total = (float) $items->sum('nominal');
+
+            return [
+                'pos' => $pos,
+                'label' => self::getPosLabel($pos),
+                'total' => $total,
+                'tunai' => $tunai,
+                'bank' => $bank,
+                'transaksi' => $items->pluck('student_payment_id')->unique()->count(),
+                'santri' => $items->pluck('payment.student_id')->filter()->unique()->count(),
+            ];
+        })->sortByDesc('total');
+
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('Uang Masuk Kas Per Pos');
+        $sheet3->setCellValue('A1', 'REKAPITULASI PENERIMAAN UANG MASUK KAS SANTRI PER POS BIAYA');
+        $sheet3->setCellValue('A2', 'PONDOK PESANTREN HIDAYATULLAH TUKSONGO');
+        $sheet3->setCellValue('A3', 'Tanggal Unduh: ' . date('d F Y, H:i') . ' WIB' . ($kelasFilter ? " | Kelas: {$kelasFilter}" : ''));
+        $sheet3->getStyle('A1:A2')->getFont()->setBold(true)->setSize(13);
+
+        $headersMasuk = ['No', 'Kode Pos', 'Nama Pos Biaya', 'Total Uang Masuk (Rp)', 'Kas Tunai (Rp)', 'Rekening Bank (Rp)', 'Jml Transaksi Kasir', 'Jml Santri'];
+        $colsMasuk = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        foreach ($headersMasuk as $idx => $h) {
+            $sheet3->setCellValue($colsMasuk[$idx] . '5', $h);
+            $sheet3->getStyle($colsMasuk[$idx] . '5')->getFont()->setBold(true);
+            $sheet3->getStyle($colsMasuk[$idx] . '5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFBFDBFE');
+        }
+
+        $rowNum3 = 6;
+        $no3 = 1;
+        $sumMasukAll3 = 0;
+        $sumTunaiAll3 = 0;
+        $sumBankAll3 = 0;
+
+        foreach ($rekapMasukPos as $rm) {
+            $sheet3->setCellValue('A' . $rowNum3, $no3++);
+            $sheet3->setCellValue('B' . $rowNum3, $rm['pos']);
+            $sheet3->setCellValue('C' . $rowNum3, $rm['label']);
+            $sheet3->setCellValue('D' . $rowNum3, $rm['total']);
+            $sheet3->setCellValue('E' . $rowNum3, $rm['tunai']);
+            $sheet3->setCellValue('F' . $rowNum3, $rm['bank']);
+            $sheet3->setCellValue('G' . $rowNum3, $rm['transaksi']);
+            $sheet3->setCellValue('H' . $rowNum3, $rm['santri']);
+
+            $sheet3->getStyle('D' . $rowNum3)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet3->getStyle('E' . $rowNum3)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet3->getStyle('F' . $rowNum3)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet3->getStyle('G' . $rowNum3)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet3->getStyle('H' . $rowNum3)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sumMasukAll3 += $rm['total'];
+            $sumTunaiAll3 += $rm['tunai'];
+            $sumBankAll3 += $rm['bank'];
+            $rowNum3++;
+        }
+
+        $sheet3->setCellValue('A' . $rowNum3, 'TOTAL PENERIMAAN UANG MASUK');
+        $sheet3->mergeCells("A{$rowNum3}:C{$rowNum3}");
+        $sheet3->setCellValue('D' . $rowNum3, $sumMasukAll3);
+        $sheet3->setCellValue('E' . $rowNum3, $sumTunaiAll3);
+        $sheet3->setCellValue('F' . $rowNum3, $sumBankAll3);
+        $sheet3->getStyle("A{$rowNum3}:H{$rowNum3}")->getFont()->setBold(true);
+        $sheet3->getStyle("A{$rowNum3}:H{$rowNum3}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFDBEAFE');
+        $sheet3->getStyle('D' . $rowNum3)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet3->getStyle('E' . $rowNum3)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet3->getStyle('F' . $rowNum3)->getNumberFormat()->setFormatCode('#,##0');
+
+        foreach ($colsMasuk as $c) {
+            $sheet3->getColumnDimension($c)->setAutoSize(true);
+        }
+
+        // Set active sheet back to Sheet 1
+        $spreadsheet->setActiveSheetIndex(0);
 
         $filename = 'Rekap_Tunggakan_Santri_' . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
