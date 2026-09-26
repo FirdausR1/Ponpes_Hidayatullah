@@ -123,6 +123,8 @@
                 <option value="MTs Laju"  {{ request('jenjang') == 'MTs Laju'  ? 'selected' : '' }}>MTs Laju</option>
                 <option value="MA Mukim"  {{ request('jenjang') == 'MA Mukim'  ? 'selected' : '' }}>MA Mukim</option>
                 <option value="MA Laju"   {{ request('jenjang') == 'MA Laju'   ? 'selected' : '' }}>MA Laju</option>
+                <option value="Tahfidz Mukim" {{ request('jenjang') == 'Tahfidz Mukim' ? 'selected' : '' }}>Tahfidz Mukim (Pondok Qur'an)</option>
+                <option value="Tahfidz Laju"  {{ request('jenjang') == 'Tahfidz Laju'  ? 'selected' : '' }}>Tahfidz Laju</option>
             </select>
 
             <!-- Kelas -->

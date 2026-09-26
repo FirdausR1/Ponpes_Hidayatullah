@@ -76,6 +76,33 @@ class StudentController extends Controller
                             ->orWhere('kamar_asrama', 'like', '%Laju%')
                             ->orWhereNull('kamar_asrama');
                       });
+            } elseif (str_contains($jen, 'Tahfidz')) {
+                $query->where(function($q) {
+                    $q->where('jenjang', 'like', '%Tahfidz%')
+                      ->orWhere('jenjang', 'like', '%Takhassus%')
+                      ->orWhere('kelas', 'like', '%Tahfidz%')
+                      ->orWhere('kelas', 'like', '%Takhassus%')
+                      ->orWhere('kelas', 'like', '%Halaqah%');
+                });
+                if (str_contains($jen, 'Mukim')) {
+                    $query->where(function($q) {
+                        $q->where('jenjang', 'like', '%Mukim%')
+                          ->orWhere('jenjang', 'like', '%Pondok%')
+                          ->orWhereNotNull('dormitory_id')
+                          ->orWhere(function($sq) {
+                              $sq->whereNotNull('kamar_asrama')
+                                 ->where('kamar_asrama', '!=', '')
+                                 ->where('kamar_asrama', 'not like', '%laju%');
+                          });
+                    });
+                } elseif (str_contains($jen, 'Laju')) {
+                    $query->where(function($q) {
+                        $q->where('jenjang', 'like', '%Laju%')
+                          ->orWhere('kamar_asrama', 'like', '%Laju%')
+                          ->orWhereNull('kamar_asrama')
+                          ->orWhere('kamar_asrama', '');
+                    });
+                }
             } else {
                 $query->where('jenjang', 'like', "%{$jen}%");
             }
@@ -1486,17 +1513,23 @@ class StudentController extends Controller
                 $mukimRaw     = $findValue($data, ['status_mukim', 'mukim_atau_laju', 'hunian', 'status_hunian', 'tipe_santri', 'mukim_laju', 'status_pondok']);
                 $kamarInput   = $findValue($data, ['kamar_asrama', 'kamar', 'asrama']);
 
-                // 1. Tentukan short jenjang (MTs atau MA)
+                // 1. Tentukan short jenjang (MTs, MA, atau Tahfidz)
                 $jenShort = null;
                 if (!empty($jenjangRaw)) {
-                    if (str_contains(strtoupper($jenjangRaw), 'MA')) {
+                    $jRawUpper = strtoupper($jenjangRaw);
+                    if (str_contains($jRawUpper, 'TAHFIDZ') || str_contains($jRawUpper, 'TAKHASSUS') || str_contains($jRawUpper, 'QURAN') || str_contains($jRawUpper, 'QUR\'AN')) {
+                        $jenShort = 'Tahfidz';
+                    } elseif (str_contains($jRawUpper, 'MA')) {
                         $jenShort = 'MA';
-                    } elseif (str_contains(strtoupper($jenjangRaw), 'MTS') || str_contains(strtoupper($jenjangRaw), 'SMP')) {
+                    } elseif (str_contains($jRawUpper, 'MTS') || str_contains($jRawUpper, 'SMP')) {
                         $jenShort = 'MTs';
                     }
                 }
                 if (!$jenShort) {
-                    if (preg_match('/^(vii|viii|ix|7|8|9)/i', (string)$kelasInput)) {
+                    $kUpper = strtoupper((string)$kelasInput);
+                    if (str_contains($kUpper, 'TAHFIDZ') || str_contains($kUpper, 'TAKHASSUS') || str_contains($kUpper, 'HALAQAH')) {
+                        $jenShort = 'Tahfidz';
+                    } elseif (preg_match('/^(vii|viii|ix|7|8|9)/i', (string)$kelasInput)) {
                         $jenShort = 'MTs';
                     } elseif (preg_match('/^(x|xi|xii|10|11|12)/i', (string)$kelasInput)) {
                         $jenShort = 'MA';
@@ -3472,7 +3505,7 @@ class StudentController extends Controller
         }
         rsort($angkatanList);
 
-        $jenjangList = ['MTs Mukim', 'MTs Laju', 'MA Mukim', 'MA Laju'];
+        $jenjangList = ['MTs Mukim', 'MTs Laju', 'MA Mukim', 'MA Laju', 'Tahfidz Mukim', 'Tahfidz Laju'];
 
         return view('admin.siswa.mutasi', compact(
             'mutations', 'stats', 'allClasses', 'allClassrooms', 'allDormitories', 'alasanOptions', 'tahunList', 'angkatanList', 'jenjangList'

@@ -202,6 +202,11 @@
                 </table>
             </div>
 
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2.5">
+                <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span><strong>Catatan Santri Tahfidz / Takhassus (Pondok Murni Menghafal Al-Qur'an):</strong> Santri jenjang Tahfidz tidak mengikuti madrasah formal (MTs/MA), sehingga otomatis hanya ditagihkan <strong>Uang Makan Rp 250.000 / bulan</strong> dan dikecualikan dari SPP Syahriyah, Iuran SOT, serta Tabungan Wajib Madrasah.</span>
+            </div>
+
             <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span class="text-xs text-gray-500 flex items-center gap-1.5">
                     <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

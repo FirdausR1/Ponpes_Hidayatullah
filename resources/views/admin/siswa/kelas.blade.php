@@ -3,7 +3,7 @@
 @section('title', 'Master Jenjang & Kelas — Pondok Pesantren Hidayatullah')
 
 @section('content')
-<div class="space-y-6" x-data="{ modalTambah: false, modalEdit: false, editData: { id: '', jenjang: 'MTs', tingkat: '', nama_kelas: '', wali_kelas: '', kontak_wali: '', nip_wali: '', kapasitas: 30, keterangan: '' } }">
+<div class="space-y-6" x-data="{ modalTambah: false, modalEdit: false, tambahJenjang: 'MTs', editData: { id: '', jenjang: 'MTs', tingkat: '', nama_kelas: '', wali_kelas: '', kontak_wali: '', nip_wali: '', kapasitas: 30, keterangan: '' } }">
     <!-- Breadcrumb & Top Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-theme-xs">
         <div>
@@ -233,10 +233,10 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1.5">Jenjang Pendidikan <span class="text-rose-500">*</span></label>
-                        <select name="jenjang" required class="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs text-gray-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10">
+                        <select name="jenjang" x-model="tambahJenjang" required class="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs text-gray-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10">
                             <option value="MTs">MTs (Madrasah Tsanawiyah)</option>
                             <option value="MA">MA (Madrasah Aliyah)</option>
-                            <option value="Tahfidz">Tahfidz / Takhassus</option>
+                            <option value="Tahfidz">Tahfidz / Takhassus (Pondok Murni)</option>
                             <option value="SMP">SMP</option>
                             <option value="SMA">SMA</option>
                         </select>
@@ -244,14 +244,25 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1.5">Tingkat Kelas <span class="text-rose-500">*</span></label>
-                        <input type="text" name="tingkat" required placeholder="Contoh: VII, VIII, IX, X, XI, XII" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10">
+                        <input type="text" name="tingkat" required :placeholder="tambahJenjang === 'Tahfidz' ? 'Contoh: Tahfidz, Takhassus, Halaqah, atau -' : 'Contoh: VII, VIII, IX, X, XI, XII'" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1.5">Nama Rombel Kelas <span class="text-rose-500">*</span></label>
-                    <input type="text" name="nama_kelas" required placeholder="Contoh: VII-C, X-IPA, XII-Agama" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10">
+                    <input type="text" name="nama_kelas" required :placeholder="tambahJenjang === 'Tahfidz' ? 'Contoh: Tahfidz Putra, Tahfidz Putri, Halaqah Al-Jazari' : 'Contoh: VII-C, X-IPA, XII-Agama'" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10">
                     <p class="text-[11px] text-gray-400 mt-1">Nama ini akan menjadi pengenal unik kelas.</p>
+                </div>
+
+                <!-- Informasi Khusus Rombel Tahfidz -->
+                <div x-show="tambahJenjang === 'Tahfidz'" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950 space-y-1">
+                    <div class="font-bold flex items-center gap-1.5 text-emerald-900">
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Ketentuan Khusus Santri Tahfidz / Takhassus:</span>
+                    </div>
+                    <p class="text-[11px] text-emerald-800 leading-relaxed">
+                        Santri program ini khusus menghafal Al-Qur'an (tidak sekolah formal MTs/SMA). Tingkat kelas bebas diisi seperti <strong>Tahfidz</strong>, <strong>Halaqah</strong>, atau tanda <strong>-</strong>. Di sistem tagihan kasir, santri Tahfidz otomatis hanya dikenakan <strong>Uang Makan Rp 250.000 / bulan</strong> (bebas SPP Syahriyah &amp; bebas SOT madrasah).
+                    </p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -321,7 +332,7 @@
                         <select name="jenjang" x-model="editData.jenjang" required class="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
                             <option value="MTs">MTs (Madrasah Tsanawiyah)</option>
                             <option value="MA">MA (Madrasah Aliyah)</option>
-                            <option value="Tahfidz">Tahfidz / Takhassus</option>
+                            <option value="Tahfidz">Tahfidz / Takhassus (Pondok Murni)</option>
                             <option value="SMP">SMP</option>
                             <option value="SMA">SMA</option>
                         </select>
@@ -329,14 +340,25 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1.5">Tingkat Kelas <span class="text-rose-500">*</span></label>
-                        <input type="text" name="tingkat" x-model="editData.tingkat" required placeholder="Contoh: VII, VIII, IX, X, XI, XII" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
+                        <input type="text" name="tingkat" x-model="editData.tingkat" required :placeholder="editData.jenjang === 'Tahfidz' ? 'Contoh: Tahfidz, Takhassus, Halaqah, atau -' : 'Contoh: VII, VIII, IX, X, XI, XII'" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1.5">Nama Rombel Kelas <span class="text-rose-500">*</span></label>
-                    <input type="text" name="nama_kelas" x-model="editData.nama_kelas" required placeholder="Contoh: VII-C, X-IPA" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
+                    <input type="text" name="nama_kelas" x-model="editData.nama_kelas" required :placeholder="editData.jenjang === 'Tahfidz' ? 'Contoh: Tahfidz Putra, Tahfidz Putri, Halaqah Al-Jazari' : 'Contoh: VII-C, X-IPA'" class="h-10 w-full rounded-xl border border-gray-300 px-3 text-xs text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
                     <p class="text-[11px] text-gray-400 mt-1">Jika nama diubah, data santri di kelas ini otomatis ikut disesuaikan.</p>
+                </div>
+
+                <!-- Informasi Khusus Rombel Tahfidz -->
+                <div x-show="editData.jenjang === 'Tahfidz'" class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-950 space-y-1">
+                    <div class="font-bold flex items-center gap-1.5 text-blue-900">
+                        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Ketentuan Khusus Santri Tahfidz / Takhassus:</span>
+                    </div>
+                    <p class="text-[11px] text-blue-800 leading-relaxed">
+                        Santri rombel ini khusus menghafal Al-Qur'an (tidak sekolah formal MTs/SMA). Tingkat kelas bebas diisi seperti <strong>Tahfidz</strong>, <strong>Halaqah</strong>, atau tanda <strong>-</strong>. Di sistem tagihan kasir, santri Tahfidz otomatis hanya dikenakan <strong>Uang Makan Rp 250.000 / bulan</strong> (bebas SPP Syahriyah &amp; bebas SOT madrasah).
+                    </p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

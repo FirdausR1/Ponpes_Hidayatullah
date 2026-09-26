@@ -318,14 +318,27 @@ class PaymentController extends Controller
             ->where('status', 'Aktif')
             ->get();
 
-        // Standar tarif bulanan santri ini (berdasarkan mukim/laju & MTs/MA)
+        // Standar tarif bulanan santri ini (berdasarkan mukim/laju, MTs/MA, dan Tahfidz)
         $isMukim = !empty($student->kamar_asrama) && !str_contains(strtolower($student->kamar_asrama), 'laju');
         $isMA = strtoupper($student->jenjang ?? '') === 'MA' || str_contains(strtoupper($student->jenjang ?? ''), 'MA');
+        $isTahfidz = str_contains(strtolower($student->jenjang ?? ''), 'tahfidz') 
+            || str_contains(strtolower($student->jenjang ?? ''), 'takhassus')
+            || str_contains(strtolower($student->kelas ?? ''), 'tahfidz')
+            || str_contains(strtolower($student->kelas ?? ''), 'takhassus')
+            || str_contains(strtolower($student->kelas ?? ''), 'halaqah');
 
-        $tarifMakan = $isMukim ? 300000 : 0;
-        $tarifSyahriyah = $isMukim ? 30000 : 0;
-        $tarifTabungan = 25000;
-        $tarifSot = $isMA ? 75000 : 55000;
+        if ($isTahfidz) {
+            // Santri Tahfidz murni: Hanya bayar uang makan Rp 250.000 / bulan (bebas SPP, SOT, Tabungan Wajib Madrasah)
+            $tarifMakan = $isMukim ? 250000 : 0;
+            $tarifSyahriyah = 0;
+            $tarifTabungan = 0;
+            $tarifSot = 0;
+        } else {
+            $tarifMakan = $isMukim ? 300000 : 0;
+            $tarifSyahriyah = $isMukim ? 30000 : 0;
+            $tarifTabungan = 25000;
+            $tarifSot = $isMA ? 75000 : 55000;
+        }
 
         $curMonth = date('F');
         $indoMonths = [
@@ -1084,26 +1097,40 @@ class PaymentController extends Controller
         foreach ($students as $st) {
             $isMukim = !empty($st->kamar_asrama) && !str_contains(strtolower($st->kamar_asrama), 'laju');
             $isMA = strtoupper($st->jenjang ?? '') === 'MA' || str_contains(strtoupper($st->jenjang ?? ''), 'MA');
-            $fieldKey = ($isMA ? 'ma_' : 'mts_') . ($isMukim ? 'mukim' : 'laju');
+            $isTahfidz = str_contains(strtolower($st->jenjang ?? ''), 'tahfidz') 
+                || str_contains(strtolower($st->jenjang ?? ''), 'takhassus')
+                || str_contains(strtolower($st->kelas ?? ''), 'tahfidz')
+                || str_contains(strtolower($st->kelas ?? ''), 'takhassus')
+                || str_contains(strtolower($st->kelas ?? ''), 'halaqah');
 
-            $tarifMakan = $isMukim ? 300000 : 0;
-            $tarifSyahriyah = $isMukim ? 30000 : 0;
-            $tarifTabungan = 25000;
-            $tarifSot = $isMA ? 75000 : 55000;
+            if ($isTahfidz) {
+                // Santri Tahfidz murni: Hanya bayar uang makan Rp 250.000 / bulan (bebas SPP, SOT, Tabungan Wajib Madrasah)
+                $tarifMakan = $isMukim ? 250000 : 0;
+                $tarifSyahriyah = 0;
+                $tarifTabungan = 0;
+                $tarifSot = 0;
+            } else {
+                $fieldKey = ($isMA ? 'ma_' : 'mts_') . ($isMukim ? 'mukim' : 'laju');
 
-            if (!empty($biayaBulananList)) {
-                foreach ($biayaBulananList as $bRow) {
-                    if (!empty($bRow['is_total'])) continue;
-                    $komp = strtolower($bRow['komponen'] ?? '');
-                    $valNom = (float) preg_replace('/[^0-9]/', '', $bRow[$fieldKey] ?? '0');
-                    if (str_contains($komp, 'makan')) {
-                        $tarifMakan = $valNom;
-                    } elseif (str_contains($komp, 'syahriyah') || str_contains($komp, 'spp') || str_contains($komp, 'pendidikan')) {
-                        $tarifSyahriyah = $valNom;
-                    } elseif (str_contains($komp, 'tabungan')) {
-                        $tarifTabungan = $valNom;
-                    } elseif (str_contains($komp, 'sot')) {
-                        $tarifSot = $valNom;
+                $tarifMakan = $isMukim ? 300000 : 0;
+                $tarifSyahriyah = $isMukim ? 30000 : 0;
+                $tarifTabungan = 25000;
+                $tarifSot = $isMA ? 75000 : 55000;
+
+                if (!empty($biayaBulananList)) {
+                    foreach ($biayaBulananList as $bRow) {
+                        if (!empty($bRow['is_total'])) continue;
+                        $komp = strtolower($bRow['komponen'] ?? '');
+                        $valNom = (float) preg_replace('/[^0-9]/', '', $bRow[$fieldKey] ?? '0');
+                        if (str_contains($komp, 'makan')) {
+                            $tarifMakan = $valNom;
+                        } elseif (str_contains($komp, 'syahriyah') || str_contains($komp, 'spp') || str_contains($komp, 'pendidikan')) {
+                            $tarifSyahriyah = $valNom;
+                        } elseif (str_contains($komp, 'tabungan')) {
+                            $tarifTabungan = $valNom;
+                        } elseif (str_contains($komp, 'sot')) {
+                            $tarifSot = $valNom;
+                        }
                     }
                 }
             }
@@ -1265,32 +1292,51 @@ class PaymentController extends Controller
                 continue;
             }
 
-            // Tentukan tarif spesifik santri ini (terutama perbedaan MA & MTs serta Mukim/Laju)
+            // Tentukan tarif spesifik santri ini (terutama perbedaan MA & MTs serta Mukim/Laju dan Tahfidz)
             $isMukim = !empty($st->kamar_asrama) && !str_contains(strtolower($st->kamar_asrama), 'laju');
             $isMA = strtoupper($st->jenjang ?? '') === 'MA' || str_contains(strtoupper($st->jenjang ?? ''), 'MA');
+            $isTahfidz = str_contains(strtolower($st->jenjang ?? ''), 'tahfidz') 
+                || str_contains(strtolower($st->jenjang ?? ''), 'takhassus')
+                || str_contains(strtolower($st->kelas ?? ''), 'tahfidz')
+                || str_contains(strtolower($st->kelas ?? ''), 'takhassus')
+                || str_contains(strtolower($st->kelas ?? ''), 'halaqah');
+
+            // Jika santri tahfidz dan pos tagihan adalah iuran formal sekolah madrasah, lewati santri ini
+            if ($isTahfidz && in_array($pos, ['SOT', 'SYAHRIYAH', 'TAB'])) {
+                $skippedCount++;
+                continue;
+            }
 
             if ($useAutoTarif || ($kategori === 'bulanan' && $inputNominal <= 0)) {
                 if ($pos === 'SOT') {
+                    if ($isTahfidz) {
+                        $skippedCount++;
+                        continue;
+                    }
                     // SOT MTs = Rp 55.000, MA = Rp 75.000
                     $nominalSantri = $isMA ? 75000 : 55000;
                 } elseif ($pos === 'MAKAN') {
-                    // Uang makan hanya untuk santri mukim
-                    $nominalSantri = $isMukim ? 300000 : 0;
+                    // Uang makan santri tahfidz Rp 250.000, santri formal Rp 300.000
+                    $nominalSantri = $isTahfidz ? ($isMukim ? 250000 : 0) : ($isMukim ? 300000 : 0);
                 } elseif ($pos === 'TAB') {
                     // Tabungan wajib standar
-                    $nominalSantri = 25000;
+                    $nominalSantri = $isTahfidz ? 0 : 25000;
                 } elseif ($pos === 'SYAHRIYAH') {
                     // Syahriyah murni: Rp 30.000 untuk santri mukim
-                    $nominalSantri = $isMukim ? 30000 : 0;
+                    $nominalSantri = ($isMukim && !$isTahfidz) ? 30000 : 0;
                 } else {
                     $nominalSantri = $inputNominal;
                 }
             } else {
-                $nominalSantri = $inputNominal;
+                if ($isTahfidz && $pos === 'MAKAN' && $inputNominal == 300000) {
+                    $nominalSantri = 250000;
+                } else {
+                    $nominalSantri = $inputNominal;
+                }
             }
 
-            // Jika santri laju dan tagihannya adalah uang makan (0), lewati
-            if ($nominalSantri <= 0 && $pos === 'MAKAN' && !$isMukim) {
+            // Jika santri laju dan tagihannya adalah uang makan (0), atau nominal 0 untuk pos bulanan, lewati
+            if ($nominalSantri <= 0 && in_array($pos, ['MAKAN', 'SYAHRIYAH', 'SOT', 'TAB'])) {
                 $skippedCount++;
                 continue;
             }

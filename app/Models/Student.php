@@ -154,8 +154,11 @@ class Student extends Authenticatable
      */
     public function getJenjangShortAttribute(): string
     {
-        $str = strtoupper($this->jenjang ?? '');
-        if (str_contains($str, 'MA')) {
+        $str = strtoupper($this->jenjang ?? '') . ' ' . strtoupper($this->kelas ?? '');
+        if (str_contains($str, 'TAHFIDZ') || str_contains($str, 'TAKHASSUS') || str_contains($str, 'HALAQAH')) {
+            return 'Tahfidz';
+        }
+        if (str_contains(strtoupper($this->jenjang ?? ''), 'MA')) {
             return 'MA';
         }
         return 'MTs';
@@ -207,8 +210,39 @@ class Student extends Authenticatable
      */
     public static function getTarifBulananByKategori(string $jenjang, string $hunian): array
     {
+        $isTahfidz = strtoupper($jenjang) === 'TAHFIDZ' || str_contains(strtoupper($jenjang), 'TAHFIDZ') || str_contains(strtoupper($jenjang), 'TAKHASSUS') || str_contains(strtoupper($jenjang), 'HALAQAH');
         $isMA = strtoupper($jenjang) === 'MA' || str_contains(strtoupper($jenjang), 'MA');
         $isMukim = strtolower($hunian) === 'mukim' || str_contains(strtolower($hunian), 'mukim');
+
+        if ($isTahfidz) {
+            if ($isMukim) {
+                return [
+                    'jenjang' => 'Tahfidz',
+                    'hunian' => 'Mukim',
+                    'kategori_label' => 'Tahfidz Mukim (Pondok Khusus Al-Qur\'an)',
+                    'uang_makan' => 250000,
+                    'syahriah' => 0,
+                    'sot' => 0,
+                    'tabungan_wajib' => 0,
+                    'total_bulanan' => 250000,
+                    'items' => [
+                        ['nama' => 'Uang Makan 3x Sehari', 'nominal' => 250000],
+                    ],
+                ];
+            } else {
+                return [
+                    'jenjang' => 'Tahfidz',
+                    'hunian' => 'Laju',
+                    'kategori_label' => 'Tahfidz Laju (Non-Asrama)',
+                    'uang_makan' => 0,
+                    'syahriah' => 0,
+                    'sot' => 0,
+                    'tabungan_wajib' => 0,
+                    'total_bulanan' => 0,
+                    'items' => [],
+                ];
+            }
+        }
 
         if ($isMA) {
             if ($isMukim) {

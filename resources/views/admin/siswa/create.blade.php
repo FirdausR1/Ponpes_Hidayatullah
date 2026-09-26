@@ -76,6 +76,8 @@
                             <option value="MTs Laju" {{ old('jenjang') === 'MTs Laju' ? 'selected' : '' }}>MTs Laju (Non-Asrama)</option>
                             <option value="MA Mukim" {{ old('jenjang') === 'MA Mukim' ? 'selected' : '' }}>MA Mukim (Asrama)</option>
                             <option value="MA Laju" {{ old('jenjang') === 'MA Laju' ? 'selected' : '' }}>MA Laju (Non-Asrama)</option>
+                            <option value="Tahfidz Mukim" {{ old('jenjang') === 'Tahfidz Mukim' ? 'selected' : '' }}>Tahfidz Mukim (Pondok Qur'an - Asrama / Rp 250k)</option>
+                            <option value="Tahfidz Laju" {{ old('jenjang') === 'Tahfidz Laju' ? 'selected' : '' }}>Tahfidz Laju (Pondok Qur'an - Non Asrama)</option>
                         </select>
                     </div>
                     <div>
