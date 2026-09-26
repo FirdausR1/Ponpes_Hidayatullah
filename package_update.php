@@ -41,6 +41,10 @@ $filesToInclude = [
     'public/logo.png',
     'public/robots.txt',
     'public/favicon.ico',
+    'public/favicon-48x48.png',
+    'public/favicon-96x96.png',
+    'public/favicon-192x192.png',
+    'public/apple-touch-icon.png',
     'Buku_Panduan_Sistem_Ponpes_Hidayatullah.pdf',
 ];
 

@@ -9,7 +9,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rincian Biaya Pendidikan & Masuk Santri Baru TA {{ \App\Models\Setting::get('tahun_ajaran', '2026/2027') }} - Pondok Pesantren Hidayatullah</title>
-    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <!-- Google Fonts: EB Garamond & Plus Jakarta Sans (Gontor Typographic Standard) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

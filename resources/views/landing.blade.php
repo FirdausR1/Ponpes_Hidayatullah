@@ -7,6 +7,13 @@
     <title>Pondok Pesantren Hidayatullah Tuksongo — Pringsurat Temanggung</title>
     <meta name="description"
         content="Website Resmi Pondok Pesantren Hidayatullah Tuksongo, Pringsurat, Temanggung. Memadukan kurikulum Kemenag (MTs-MA) dan tradisi kepesantrenan modern, tahfidz bersanad, bahasa Arab-Inggris aktif.">
+    <!-- Favicon & Touch Icons (Google Search Standard) -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
