@@ -15,10 +15,14 @@ if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== tru
 // Folder-folder yang harus dimasukkan ke dalam paket update
 $directoriesToInclude = [
     'app',
+    'config',
     'routes',
     'resources/views',
+    'resources/css',
+    'resources/js',
     'database/migrations',
     'database/seeders',
+    'database/scripts',
     'public/.htaccess',
 ];
 
@@ -27,7 +31,16 @@ $filesToInclude = [
     'run_migrate.php',
     'unzip.php',
     '.htaccess',
+    'artisan',
+    'composer.json',
+    'composer.lock',
+    'bootstrap/app.php',
     'public/googleab93c42a8094409a.html',
+    'public/index.php',
+    'public/kop_psb.png',
+    'public/logo.png',
+    'public/robots.txt',
+    'public/favicon.ico',
     'Buku_Panduan_Sistem_Ponpes_Hidayatullah.pdf',
 ];
 

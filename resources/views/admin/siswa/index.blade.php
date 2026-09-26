@@ -410,29 +410,41 @@
                         Template ini berlaku untuk semua kebutuhan import: santri baru, santri lama, alumni bertagihan, dll. Isi sesuai kolom yang tersedia:
                     </p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-700 bg-white p-3 rounded-lg border border-emerald-100">
-                        <div class="flex items-start gap-1.5">
+                        <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-emerald-600 font-bold">✓</span>
-                            <span><strong>Kolom A-F (Hijau):</strong> Data Pokok Wajib (Nama, NIS, L/P, Tgl Lahir <code class="bg-gray-100 px-1 rounded text-[10px]">YYYY-MM-DD</code>, Tahun Masuk, Kelas)</span>
+                            <span><strong>Kolom A-J (Hijau):</strong> Data Pokok &amp; Akademik (Nama, NIS, L/P, Tgl Lahir <code class="bg-gray-100 px-1 rounded text-[10px]">YYYY-MM-DD</code>, Tmp Lahir, Thn Masuk, <strong>Jenjang MTs/MA</strong>, <strong class="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">Status Santri: Mukim / Laju</strong>, Kelas, Status)</span>
                         </div>
                         <div class="flex items-start gap-1.5">
                             <span class="text-blue-600 font-bold">✓</span>
-                            <span><strong>Kolom G-L (Biru):</strong> Biodata &amp; Alamat (Tempat Lahir, NIK, NISN, Gol. Darah, Alamat Lengkap, Kamar/Asrama) <span class="text-gray-400">(Opsional)</span></span>
+                            <span><strong>Kolom K-T (Biru):</strong> Biodata &amp; Asrama (NIK Santri, No KK, NISN, Anak Ke, Jml Saudara, Gol. Darah, Hobi, Riwayat Sakit, Kamar Asrama, Alamat Lengkap)</span>
                         </div>
                         <div class="flex items-start gap-1.5">
-                            <span class="text-purple-600 font-bold">✓</span>
-                            <span><strong>Kolom M-Q (Ungu):</strong> Orang Tua &amp; Sekolah (Nama Wali/Ayah, WhatsApp, Pekerjaan, Nama Ibu, Asal Sekolah) <span class="text-gray-400">(Opsional)</span></span>
+                            <span class="text-teal-600 font-bold">✓</span>
+                            <span><strong>Kolom U-W (Teal):</strong> Asal Sekolah (Nama Sekolah Asal, Tahun Lulus, Alamat Sekolah)</span>
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
-                            <span class="text-teal-600 font-bold">✓</span>
-                            <span><strong>Kolom R-U (Teal):</strong> 4 Pos Bulanan: <strong>Makan</strong> (300k), <strong>Syahriyah</strong> (SPP 30k), <strong>Sot</strong> (MTs 55k / MA 75k), <strong>Tabungan</strong> (25k)</span>
+                            <span class="text-purple-600 font-bold">✓</span>
+                            <span><strong>Kolom X-AG (Ungu &amp; Pink):</strong> Data Orang Tua (Ayah: Nama, NIK, Kerja, Pendidikan, Gaji | Ibu: Nama, NIK, Kerja, Pendidikan, Gaji)</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <span class="text-indigo-600 font-bold">✓</span>
+                            <span><strong>Kolom AH-AL (Indigo):</strong> Wali Santri (Nama Wali, Hubungan, NIK, Pekerjaan, Gaji)</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <span class="text-rose-600 font-bold">✓</span>
+                            <span><strong>Kolom AM-AN (Rose):</strong> Kontak Utama &amp; Catatan (<strong class="text-rose-700 bg-rose-50 px-1 py-0.5 rounded">Cukup 1 No. WA Aktif Orang Tua / Wali</strong>, Catatan Khusus/Tahfidz)</span>
+                        </div>
+                        <div class="flex items-start gap-1.5 sm:col-span-2">
+                            <span class="text-teal-700 font-bold">✓</span>
+                            <span><strong>Kolom AO-AR (Teal Tua):</strong> 4 Pos Bulanan: <strong>Makan</strong> (300k - isi 0 jika laju), <strong>Syahriyah</strong> (SPP 30k), <strong>Sot</strong> (MTs 55k / MA 75k), <strong>Tabungan</strong> (25k)</span>
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-amber-600 font-bold">✓</span>
-                            <span><strong>Kolom V-AE (Oranye):</strong> 10 Pos Tagihan Resmi: <strong>Pangkal, Gedung, Kertas, Kesehatan, Kegiatan, Pg, Almari, Pendaftaran, Kenaikan, Pengembangan Pondok</strong> <span class="text-gray-400">(Isi 0 jika lunas/tidak ada)</span></span>
+                            <span><strong>Kolom AS-BB (Oranye):</strong> 10 Pos Tagihan Resmi: <strong>Pangkal, Gedung, Kertas, Kesehatan, Kegiatan, Pg, Almari, Pendaftaran, Kenaikan, Pengembangan Pondok</strong> <span class="text-gray-400">(Isi 0 jika lunas/laju)</span></span>
                         </div>
                         <div class="flex items-start gap-1.5 sm:col-span-2">
                             <span class="text-slate-600 font-bold">✓</span>
-                            <span><strong>Kolom AF (Abu-abu):</strong> Keterangan / Catatan Tagihan (misal: "Mei-Juni 2 Bulan"). <em>✨ Bisa tambah kolom sendiri di kolom AG, AH, dst jika ada pos biaya baru!</em></span>
+                            <span><strong>Kolom BC dst (Abu-abu):</strong> Keterangan / Catatan Tagihan (misal: "Mei-Juni 2 Bulan"). <em>✨ Bisa tambah kolom sendiri di kolom BD, BE, dst jika ada pos biaya baru!</em></span>
                         </div>
                     </div>
                     <div class="pt-1">

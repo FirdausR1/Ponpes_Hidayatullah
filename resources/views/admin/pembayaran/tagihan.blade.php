@@ -1264,12 +1264,15 @@
                             Template ini telah disatukan dengan Data Santri dan dilengkapi kolom biodata, alamat, serta tagihan masa lalu:
                         </p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10.5px] text-gray-700 bg-white p-2.5 rounded-lg border border-emerald-100">
-                            <div><strong class="text-emerald-700">✓ Kolom A-F:</strong> Data Pokok Wajib (Nama, NIS, L/P, Tgl Lahir, Thn Masuk, Kelas)</div>
-                            <div><strong class="text-blue-700">✓ Kolom G-L:</strong> Biodata &amp; Alamat (Tempat Lahir, NIK, Alamat, Asrama)</div>
-                            <div><strong class="text-purple-700">✓ Kolom M-Q:</strong> Orang Tua &amp; Sekolah (Wali, WA, Pekerjaan, Ibu, Asal SD/MI)</div>
-                            <div><strong class="text-teal-700">✓ Kolom R-U:</strong> 4 Pos Bulanan (Makan, Syahriyah, Sot, Tabungan)</div>
-                            <div class="sm:col-span-2"><strong class="text-amber-700">✓ Kolom V-AE:</strong> 10 Pos Tagihan Resmi (Pangkal, Gedung, Kertas, Kesehatan, Kegiatan, Pg, Almari, Pendaftaran, Kenaikan, Pengembangan Pondok)</div>
-                            <div class="sm:col-span-2"><strong class="text-slate-700">✓ Kolom AF dst:</strong> Catatan Tagihan. <em>✨ Bisa tambah kolom sendiri di kolom AG, AH, dst jika ada pos biaya baru!</em></div>
+                            <div class="sm:col-span-2"><strong class="text-emerald-700">✓ Kolom A-J:</strong> Data Pokok &amp; Akademik (Nama, NIS, L/P, Tgl Lahir, Tmp Lahir, Thn Masuk, <strong>Jenjang MTs/MA</strong>, <strong class="text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded">Status Santri: Mukim / Laju</strong>, Kelas, Status)</div>
+                            <div><strong class="text-blue-700">✓ Kolom K-T:</strong> Biodata &amp; Asrama (NIK, KK, NISN, Anak Ke, Jml Sdr, Gol. Darah, Hobi, Kamar, Alamat)</div>
+                            <div><strong class="text-teal-700">✓ Kolom U-W:</strong> Asal Sekolah (Nama Sekolah Asal, Thn Lulus, Alamat)</div>
+                            <div class="sm:col-span-2"><strong class="text-purple-700">✓ Kolom X-AG:</strong> Data Orang Tua (Ayah: Nama, NIK, Kerja, Pddk, Gaji | Ibu: Nama, NIK, Kerja, Pddk, Gaji)</div>
+                            <div><strong class="text-indigo-700">✓ Kolom AH-AL:</strong> Wali Santri (Wali: Nama, Hubungan, NIK, Kerja, Gaji)</div>
+                            <div><strong class="text-rose-700">✓ Kolom AM-AN:</strong> Kontak Utama &amp; Catatan (<span class="text-rose-800 font-semibold bg-rose-50 px-1 py-0.5 rounded">Cukup 1 No WA Aktif</span>, Catatan Khusus/Tahfidz)</div>
+                            <div class="sm:col-span-2"><strong class="text-teal-800">✓ Kolom AO-AR:</strong> 4 Pos Bulanan: Makan (300k - isi 0 jika laju), Syahriyah (30k), Sot (55k/75k), Tabungan (25k)</div>
+                            <div class="sm:col-span-2"><strong class="text-amber-700">✓ Kolom AS-BB:</strong> 10 Pos Tagihan Resmi (Pangkal, Gedung, Kertas, Kesehatan, Kegiatan, Pg, Almari, Pendaftaran, Kenaikan, Pengembangan Pondok)</div>
+                            <div class="sm:col-span-2"><strong class="text-slate-700">✓ Kolom BC dst:</strong> Keterangan Tagihan. <em>✨ Bisa tambah kolom sendiri di kolom BD, BE, dst jika ada pos biaya baru!</em></div>
                         </div>
                         <div class="pt-1">
                             <a href="{{ route('admin.siswa.downloadTemplate') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-theme-xs transition">

@@ -155,12 +155,75 @@
             margin-bottom: 8px;
             line-height: 1.75;
         }
+        /* KUTIPAN / BLOCKQUOTE GAYA MEDIA BERITA */
         .article-content blockquote {
-            border-left: 3px solid var(--green-500);
-            background: var(--green-50); padding: 18px 24px;
-            margin: 24px 0; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            font-family: 'Grenze', Georgia, serif; font-size: 19px; font-style: italic;
-            color: var(--green-950);
+            position: relative;
+            background: #f3f5f8;
+            border: 1px solid #e5e9f0;
+            border-radius: 16px;
+            padding: 24px 26px 24px 74px;
+            margin: 30px 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-style: italic;
+            font-size: 15.5px;
+            line-height: 1.8;
+            color: #334155;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+        .article-content blockquote::before {
+            content: "";
+            position: absolute;
+            left: 22px;
+            top: 22px;
+            width: 36px;
+            height: 36px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cbd5e1'%3E%3Cpath d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.95;
+            pointer-events: none;
+        }
+        .article-content blockquote p {
+            margin-bottom: 12px;
+            font-family: inherit;
+            font-style: italic;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+            text-align: left;
+        }
+        .article-content blockquote p:last-child {
+            margin-bottom: 0;
+        }
+        .article-content blockquote em,
+        .article-content blockquote i {
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+        }
+        .article-content blockquote cite,
+        .article-content blockquote footer {
+            display: block;
+            margin-top: 10px;
+            font-size: 13px;
+            font-style: normal;
+            font-weight: 600;
+            color: #64748b;
+        }
+        @media (max-width: 640px) {
+            .article-content blockquote {
+                padding: 18px 18px 18px 56px;
+                font-size: 14.5px;
+                line-height: 1.75;
+                border-radius: 14px;
+                margin: 22px 0;
+            }
+            .article-content blockquote::before {
+                left: 16px;
+                top: 18px;
+                width: 26px;
+                height: 26px;
+            }
         }
 
         /* SHARE BUTTONS */

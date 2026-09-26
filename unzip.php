@@ -31,7 +31,7 @@ if ($zip->open($zipFile) === TRUE) {
 
     echo "<div style='font-family:sans-serif; max-width:650px; margin:40px auto; padding:25px; border-radius:12px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534;'>";
     echo "<h2 style='margin-top:0;'>Alhamdulillah, Update Sukses Diterapkan!</h2>";
-    echo "<p>Semua file pembaruan sistem (Pemisahan SOT & Syahriyah RAB, Template Upload Santri Massal Baru, Peningkatan Panjang Asrama, Pemisahan Soal CBT, Tab Alumni Kasir, Cetak Kwitansi, dll.) berhasil diekstrak dan <b>{$count}</b> cache view lama telah dibersihkan otomatis.</p>";
+    echo "<p>Semua file pembaruan sistem (Desain Kotak Kutipan Berita Modern, Kapasitas Kamar Asrama s/d 1.000 Santri, Template Upload Santri Massal Lengkap 58 Kolom [Status Mukim/Laju, Biodata & Pos Tagihan], Pemisahan SOT & Syahriyah RAB, Modul CBT Madrasah, Tab Alumni Kasir, Cetak Kwitansi, dll.) berhasil diekstrak dan <b>{$count}</b> cache view lama telah dibersihkan otomatis.</p>";
     echo "<div style='margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;'>";
     echo "<a href='/run_migrate.php' style='display:inline-block; padding:10px 18px; background:#0f766e; color:white; text-decoration:none; border-radius:8px; font-weight:bold;'>1. Jalankan Update Database &rarr;</a>";
     echo "<a href='/' style='display:inline-block; padding:10px 18px; background:#15803d; color:white; text-decoration:none; border-radius:8px; font-weight:bold;'>2. Buka Website</a>";

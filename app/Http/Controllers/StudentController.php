@@ -22,6 +22,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
 
@@ -166,7 +167,7 @@ class StudentController extends Controller
             'tanggal_lahir' => 'nullable|string|max:30',
             'jenjang' => 'required|string|max:50',
             'kelas' => 'required|string|max:50',
-            'kamar_asrama' => 'nullable|string|max:50',
+            'kamar_asrama' => 'nullable|string|max:255',
             'tahun_masuk' => 'required|string|max:10',
             'status' => 'required|string|in:Aktif,Alumni,Mutasi,Cuti',
 
@@ -328,7 +329,7 @@ class StudentController extends Controller
             'tanggal_lahir' => 'nullable|string|max:30',
             'jenjang' => 'required|string|max:50',
             'kelas' => 'required|string|max:50',
-            'kamar_asrama' => 'nullable|string|max:50',
+            'kamar_asrama' => 'nullable|string|max:255',
             'tahun_masuk' => 'required|string|max:10',
             'status' => 'required|string|in:Aktif,Alumni,Mutasi,Cuti',
 
@@ -887,61 +888,93 @@ class StudentController extends Controller
 
     /**
      * Unduh template file Excel / CSV untuk Tambah Santri Secara Massal beserta Tagihan Tunggakan Lalu.
+     * Dilengkapi kolom status mukim/laju, jenjang MTs/MA, biodata lengkap, asal sekolah, orang tua, wali, & tagihan.
      */
     public function downloadTemplate()
     {
         $spreadsheet = new Spreadsheet();
 
         // ============================================================
-        // SHEET 1: DATA SANTRI & TAGIHAN (Lengkap dengan Biodata & Alamat)
+        // SHEET 1: DATA SANTRI & TAGIHAN LENGKAP
         // ============================================================
         $sheet1 = $spreadsheet->getActiveSheet();
         $sheet1->setTitle('Data Santri & Tagihan');
 
         $colsSheet1 = [
-            // A - F: DATA POKOK & AKADEMIK (WAJIB)
-            'A' => ['title' => 'nama_lengkap',          'label' => 'Nama Lengkap Santri (WAJIB)'],
-            'B' => ['title' => 'nis',                    'label' => 'NIS — kosongkan jika baru / isi NIS lama jika santri lama/alumni (Opsional)'],
-            'C' => ['title' => 'jenis_kelamin',          'label' => 'L / P (WAJIB)'],
-            'D' => ['title' => 'tanggal_lahir',          'label' => 'Tgl Lahir YYYY-MM-DD, misal: 2012-05-15 (WAJIB — otomatis password login)'],
-            'E' => ['title' => 'tahun_masuk',            'label' => 'Tahun Masuk Pesantren, misal: 2026 (WAJIB)'],
-            'F' => ['title' => 'kelas',                  'label' => 'Kelas, misal: VII-A, X-B (WAJIB)'],
+            // A - J (1 - 10): BAGIAN 1: DATA POKOK & AKADEMIK (HIJAU EMERALD - WAJIB)
+            'A'  => ['title' => 'nama_lengkap',         'label' => 'Nama Lengkap Santri (WAJIB)'],
+            'B'  => ['title' => 'nis',                  'label' => 'NIS — kosongkan jika santri baru / isi NIS lama jika santri lama/alumni (Opsional)'],
+            'C'  => ['title' => 'jenis_kelamin',        'label' => 'L / P (WAJIB)'],
+            'D'  => ['title' => 'tanggal_lahir',        'label' => 'Tgl Lahir YYYY-MM-DD, misal: 2012-05-15 (WAJIB — otomatis password login)'],
+            'E'  => ['title' => 'tempat_lahir',         'label' => 'Tempat Lahir, misal: Temanggung (Opsional)'],
+            'F'  => ['title' => 'tahun_masuk',          'label' => 'Tahun Masuk Pesantren, misal: 2026 (WAJIB)'],
+            'G'  => ['title' => 'jenjang',              'label' => 'Jenjang: MTs atau MA (WAJIB)'],
+            'H'  => ['title' => 'status_mukim',         'label' => 'Status: Mukim atau Laju (WAJIB — menentukan uang makan & fasilitas asrama)'],
+            'I'  => ['title' => 'kelas',                'label' => 'Kelas / Rombel, misal: VII-A, VIII-B, X-A (WAJIB)'],
+            'J'  => ['title' => 'status',               'label' => 'Status Keaktifan: Aktif / Alumni / Mutasi / Cuti (Opsional - default: Aktif)'],
 
-            // G - L: BIODATA & ALAMAT SANTRI (OPSIONAL)
-            'G' => ['title' => 'tempat_lahir',          'label' => 'Tempat Lahir, misal: Temanggung (Opsional)'],
-            'H' => ['title' => 'nik',                   'label' => 'NIK Santri 16 Digit KK (Opsional)'],
-            'I' => ['title' => 'nisn',                  'label' => 'Nomor Stambuk / NISN Kemdikbud (Opsional)'],
-            'J' => ['title' => 'golongan_darah',        'label' => 'Gol. Darah: A / B / AB / O (Opsional)'],
-            'K' => ['title' => 'alamat_lengkap',        'label' => 'Alamat Lengkap: RT/RW, Desa, Kec, Kab (Opsional)'],
-            'L' => ['title' => 'kamar_asrama',          'label' => 'Kamar / Asrama, misal: Al-Khawarizmi (Opsional)'],
+            // K - T (11 - 20): BAGIAN 2: BIODATA SANTRI & ASRAMA (BIRU - OPSIONAL)
+            'K'  => ['title' => 'nik',                  'label' => 'NIK Santri 16 Digit KK (Opsional)'],
+            'L'  => ['title' => 'nomor_kk',             'label' => 'Nomor Kartu Keluarga (KK) 16 Digit (Opsional)'],
+            'M'  => ['title' => 'nisn',                 'label' => 'Nomor Stambuk / NISN Kemdikbud (Opsional)'],
+            'N'  => ['title' => 'anak_ke',              'label' => 'Anak Ke- (angka, misal: 1, 2) (Opsional)'],
+            'O'  => ['title' => 'jumlah_saudara',       'label' => 'Jumlah Saudara Kandung (angka, misal: 3) (Opsional)'],
+            'P'  => ['title' => 'golongan_darah',       'label' => 'Gol. Darah: A / B / AB / O (Opsional)'],
+            'Q'  => ['title' => 'hobi',                 'label' => 'Hobi / Minat Bakat (Opsional)'],
+            'R'  => ['title' => 'riwayat_penyakit',     'label' => 'Riwayat Penyakit / Alergi (Opsional)'],
+            'S'  => ['title' => 'kamar_asrama',         'label' => 'Kamar Asrama Mukim, misal: Al-Khawarizmi (Kosongkan jika Laju) (Opsional)'],
+            'T'  => ['title' => 'alamat_lengkap',       'label' => 'Alamat Lengkap: Dusun, RT/RW, Desa, Kec, Kab, Provinsi (Opsional)'],
 
-            // M - Q: DATA ORANG TUA / WALI & SEKOLAH ASAL (OPSIONAL)
-            'M' => ['title' => 'nama_wali',             'label' => 'Nama Ayah / Wali (Opsional)'],
-            'N' => ['title' => 'no_whatsapp',           'label' => 'No. WhatsApp Wali, misal: 081234567890 (Opsional)'],
-            'O' => ['title' => 'pekerjaan_wali',        'label' => 'Pekerjaan Ayah / Wali (Opsional)'],
-            'P' => ['title' => 'nama_ibu',              'label' => 'Nama Ibu Kandung (Opsional)'],
-            'Q' => ['title' => 'nama_sekolah',          'label' => 'Nama Sekolah Asal SD/MI (Opsional)'],
+            // U - W (21 - 23): BAGIAN 3: DATA ASAL SEKOLAH (TEAL - OPSIONAL)
+            'U'  => ['title' => 'nama_sekolah',         'label' => 'Nama Asal Sekolah SD/MI/SMP/MTs (Opsional)'],
+            'V'  => ['title' => 'tahun_lulus',          'label' => 'Tahun Kelulusan Sekolah Asal, misal: 2026 (Opsional)'],
+            'W'  => ['title' => 'alamat_sekolah',       'label' => 'Alamat / Kota Sekolah Asal (Opsional)'],
 
-            // R - U: 4 POS BIAYA BULANAN RESMI (HIJAU TEAL)
-            'R'  => ['title' => 'makan',                   'label' => 'Makan (Rp) — Uang Makan 3x Sehari (isi 0 jika lunas/laju)'],
-            'S'  => ['title' => 'syahriyah',               'label' => 'Syahriyah (Rp) — SPP Pendidikan (isi 0 jika lunas)'],
-            'T'  => ['title' => 'sot',                     'label' => 'Sot (Rp) — Iuran SOT (isi 0 jika lunas)'],
-            'U'  => ['title' => 'tabungan',                'label' => 'Tabungan (Rp) — Tabungan Wajib Santri (isi 0 jika lunas)'],
+            // X - AB (24 - 28): BAGIAN 4: DATA AYAH KANDUNG (UNGU VIOLET - OPSIONAL)
+            'X'  => ['title' => 'ayah_nama',            'label' => 'Nama Lengkap Ayah Kandung (Opsional)'],
+            'Y'  => ['title' => 'ayah_nik',             'label' => 'NIK Ayah 16 Digit (Opsional)'],
+            'Z'  => ['title' => 'ayah_pekerjaan',       'label' => 'Pekerjaan Ayah, misal: Wiraswasta, PNS, Petani (Opsional)'],
+            'AA' => ['title' => 'ayah_pendidikan',      'label' => 'Pendidikan Terakhir Ayah: SD/SMP/SMA/S1/S2 (Opsional)'],
+            'AB' => ['title' => 'ayah_penghasilan',     'label' => 'Penghasilan Ayah Per Bulan (Opsional)'],
 
-            // V - AE: 10 POS TAGIHAN MASUK, TAHUNAN & TAMBAHAN RESMI (ORANYE AMBER)
-            'V'  => ['title' => 'pangkal',                 'label' => 'Pangkal (Rp) — Sisa Uang Pangkal Masuk (isi 0 jika lunas)'],
-            'W'  => ['title' => 'gedung',                  'label' => 'Gedung (Rp) — Uang Gedung & Sarpras (isi 0 jika lunas)'],
-            'X'  => ['title' => 'kertas',                  'label' => 'Kertas (Rp) — Kertas & Evaluasi Belajar (isi 0 jika lunas)'],
-            'Y'  => ['title' => 'kesehatan',               'label' => 'Kesehatan (Rp) — Iuran Kesehatan 1 Thn (isi 0 jika lunas)'],
-            'Z'  => ['title' => 'kegiatan',                'label' => 'Kegiatan (Rp) — Iuran Kegiatan 1 Thn (isi 0 jika lunas)'],
-            'AA' => ['title' => 'pg',                      'label' => 'Pg (Rp) — Biaya PG (isi 0 jika lunas/tidak ada)'],
-            'AB' => ['title' => 'almari',                  'label' => 'Almari (Rp) — Pembelian Almari & Fasilitas (isi 0 jika lunas/laju)'],
-            'AC' => ['title' => 'pendaftaran',             'label' => 'Pendaftaran (Rp) — Biaya Pendaftaran PSB (isi 0 jika lunas)'],
-            'AD' => ['title' => 'kenaikan',                'label' => 'Kenaikan (Rp) — Biaya Kenaikan Kelas (isi 0 jika lunas/tidak ada)'],
-            'AE' => ['title' => 'pengembangan_pondok',     'label' => 'Pengembangan Pondok (Rp) — Infaq Pengembangan (isi 0 jika lunas)'],
+            // AC - AG (29 - 33): BAGIAN 5: DATA IBU KANDUNG (PINK FUCHSIA - OPSIONAL)
+            'AC' => ['title' => 'ibu_nama',             'label' => 'Nama Lengkap Ibu Kandung (Opsional)'],
+            'AD' => ['title' => 'ibu_nik',              'label' => 'NIK Ibu 16 Digit (Opsional)'],
+            'AE' => ['title' => 'ibu_pekerjaan',        'label' => 'Pekerjaan Ibu, misal: Ibu Rumah Tangga, Guru (Opsional)'],
+            'AF' => ['title' => 'ibu_pendidikan',       'label' => 'Pendidikan Terakhir Ibu: SD/SMP/SMA/S1/S2 (Opsional)'],
+            'AG' => ['title' => 'ibu_penghasilan',      'label' => 'Penghasilan Ibu Per Bulan (Opsional)'],
 
-            // AF: KETERANGAN / CATATAN TAGIHAN (OPSIONAL)
-            'AF' => ['title' => 'keterangan_tagihan',      'label' => 'Keterangan / Catatan Tagihan, misal: Tunggakan Mei-Juni (Opsional)'],
+            // AH - AL (34 - 38): BAGIAN 6: DATA WALI SANTRI (INDIGO - OPSIONAL, BILA DIASUH WALI)
+            'AH' => ['title' => 'nama_wali',            'label' => 'Nama Lengkap Wali (bila selain orang tua) (Opsional)'],
+            'AI' => ['title' => 'wali_hubungan',        'label' => 'Hubungan Keluarga: Paman, Kakek, Kakak, dll (Opsional)'],
+            'AJ' => ['title' => 'wali_nik',             'label' => 'NIK Wali 16 Digit (Opsional)'],
+            'AK' => ['title' => 'wali_pekerjaan',       'label' => 'Pekerjaan Wali (Opsional)'],
+            'AL' => ['title' => 'wali_penghasilan',     'label' => 'Penghasilan Wali Per Bulan (Opsional)'],
+
+            // AM - AN (39 - 40): BAGIAN 7: KONTAK RESMI & CATATAN (ROSE - OPSIONAL)
+            'AM' => ['title' => 'no_whatsapp',          'label' => 'No. WhatsApp / HP Orang Tua / Santri (Cukup 1 Nomor Aktif untuk Notifikasi & Kwitansi) (Opsional)'],
+            'AN' => ['title' => 'catatan',              'label' => 'Catatan Khusus Santri / Prestasi Tahfidz (Opsional)'],
+
+            // AO - AR (41 - 44): BAGIAN 8: 4 POS BIAYA BULANAN RESMI (HIJAU TEAL - TUNGGAKAN LALU)
+            'AO' => ['title' => 'makan',                'label' => 'Makan (Rp) — Uang Makan 3x Sehari (Rp 300.000/bln untuk mukim, isi 0 jika lunas/laju)'],
+            'AP' => ['title' => 'syahriyah',            'label' => 'Syahriyah (Rp) — SPP Pendidikan (isi 0 jika lunas)'],
+            'AQ' => ['title' => 'sot',                  'label' => 'Sot (Rp) — Iuran SOT (MTs 55k / MA 75k per bulan, isi 0 jika lunas)'],
+            'AR' => ['title' => 'tabungan',             'label' => 'Tabungan (Rp) — Tabungan Wajib Santri (isi 0 jika lunas)'],
+
+            // AS - BB (45 - 54): BAGIAN 9: 10 POS TAGIHAN MASUK, TAHUNAN & TAMBAHAN (ORANYE AMBER)
+            'AS' => ['title' => 'pangkal',              'label' => 'Pangkal (Rp) — Sisa Uang Pangkal Masuk (isi 0 jika lunas)'],
+            'AT' => ['title' => 'gedung',               'label' => 'Gedung (Rp) — Uang Gedung & Sarpras (isi 0 jika lunas)'],
+            'AU' => ['title' => 'kertas',               'label' => 'Kertas (Rp) — Kertas & Evaluasi Belajar (isi 0 jika lunas)'],
+            'AV' => ['title' => 'kesehatan',            'label' => 'Kesehatan (Rp) — Iuran Kesehatan 1 Thn (isi 0 jika lunas)'],
+            'AW' => ['title' => 'kegiatan',             'label' => 'Kegiatan (Rp) — Iuran Kegiatan 1 Thn (isi 0 jika lunas)'],
+            'AX' => ['title' => 'pg',                   'label' => 'Pg (Rp) — Biaya PG (isi 0 jika lunas/tidak ada)'],
+            'AY' => ['title' => 'almari',               'label' => 'Almari (Rp) — Fasilitas Almari Mukim (isi 0 jika lunas/laju)'],
+            'AZ' => ['title' => 'pendaftaran',          'label' => 'Pendaftaran (Rp) — Biaya Pendaftaran PSB (isi 0 jika lunas)'],
+            'BA' => ['title' => 'kenaikan',             'label' => 'Kenaikan (Rp) — Biaya Kenaikan Kelas (isi 0 jika lunas/tidak ada)'],
+            'BB' => ['title' => 'pengembangan_pondok',  'label' => 'Pengembangan Pondok (Rp) — Infaq Pengembangan (isi 0 jika lunas)'],
+
+            // BC (55): BAGIAN 10: KETERANGAN / CATATAN TAGIHAN (SLATE GRAY)
+            'BC' => ['title' => 'keterangan_tagihan',   'label' => 'Keterangan / Catatan Tagihan, misal: Tunggakan Mei-Juni 2 Bulan (Opsional)'],
         ];
 
         foreach ($colsSheet1 as $col => $info) {
@@ -949,48 +982,80 @@ class StudentController extends Controller
             $sheet1->setCellValueExplicit($col . '2', $info['label'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         }
 
-        // Section A-F: HIJAU EMERALD (Data Pokok - WAJIB)
-        $sheet1->getStyle('A1:F1')->applyFromArray([
+        // Section A-J: HIJAU EMERALD (Data Pokok & Akademik - WAJIB)
+        $sheet1->getStyle('A1:J1')->applyFromArray([
             'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF059669']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
 
-        // Section G-L: BIRU (Biodata Santri & Alamat - OPSIONAL)
-        $sheet1->getStyle('G1:L1')->applyFromArray([
+        // Section K-T: BIRU (Biodata Santri & Asrama - OPSIONAL)
+        $sheet1->getStyle('K1:T1')->applyFromArray([
             'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF2563EB']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
 
-        // Section M-Q: UNGU (Data Orang Tua / Asal Sekolah - OPSIONAL)
-        $sheet1->getStyle('M1:Q1')->applyFromArray([
-            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF7C3AED']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
-        ]);
-
-        // Section R-U: HIJAU TEAL (4 Pos Biaya Bulanan Resmi)
-        $sheet1->getStyle('R1:U1')->applyFromArray([
+        // Section U-W: TEAL (Data Asal Sekolah - OPSIONAL)
+        $sheet1->getStyle('U1:W1')->applyFromArray([
             'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF0D9488']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
 
-        // Section V-AE: ORANYE AMBER (10 Pos Masuk, Tahunan & Tambahan)
-        $sheet1->getStyle('V1:AE1')->applyFromArray([
+        // Section X-AB: UNGU VIOLET (Data Ayah Kandung - OPSIONAL)
+        $sheet1->getStyle('X1:AB1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF7C3AED']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        // Section AC-AG: PINK FUCHSIA (Data Ibu Kandung - OPSIONAL)
+        $sheet1->getStyle('AC1:AG1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFDB2777']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        // Section AH-AL: INDIGO (Data Wali Santri - OPSIONAL)
+        $sheet1->getStyle('AH1:AL1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF4F46E5']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        // Section AM-AN: ROSE (Kontak Satu Nomor WhatsApp & Catatan - OPSIONAL)
+        $sheet1->getStyle('AM1:AN1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE11D48']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        // Section AO-AR: HIJAU TEAL (4 Pos Biaya Bulanan Resmi)
+        $sheet1->getStyle('AO1:AR1')->applyFromArray([
+            'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF0D9488']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
+        ]);
+
+        // Section AS-BB: ORANYE AMBER (10 Pos Masuk, Tahunan & Tambahan)
+        $sheet1->getStyle('AS1:BB1')->applyFromArray([
             'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD97706']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFD1D5DB']]],
         ]);
 
-        // Section AF: SLATE GRAY (Keterangan / Catatan Tagihan)
-        $sheet1->getStyle('AF1')->applyFromArray([
+        // Section BC: SLATE GRAY (Keterangan / Catatan Tagihan)
+        $sheet1->getStyle('BC1')->applyFromArray([
             'font' => ['name' => 'Calibri', 'bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF475569']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -999,29 +1064,70 @@ class StudentController extends Controller
 
         $sheet1->getRowDimension(1)->setRowHeight(28);
 
-        $sheet1->getStyle('A2:AF2')->applyFromArray([
+        $sheet1->getStyle('A2:BC2')->applyFromArray([
             'font' => ['name' => 'Calibri', 'italic' => true, 'size' => 9, 'color' => ['argb' => 'FF374151']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF3F4F6']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE5E7EB']]],
         ]);
-        $sheet1->getRowDimension(2)->setRowHeight(34);
+        $sheet1->getRowDimension(2)->setRowHeight(36);
 
-        // Contoh Data Nyata (Sample Rows — 32 Kolom)
+        // Contoh Data Nyata (Sample Rows — 55 Kolom dengan 1 Nomor WhatsApp Utama)
         $samplesSheet1 = [
-            ['Ahmad Fauzan Hidayat',   '',          'L', '2012-05-15', '2026', 'VII-A', 'Temanggung', '3302012345678901', '0089765432', 'B',  'Jl. Melati No.12 RT 02/04 Ds. Ngadipuro Kec. Wonoboyo Temanggung', 'Al-Khawarizmi', 'H. Budi Santoso',  '081234567890', 'Wiraswasta', 'Siti Aminah',   'MI Al-Hidayah Ngadipuro', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', ''],
-            ['Nurul Aisyah Zahra',     '',          'P', '2009-08-20', '2026', 'X-A',   'Magelang',   '3302019876543210', '0098765431', 'A',  'Jl. Anggrek No.5 RT 01/02 Ds. Kalisari Kec. Salaman Magelang',    'Khadijah',      'Drs. Subhan',      '085678901234', 'PNS Guru',   'Rr. Wulandari', 'SDN Salaman 1',           '0', '0', '0', '0', '1250000', '0', '0', '0', '0', '0', '0', '0', '0', '250000', 'Sisa Pangkal & Pengembangan Pondok'],
-            ['Muhammad Rizky Pratama', '20250012',  'L', '2011-11-10', '2025', 'VIII-A','Wonosobo',   '',                 '',           'O',  'Kec. Garung Kab. Wonosobo',                                        'Ibnu Sina',     'Ahmad Syarifudin', '081398765432', 'Petani',     'Maimunah',      'MI Maarif Garung',        '600000', '60000', '110000', '50000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'Tunggakan 4 Pos Bulanan (Makan, Syahriyah, SOT, Tabungan) Mei-Juni (2 Bulan)'],
-            ['Siti Rahmawati',         '20220008',  'P', '2007-03-25', '2022', 'XII-A', 'Semarang',   '',                 '',           '',   'Jl. Pemuda No. 8 Semarang',                                        'Aisyah',        'Mahmud Effendi',   '082233445566', 'Wiraswasta', 'Khadijah',      'SMP N 1 Semarang',        '0', '0', '0', '0', '0', '0', '200000', '200000', '300000', '0', '0', '0', '250000', '0', 'Tagihan Tahunan (Kertas, Kesehatan, Kegiatan, Kenaikan)'],
+            // Baris 1: Santri Baru MTs Mukim (Asrama)
+            [
+                'Ahmad Fauzan Hidayat', '', 'L', '2012-05-15', 'Temanggung', '2026', 'MTs', 'Mukim', 'VII-A', 'Aktif',
+                '3323011505120001', '3323010101100005', '0089765432', '1', '3', 'B', 'Tahfidz Al-Qur\'an', '-', 'Al-Khawarizmi', 'Dusun Tuksongo RT 02/RW 01, Tuksongo, Kec. Pringsurat, Kab. Temanggung',
+                'MI Al-Hidayah Tuksongo', '2026', 'Temanggung',
+                'H. Budi Santoso', '3323011005780002', 'Wiraswasta', 'S1', 'Rp 4.000.000 - Rp 6.000.000',
+                'Hj. Siti Aminah', '3323014508800003', 'Ibu Rumah Tangga', 'SMA', '-',
+                '', '', '', '', '',
+                '081234567890', 'Sudah hafal Juz 30',
+                '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', ''
+            ],
+            // Baris 2: Santri Baru MTs Laju (Non-Asrama / Pulang Pergi)
+            [
+                'Siti Nur Aisyah', '', 'P', '2012-08-20', 'Magelang', '2026', 'MTs', 'Laju', 'VII-B', 'Aktif',
+                '3308016008120002', '3308010502110008', '0098765431', '2', '2', 'A', 'Kaligrafi', 'Alergi dingin', '', 'Jl. Anggrek No.5 RT 01/02 Ds. Kalisari Kec. Secang Magelang',
+                'SD Negeri 1 Secang', '2026', 'Magelang',
+                'Drs. Subhan', '3308011203750001', 'PNS Guru', 'S1', 'Rp 5.000.000',
+                'Rr. Wulandari', '3308015507780004', 'Guru', 'S1', 'Rp 4.000.000',
+                '', '', '', '', '',
+                '085678901234', 'Santri Laju Pulang Pergi',
+                '0', '0', '0', '0', '1250000', '0', '0', '0', '0', '0', '0', '0', '0', '250000', 'Sisa Uang Pangkal Santri Laju Baru'
+            ],
+            // Baris 3: Santri Lama MA Mukim (Dengan NIS & Tunggakan Bulanan)
+            [
+                'Muhammad Rizky Pratama', '20250012', 'L', '2010-11-10', 'Wonosobo', '2025', 'MA', 'Mukim', 'X-A', 'Aktif',
+                '3307011011100003', '3307012005080006', '0076543210', '1', '2', 'O', 'Rebana / Hadroh', '-', 'Ibnu Sina', 'Ds. Garung RT 04/02 Kec. Garung Kab. Wonosobo',
+                'MTs Negeri 1 Wonosobo', '2025', 'Wonosobo',
+                'Ahmad Syarifudin', '3307011406720005', 'Petani', 'SMP', 'Rp 2.500.000',
+                'Maimunah', '3307015002760001', 'Ibu Rumah Tangga', 'SD', '-',
+                '', '', '', '', '',
+                '081398765432', 'Lulusan MTs Lanjut ke MA',
+                '600000', '60000', '150000', '50000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'Tunggakan 4 Pos Bulanan (Makan, Syahriyah, SOT, Tabungan) Mei-Juni (2 Bulan)'
+            ],
+            // Baris 4: Santri MA Laju (Alumni dengan Tunggakan Tahunan & Data Wali)
+            [
+                'Siti Rahmawati', '20230008', 'P', '2007-03-25', 'Semarang', '2023', 'MA', 'Laju', 'XII-A', 'Alumni',
+                '3374016503070004', '3374011201050007', '0054321098', '3', '3', 'AB', 'Membaca', '-', '', 'Jl. Pemuda No. 8 RT 03/01 Semarang',
+                'SMP N 1 Semarang', '2023', 'Semarang',
+                '', '', '', '', '',
+                'Khadijah', '3374015004700008', 'Wiraswasta', 'SMA', 'Rp 3.500.000',
+                'Drs. Mahmud Effendi', 'Paman', '3374011002680002', 'Wiraswasta', 'Rp 6.000.000',
+                '082233445566', 'Alumni MA Laju 2026',
+                '0', '0', '0', '0', '0', '0', '200000', '200000', '300000', '0', '0', '0', '250000', '0', 'Tagihan Tahunan (Kertas, Kesehatan, Kegiatan, Kenaikan)'
+            ],
         ];
-        $this->_writeExcelSamples($sheet1, $samplesSheet1, 3, 'AF');
+        $this->_writeExcelSamples($sheet1, $samplesSheet1, 3, 'BC');
 
         foreach (array_keys($colsSheet1) as $col) {
             $sheet1->getColumnDimension($col)->setAutoSize(true);
         }
-        $sheet1->getColumnDimension('D')->setWidth(26);
-        $sheet1->getColumnDimension('K')->setWidth(45);
-        $sheet1->getColumnDimension('AF')->setWidth(40);
+        $sheet1->getColumnDimension('D')->setWidth(20);
+        $sheet1->getColumnDimension('T')->setWidth(40);
+        $sheet1->getColumnDimension('W')->setWidth(25);
+        $sheet1->getColumnDimension('BC')->setWidth(35);
         $sheet1->freezePane('A3');
 
         // ============================================================
@@ -1044,40 +1150,75 @@ class StudentController extends Controller
         $sheet2->getRowDimension(2)->setRowHeight(22);
 
         $guideData = [
-            ['BAGIAN 1: DATA POKOK & AKADEMIK (HIJAU)', '', ''],
+            ['BAGIAN 1: DATA POKOK & AKADEMIK (HIJAU EMERALD)', '', ''],
             ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
-            ['nama_lengkap',          'WAJIB',    'Nama lengkap santri sesuai dokumen resmi / akta kelahiran.'],
+            ['nama_lengkap',          'WAJIB',    'Nama lengkap santri sesuai akta kelahiran / ijazah.'],
             ['nis',                   'Opsional', 'Nomor Induk Santri. Kosongkan untuk santri baru (otomatis digenerate sistem). Jika santri lama atau alumni berikan NIS lamanya agar tagihan tersambung tanpa membuat akun ganda.'],
-            ['jenis_kelamin',         'WAJIB',    'L = Laki-laki, P = Perempuan.'],
+            ['jenis_kelamin',         'WAJIB',    'L = Laki-laki (Santriwan), P = Perempuan (Santriwati).'],
             ['tanggal_lahir',         'WAJIB',    'Format YYYY-MM-DD. Contoh: 2012-05-15. Otomatis menjadi PASSWORD DEFAULT login akun santri (format DDMMYYYY, misal: 15052012).'],
+            ['tempat_lahir',          'Opsional', 'Kota / Kabupaten tempat lahir santri. Contoh: Temanggung.'],
             ['tahun_masuk',           'WAJIB',    'Tahun masuk santri ke pesantren, misal: 2026. Digunakan untuk nomor induk dan angkatan.'],
-            ['kelas',                 'WAJIB',    'VII-A, VII-B, VIII-A, X-A, XI-B, XII-A. Jenjang MTs / MA otomatis terdeteksi dari nama kelas.'],
+            ['jenjang',               'WAJIB',    'Jenjang pendidikan: MTs atau MA (Bisa juga langsung ditulis MTs Mukim / MTs Laju / MA Mukim / MA Laju).'],
+            ['status_mukim',          'WAJIB',    'Status hunian santri: Tulis "Mukim" (tinggal di asrama pondok) atau "Laju" (pulang-pergi/non-asrama). Kolom ini sangat penting karena menentukan perhitungan tagihan uang makan & fasilitas asrama!'],
+            ['kelas',                 'WAJIB',    'VII-A, VII-B, VIII-A, X-A, XI-B, XII-A.'],
+            ['status',                'Opsional', 'Status keaktifan santri: Aktif, Alumni, Mutasi, Cuti (Default: Aktif).'],
             ['', '', ''],
             ['BAGIAN 2: BIODATA SANTRI & ASRAMA (BIRU)', '', ''],
             ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
-            ['tempat_lahir',          'Opsional', 'Kota / Kabupaten tempat lahir santri. Contoh: Temanggung.'],
             ['nik',                   'Opsional', 'Nomor Induk Kependudukan santri (16 digit) sesuai Kartu Keluarga.'],
-            ['nisn',                  'Opsional', 'Nomor Induk Siswa Nasional (NISN Kemdikbud).'],
+            ['nomor_kk',              'Opsional', 'Nomor Kartu Keluarga (KK) 16 digit.'],
+            ['nisn',                  'Opsional', 'Nomor Induk Siswa Nasional (NISN Kemdikbud / Kemenag).'],
+            ['anak_ke',               'Opsional', 'Anak ke-berapa dalam susunan keluarga santri (misal: 1, 2).'],
+            ['jumlah_saudara',        'Opsional', 'Jumlah seluruh saudara kandung (misal: 3).'],
             ['golongan_darah',        'Opsional', 'Golongan darah: A, B, AB, atau O.'],
-            ['alamat_lengkap',        'Opsional', 'Alamat domisili lengkap: RT/RW, Dusun, Desa/Kelurahan, Kecamatan, Kabupaten/Kota.'],
-            ['kamar_asrama',          'Opsional', 'Nama kamar asrama mukim. Contoh: Al-Khawarizmi, Khadijah. Jika kamar belum ada di sistem, otomatis didaftarkan ke master asrama.'],
+            ['hobi',                  'Opsional', 'Hobi atau minat bakat santri. Contoh: Tahfidz, Kaligrafi, Futsal, Membaca Kitab.'],
+            ['riwayat_penyakit',      'Opsional', 'Riwayat penyakit atau alergi makanan/cuaca jika ada. Contoh: Asma, Alergi seafood.'],
+            ['kamar_asrama',          'Opsional', 'Nama kamar asrama santri mukim. Contoh: Al-Khawarizmi, Khadijah. Jika kamar belum ada di sistem, otomatis didaftarkan ke master asrama. Kosongkan jika santri laju.'],
+            ['alamat_lengkap',        'Opsional', 'Alamat domisili lengkap: RT/RW, Dusun, Desa/Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi.'],
             ['', '', ''],
-            ['BAGIAN 3: DATA ORANG TUA / WALI & ASAL SEKOLAH (UNGU)', '', ''],
+            ['BAGIAN 3: DATA ASAL SEKOLAH (TEAL)', '', ''],
             ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
-            ['nama_wali',             'Opsional', 'Nama lengkap Ayah / Ibu / Wali santri.'],
-            ['no_whatsapp',           'Opsional', 'No. WhatsApp wali untuk informasi tagihan & kabar santri. Contoh: 081234567890.'],
-            ['pekerjaan_wali',        'Opsional', 'Pekerjaan Ayah / Wali. Contoh: Wiraswasta, PNS, Petani, Karyawan Swasta.'],
-            ['nama_ibu',              'Opsional', 'Nama lengkap Ibu kandung santri.'],
-            ['nama_sekolah',          'Opsional', 'Nama sekolah asal sebelum masuk pesantren (SD / MI). Contoh: MI Al-Hidayah.'],
+            ['nama_sekolah',          'Opsional', 'Nama sekolah asal sebelum masuk pesantren (SD / MI / SMP / MTs). Contoh: MI Al-Hidayah Tuksongo.'],
+            ['tahun_lulus',           'Opsional', 'Tahun kelulusan dari sekolah asal. Contoh: 2026.'],
+            ['alamat_sekolah',        'Opsional', 'Alamat / Kota asal sekolah. Contoh: Temanggung, Magelang.'],
             ['', '', ''],
-            ['BAGIAN 4: 4 POS BIAYA BULANAN RESMI (HIJAU TEAL)', '', ''],
+            ['BAGIAN 4: DATA AYAH KANDUNG (UNGU VIOLET)', '', ''],
             ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
-            ['makan',                 'Opsional', 'Uang Makan 3x Sehari (Rp 300.000/bln untuk mukim). Contoh: 600000. Jika lunas atau santri laju, isi 0.'],
+            ['ayah_nama',             'Opsional', 'Nama lengkap Ayah kandung santri.'],
+            ['ayah_nik',              'Opsional', 'NIK Ayah kandung (16 digit).'],
+            ['ayah_pekerjaan',        'Opsional', 'Pekerjaan Ayah. Contoh: Wiraswasta, PNS, Petani, Karyawan Swasta.'],
+            ['ayah_pendidikan',       'Opsional', 'Pendidikan terakhir Ayah. Contoh: SMA, S1, S2.'],
+            ['ayah_penghasilan',      'Opsional', 'Estimasi penghasilan Ayah per bulan. Contoh: Rp 3.000.000 - Rp 5.000.000.'],
+            ['', '', ''],
+            ['BAGIAN 5: DATA IBU KANDUNG (PINK FUCHSIA)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['ibu_nama',              'Opsional', 'Nama lengkap Ibu kandung santri.'],
+            ['ibu_nik',               'Opsional', 'NIK Ibu kandung (16 digit).'],
+            ['ibu_pekerjaan',         'Opsional', 'Pekerjaan Ibu. Contoh: Ibu Rumah Tangga, Guru, Pedagang.'],
+            ['ibu_pendidikan',        'Opsional', 'Pendidikan terakhir Ibu. Contoh: SMA, D3, S1.'],
+            ['ibu_penghasilan',       'Opsional', 'Estimasi penghasilan Ibu per bulan.'],
+            ['', '', ''],
+            ['BAGIAN 6: DATA WALI SANTRI (INDIGO)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['nama_wali',             'Opsional', 'Nama lengkap wali jika santri diasuh selain orang tua kandung.'],
+            ['wali_hubungan',         'Opsional', 'Hubungan keluarga dengan santri. Contoh: Paman, Kakek, Nenek, Kakak Kandung.'],
+            ['wali_nik',              'Opsional', 'NIK wali santri (16 digit).'],
+            ['wali_pekerjaan',        'Opsional', 'Pekerjaan wali santri.'],
+            ['wali_penghasilan',      'Opsional', 'Penghasilan wali santri per bulan.'],
+            ['', '', ''],
+            ['BAGIAN 7: KONTAK UTAMA & CATATAN (ROSE)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['no_whatsapp',           'Opsional', 'SATU-SATUNYA NOMOR WHATSAPP/HP UTAMA: Cukup masukkan 1 nomor WA aktif (bisa nomor orang tua atau wali). Nomor ini otomatis menjadi kontak utama penerima kwitansi digital, notifikasi tagihan, dan koordinasi pondok. Contoh: 081234567890.'],
+            ['catatan',               'Opsional', 'Catatan khusus kepesantrenan, prestasi tahfidz, atau kebutuhan khusus santri.'],
+            ['', '', ''],
+            ['BAGIAN 8: 4 POS BIAYA BULANAN RESMI (HIJAU TEAL)', '', ''],
+            ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
+            ['makan',                 'Opsional', 'Uang Makan 3x Sehari (Rp 300.000/bln untuk mukim). Jika lunas atau santri laju (non-asrama), isi 0.'],
             ['syahriyah',             'Opsional', 'Syahriyah Pendidikan SPP (Rp 30.000/bln). Tulis nominal tanpa titik (contoh: 60000). Jika lunas, isi 0.'],
             ['sot',                   'Opsional', 'Iuran SOT (MTs Rp 55.000 / MA Rp 75.000 per bulan). Contoh: 110000. Jika lunas, isi 0.'],
             ['tabungan',              'Opsional', 'Tabungan Wajib Santri (Rp 25.000/bln). Contoh: 50000. Jika lunas, isi 0.'],
             ['', '', ''],
-            ['BAGIAN 5: 10 POS TAGIHAN MASUK, TAHUNAN & TAMBAHAN (ORANYE AMBER)', '', ''],
+            ['BAGIAN 9: 10 POS TAGIHAN MASUK, TAHUNAN & TAMBAHAN (ORANYE AMBER)', '', ''],
             ['Nama Kolom', 'Wajib?', 'Penjelasan & Contoh'],
             ['pangkal',               'Opsional', 'Sisa tunggakan Uang Pangkal Masuk santri baru. Contoh: 1250000. Jika lunas, isi 0.'],
             ['gedung',                'Opsional', 'Sisa tunggakan Uang Gedung & Sarpras. Contoh: 500000. Jika lunas, isi 0.'],
@@ -1085,14 +1226,14 @@ class StudentController extends Controller
             ['kesehatan',             'Opsional', 'Iuran Kesehatan Santri (1 Thn). Contoh: 200000. Jika lunas, isi 0.'],
             ['kegiatan',              'Opsional', 'Iuran Kegiatan Santri (1 Thn). Contoh: 300000. Jika lunas, isi 0.'],
             ['pg',                    'Opsional', 'Biaya PG Santri. Contoh: 100000. Jika lunas/tidak ada, isi 0.'],
-            ['almari',                'Opsional', 'Pembelian Almari & Fasilitas Asrama Mukim. Contoh: 350000. Jika lunas/laju, isi 0.'],
+            ['almari',                'Opsional', 'Pembelian Almari & Fasilitas Asrama Mukim. Contoh: 350000. Jika lunas atau santri laju, isi 0.'],
             ['pendaftaran',           'Opsional', 'Biaya Pendaftaran Santri Baru (PSB). Contoh: 200000. Jika lunas, isi 0.'],
             ['kenaikan',              'Opsional', 'Biaya Kenaikan Kelas. Contoh: 250000. Jika lunas/tidak ada, isi 0.'],
             ['pengembangan_pondok',   'Opsional', 'Infaq Pengembangan Pondok Pesantren. Contoh: 250000. Jika lunas, isi 0.'],
             ['keterangan_tagihan',    'Opsional', 'Catatan rincian tagihan atau bulan yang menunggak (misal: "Mei-Juni 2 Bulan").'],
             ['', '', ''],
-            ['BAGIAN 6: APAKAH BISA MENAMBAH KOLOM TAGIHAN SENDIRI? (SANGAT BISA!)', '', ''],
-            ['Fitur Fleksibel',       'BISA',     'Jika pondok memiliki pos biaya tambahan lain (misalnya: Wisuda, Ziarah, Seragam, Kitab, Titipan Saku, Outing Class, Infaq Masjid, dll), bendahara BISA LANGSUNG MENAMBAHKAN KOLOM SENDIRI di sebelah kanan kolom keterangan_tagihan (mulai kolom AG, AH, dst). Tulis nama pos biaya di baris 1 (misal: Wisuda atau Infaq Asrama), lalu isi nominal tagihannya di baris 3 ke bawah. Sistem secara cerdas dan otomatis akan membaca pos tersebut, menyimpannya ke database, dan menampilkannya langsung di Kasir POS & Kwitansi!'],
+            ['BAGIAN 10: APAKAH BISA MENAMBAH KOLOM TAGIHAN SENDIRI? (SANGAT BISA!)', '', ''],
+            ['Fitur Fleksibel',       'BISA',     'Jika pondok memiliki pos biaya tambahan lain (misalnya: Wisuda, Ziarah, Seragam, Kitab, Titipan Saku, Outing Class, Infaq Masjid, dll), bendahara BISA LANGSUNG MENAMBAHKAN KOLOM SENDIRI di sebelah kanan kolom keterangan_tagihan (mulai kolom BD, BE, dst). Tulis nama pos biaya di baris 1 (misal: Wisuda atau Infaq Asrama), lalu isi nominal tagihannya di baris 3 ke bawah. Sistem secara cerdas dan otomatis akan membaca pos tersebut, menyimpannya ke database, dan menampilkannya langsung di Kasir POS & Kwitansi!'],
         ];
 
         $gRow = 4;
@@ -1158,10 +1299,11 @@ class StudentController extends Controller
     {
         $rowIdx = $startRow;
         foreach ($samples as $sample) {
-            $colLetter = 'A';
+            $colIdx = 1;
             foreach ($sample as $val) {
+                $colLetter = Coordinate::stringFromColumnIndex($colIdx);
                 $sheet->setCellValueExplicit($colLetter . $rowIdx, (string)$val, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-                $colLetter++;
+                $colIdx++;
             }
             $sheet->getStyle("A{$rowIdx}:{$lastCol}{$rowIdx}")->applyFromArray([
                 'font' => ['name' => 'Calibri', 'size' => 10],
@@ -1316,42 +1458,187 @@ class StudentController extends Controller
                 }
 
                 // Lewati baris bantuan / header kedua template
-                if (str_contains(strtolower($nama), 'wajib') || str_contains(strtolower($nama), 'contoh') || strtolower($nama) === 'nama lengkap' || strtolower($nama) === 'nama_lengkap') {
+                if (str_contains(strtolower($nama), 'wajib') 
+                    || str_contains(strtolower($nama), 'contoh') 
+                    || str_contains(strtolower($nama), 'label') 
+                    || str_contains(strtolower($nama), 'bantuan')
+                    || str_contains(strtolower($nama), 'petunjuk')
+                    || strtolower($nama) === 'nama lengkap' 
+                    || strtolower($nama) === 'nama_lengkap'
+                    || strtolower($nama) === 'nama santri'
+                    || strtolower($nama) === 'nama_santri'
+                ) {
                     continue;
                 }
 
-                $tahunMasuk = $findValue($data, ['tahun_masuk', 'angkatan']) ?: date('Y');
-                $nisInput = $findValue($data, ['nis', 'no_induk', 'nomor_induk']);
-                $usernameInput = $findValue($data, ['username', 'user_id']);
-                $nisnInput = $findValue($data, ['nisn', 'no_nisn']);
-                $jkRaw = $findValue($data, ['jenis_kelamin', 'jk', 'gender']) ?: '';
-                $tglLahirRaw = $findValue($data, ['tanggal_lahir', 'tgl_lahir', 'tgl_lahir_yyyy_mm_dd', 'birth_date']);
-                $kelasInput = $findValue($data, ['kelas', 'rombel']) ?: 'VII-A';
-                $jenjangInput = $findValue($data, ['jenjang', 'tingkat']);
-                if (empty($jenjangInput)) {
+                $tahunMasuk   = $findValue($data, ['tahun_masuk', 'angkatan', 'thn_masuk']) ?: date('Y');
+                $nisInput     = $findValue($data, ['nis', 'no_induk', 'nomor_induk']);
+                $usernameInput= $findValue($data, ['username', 'user_id']);
+                $nisnInput    = $findValue($data, ['nisn', 'no_nisn', 'stambuk', 'no_stambuk']);
+                $jkRaw        = $findValue($data, ['jenis_kelamin', 'jk', 'gender']) ?: '';
+                $tglLahirRaw  = $findValue($data, ['tanggal_lahir', 'tgl_lahir', 'tgl_lahir_yyyy_mm_dd', 'birth_date']);
+                $tempatLahir  = $findValue($data, ['tempat_lahir', 'tmp_lahir', 'kota_lahir']);
+                $kelasInput   = $findValue($data, ['kelas', 'rombel', 'kelas_santri']) ?: 'VII-A';
+                $statusInput  = $findValue($data, ['status', 'status_santri', 'status_keaktifan']) ?: 'Aktif';
+
+                // Jenjang & Status Hunian (Mukim / Laju)
+                $jenjangRaw   = $findValue($data, ['jenjang', 'tingkat', 'jenjang_pendidikan']);
+                $mukimRaw     = $findValue($data, ['status_mukim', 'mukim_atau_laju', 'hunian', 'status_hunian', 'tipe_santri', 'mukim_laju', 'status_pondok']);
+                $kamarInput   = $findValue($data, ['kamar_asrama', 'kamar', 'asrama']);
+
+                // 1. Tentukan short jenjang (MTs atau MA)
+                $jenShort = null;
+                if (!empty($jenjangRaw)) {
+                    if (str_contains(strtoupper($jenjangRaw), 'MA')) {
+                        $jenShort = 'MA';
+                    } elseif (str_contains(strtoupper($jenjangRaw), 'MTS') || str_contains(strtoupper($jenjangRaw), 'SMP')) {
+                        $jenShort = 'MTs';
+                    }
+                }
+                if (!$jenShort) {
                     if (preg_match('/^(vii|viii|ix|7|8|9)/i', (string)$kelasInput)) {
-                        $jenjangInput = 'MTs Pondok Mukim';
+                        $jenShort = 'MTs';
                     } elseif (preg_match('/^(x|xi|xii|10|11|12)/i', (string)$kelasInput)) {
-                        $jenjangInput = 'MA Pondok Mukim';
+                        $jenShort = 'MA';
                     } else {
-                        $jenjangInput = 'MTs Pondok Mukim';
+                        $jenShort = 'MTs';
+                    }
+                }
+
+                // 2. Tentukan status hunian (Mukim atau Laju)
+                $hunianVal = null;
+                if (!empty($mukimRaw)) {
+                    $mukimLower = strtolower(trim($mukimRaw));
+                    if (str_contains($mukimLower, 'laju') || str_contains($mukimLower, 'non') || str_contains($mukimLower, 'pulang')) {
+                        $hunianVal = 'Laju';
+                    } elseif (str_contains($mukimLower, 'mukim') || str_contains($mukimLower, 'asrama') || str_contains($mukimLower, 'pondok')) {
+                        $hunianVal = 'Mukim';
+                    }
+                }
+
+                // Jika kolom status_mukim belum menentukan, cek dari teks jenjang (apabila user menulis "MTs Laju" atau "MTs Mukim")
+                if (!$hunianVal && !empty($jenjangRaw)) {
+                    $jenLower = strtolower($jenjangRaw);
+                    if (str_contains($jenLower, 'laju')) {
+                        $hunianVal = 'Laju';
+                    } elseif (str_contains($jenLower, 'mukim') || str_contains($jenLower, 'pondok') || str_contains($jenLower, 'asrama')) {
+                        $hunianVal = 'Mukim';
+                    }
+                }
+
+                // Jika masih belum ditentukan, cek kamar asrama
+                if (!$hunianVal) {
+                    if (!empty($kamarInput) && !in_array(strtolower(trim($kamarInput)), ['-', '—', 'tidak ada', 'tdk ada', 'none', 'laju', 'pulang', 'non-asrama'])) {
+                        $hunianVal = 'Mukim';
+                    } else {
+                        $hunianVal = 'Mukim'; // Default pondok adalah Mukim
+                    }
+                }
+
+                $jenjangInput = "{$jenShort} {$hunianVal}";
+
+                // Jika santri Laju (Non-Asrama), kamar dinetralkan jika berisi kata laju atau kosong
+                if ($hunianVal === 'Laju') {
+                    if (empty($kamarInput) || in_array(strtolower(trim($kamarInput)), ['-', '—', 'tidak ada', 'tdk ada', 'none', 'laju', 'pulang', 'non-asrama'])) {
+                        $kamarInput = null;
                     }
                 }
 
                 // Biodata Tambahan Santri & Alamat
-                $tempatLahir = $findValue($data, ['tempat_lahir', 'tmp_lahir', 'kota_lahir']);
-                $nikInput = $findValue($data, ['nik', 'no_nik', 'nik_santri']);
-                $golDarah = $findValue($data, ['golongan_darah', 'gol_darah', 'goldar']);
-                $alamatLengkap = $findValue($data, ['alamat_lengkap', 'alamat', 'domisili', 'alamat_santri']);
-                $kamarInput = $findValue($data, ['kamar_asrama', 'kamar', 'asrama']);
-                $namaWali = $findValue($data, ['nama_wali', 'wali', 'orang_tua', 'nama_ortu', 'ayah_nama']);
-                $noWhatsapp = $findValue($data, ['no_whatsapp', 'whatsapp', 'no_wa', 'no_hp', 'telepon', 'ayah_telepon']);
-                $pekerjaanWali = $findValue($data, ['pekerjaan_wali', 'ayah_pekerjaan', 'pekerjaan_ayah', 'wali_pekerjaan']);
-                $namaIbu = $findValue($data, ['nama_ibu', 'ibu_nama']);
-                $teleponIbu = $findValue($data, ['telepon_ibu', 'ibu_telepon', 'no_hp_ibu']);
-                $namaSekolah = $findValue($data, ['nama_sekolah', 'sekolah_asal', 'asal_sekolah']);
-                $tahunLulus = $findValue($data, ['tahun_lulus', 'thn_lulus']);
-                $catatan = $findValue($data, ['catatan', 'keterangan_santri']);
+                $nikInput       = $findValue($data, ['nik', 'no_nik', 'nik_santri']);
+                $nomorKk        = $findValue($data, ['nomor_kk', 'no_kk', 'kartu_keluarga', 'kk']);
+                $anakKe         = $findValue($data, ['anak_ke', 'anak_ke_']);
+                $jumlahSaudara  = $findValue($data, ['jumlah_saudara', 'jml_saudara', 'saudara']);
+                $golDarah       = $findValue($data, ['golongan_darah', 'gol_darah', 'goldar']);
+                $hobi           = $findValue($data, ['hobi', 'minat_bakat', 'minat']);
+                $riwayatPenyakit= $findValue($data, ['riwayat_penyakit', 'penyakit', 'alergi']);
+                $alamatLengkap  = $findValue($data, ['alamat_lengkap', 'alamat', 'domisili', 'alamat_santri']);
+
+                // Asal Sekolah
+                $namaSekolah    = $findValue($data, ['nama_sekolah', 'sekolah_asal', 'asal_sekolah']);
+                $tahunLulus     = $findValue($data, ['tahun_lulus', 'thn_lulus']);
+                $alamatSekolah  = $findValue($data, ['alamat_sekolah', 'kota_sekolah']);
+
+                // Data Orang Tua Kandung (Ayah & Ibu)
+                $ayahNama       = $findValue($data, ['ayah_nama', 'nama_ayah']);
+                $ayahNik        = $findValue($data, ['ayah_nik', 'nik_ayah']);
+                $ayahTelepon    = $findValue($data, ['ayah_telepon', 'no_hp_ayah', 'wa_ayah', 'telepon_ayah']);
+                $ayahPekerjaan  = $findValue($data, ['ayah_pekerjaan', 'pekerjaan_ayah']);
+                $ayahPendidikan = $findValue($data, ['ayah_pendidikan', 'pendidikan_ayah']);
+                $ayahPenghasilan= $findValue($data, ['ayah_penghasilan', 'penghasilan_ayah', 'gaji_ayah']);
+
+                $ibuNama        = $findValue($data, ['ibu_nama', 'nama_ibu']);
+                $ibuNik         = $findValue($data, ['ibu_nik', 'nik_ibu']);
+                $ibuTelepon     = $findValue($data, ['ibu_telepon', 'no_hp_ibu', 'wa_ibu', 'telepon_ibu']);
+                $ibuPekerjaan   = $findValue($data, ['ibu_pekerjaan', 'pekerjaan_ibu']);
+                $ibuPendidikan  = $findValue($data, ['ibu_pendidikan', 'pendidikan_ibu']);
+                $ibuPenghasilan = $findValue($data, ['ibu_penghasilan', 'penghasilan_ibu', 'gaji_ibu']);
+
+                // Data Wali Santri
+                $namaWali       = $findValue($data, ['nama_wali', 'wali', 'orang_tua', 'nama_ortu']);
+                $waliHubungan   = $findValue($data, ['wali_hubungan', 'hubungan_wali', 'hubungan']);
+                $waliTelepon    = $findValue($data, ['wali_telepon', 'no_hp_wali', 'telepon_wali']);
+                $waliNik        = $findValue($data, ['wali_nik', 'nik_wali']);
+                $waliPekerjaan  = $findValue($data, ['wali_pekerjaan', 'pekerjaan_wali']);
+                $waliPenghasilan= $findValue($data, ['wali_penghasilan', 'penghasilan_wali']);
+
+                // Fallbacks jika nama_wali diisi tapi ayah_nama kosong atau sebaliknya
+                if (empty($namaWali) && !empty($ayahNama)) {
+                    $namaWali = $ayahNama;
+                } elseif (empty($ayahNama) && !empty($namaWali) && empty($waliHubungan)) {
+                    $ayahNama = $namaWali;
+                }
+
+                // Kontak Santri & Catatan
+                $noWhatsapp     = $findValue($data, ['no_whatsapp', 'whatsapp', 'no_wa', 'no_hp', 'telepon', 'kontak']);
+                if (empty($noWhatsapp)) {
+                    $noWhatsapp = $ayahTelepon ?: ($waliTelepon ?: $ibuTelepon);
+                }
+                if (empty($ayahTelepon) && !empty($noWhatsapp)) {
+                    $ayahTelepon = $noWhatsapp;
+                }
+                $catatan        = $findValue($data, ['catatan', 'keterangan_santri', 'catatan_santri']);
+
+                // Sanitasi Panjang String untuk Menghindari Truncation Error MySQL
+                if (!empty($golDarah)) {
+                    $cleanGol = strtoupper(trim($golDarah));
+                    if (in_array($cleanGol, ['A', 'B', 'AB', 'O'])) {
+                        $golDarah = $cleanGol;
+                    } elseif (str_contains($cleanGol, 'AB')) {
+                        $golDarah = 'AB';
+                    } elseif (str_contains($cleanGol, 'A')) {
+                        $golDarah = 'A';
+                    } elseif (str_contains($cleanGol, 'B')) {
+                        $golDarah = 'B';
+                    } elseif (str_contains($cleanGol, 'O')) {
+                        $golDarah = 'O';
+                    } else {
+                        $golDarah = substr($cleanGol, 0, 10);
+                    }
+                }
+                $nikInput       = !empty($nikInput) ? substr(trim($nikInput), 0, 30) : null;
+                $nomorKk        = !empty($nomorKk) ? substr(trim($nomorKk), 0, 30) : null;
+                $nisnInput      = !empty($nisnInput) ? substr(trim($nisnInput), 0, 30) : null;
+                $nisInput       = !empty($nisInput) ? substr(trim($nisInput), 0, 30) : null;
+                $tahunMasuk     = !empty($tahunMasuk) ? substr(trim($tahunMasuk), 0, 10) : date('Y');
+                $kelasInput     = !empty($kelasInput) ? substr(trim($kelasInput), 0, 30) : 'VII-A';
+                $tahunLulus     = !empty($tahunLulus) ? substr(trim($tahunLulus), 0, 10) : null;
+                $ayahNik        = !empty($ayahNik) ? substr(trim($ayahNik), 0, 30) : null;
+                $ayahTelepon    = !empty($ayahTelepon) ? substr(trim($ayahTelepon), 0, 30) : null;
+                $ayahPendidikan = !empty($ayahPendidikan) ? substr(trim($ayahPendidikan), 0, 50) : null;
+                $ayahPenghasilan= !empty($ayahPenghasilan) ? substr(trim($ayahPenghasilan), 0, 50) : null;
+                $ayahPekerjaan  = !empty($ayahPekerjaan) ? substr(trim($ayahPekerjaan), 0, 100) : null;
+                $ibuNik         = !empty($ibuNik) ? substr(trim($ibuNik), 0, 30) : null;
+                $ibuTelepon     = !empty($ibuTelepon) ? substr(trim($ibuTelepon), 0, 30) : null;
+                $ibuPendidikan  = !empty($ibuPendidikan) ? substr(trim($ibuPendidikan), 0, 50) : null;
+                $ibuPenghasilan = !empty($ibuPenghasilan) ? substr(trim($ibuPenghasilan), 0, 50) : null;
+                $ibuPekerjaan   = !empty($ibuPekerjaan) ? substr(trim($ibuPekerjaan), 0, 100) : null;
+                $waliNik        = !empty($waliNik) ? substr(trim($waliNik), 0, 30) : null;
+                $waliTelepon    = !empty($waliTelepon) ? substr(trim($waliTelepon), 0, 30) : null;
+                $waliHubungan   = !empty($waliHubungan) ? substr(trim($waliHubungan), 0, 50) : null;
+                $waliPekerjaan  = !empty($waliPekerjaan) ? substr(trim($waliPekerjaan), 0, 100) : null;
+                $waliPenghasilan= !empty($waliPenghasilan) ? substr(trim($waliPenghasilan), 0, 50) : null;
+                $noWhatsapp     = !empty($noWhatsapp) ? substr(trim($noWhatsapp), 0, 30) : null;
 
                 // Parsing Data Tagihan / Tunggakan Masa Lalu Terinci per Kategori
                 // 1. 4 Pos Biaya Bulanan Resmi
@@ -1478,19 +1765,49 @@ class StudentController extends Controller
                     // Perbarui profil santri jika ada data baru yang terisi
                     if (empty($student->no_whatsapp) && !empty($noWhatsapp)) $student->no_whatsapp = $noWhatsapp;
                     if (empty($student->nama_wali) && !empty($namaWali)) $student->nama_wali = $namaWali;
-                    if (empty($student->ayah_nama) && !empty($namaWali)) $student->ayah_nama = $namaWali;
+                    if (empty($student->ayah_nama) && !empty($ayahNama)) $student->ayah_nama = $ayahNama;
+                    if (empty($student->ayah_nik) && !empty($ayahNik)) $student->ayah_nik = $ayahNik;
+                    if (empty($student->ayah_telepon) && !empty($ayahTelepon)) $student->ayah_telepon = $ayahTelepon;
+                    if (empty($student->ayah_pekerjaan) && !empty($ayahPekerjaan)) $student->ayah_pekerjaan = $ayahPekerjaan;
+                    if (empty($student->ayah_pendidikan) && !empty($ayahPendidikan)) $student->ayah_pendidikan = $ayahPendidikan;
+                    if (empty($student->ayah_penghasilan) && !empty($ayahPenghasilan)) $student->ayah_penghasilan = $ayahPenghasilan;
+                    if (empty($student->ibu_nama) && !empty($ibuNama)) $student->ibu_nama = $ibuNama;
+                    if (empty($student->ibu_nik) && !empty($ibuNik)) $student->ibu_nik = $ibuNik;
+                    if (empty($student->ibu_telepon) && !empty($ibuTelepon)) $student->ibu_telepon = $ibuTelepon;
+                    if (empty($student->ibu_pekerjaan) && !empty($ibuPekerjaan)) $student->ibu_pekerjaan = $ibuPekerjaan;
+                    if (empty($student->ibu_pendidikan) && !empty($ibuPendidikan)) $student->ibu_pendidikan = $ibuPendidikan;
+                    if (empty($student->ibu_penghasilan) && !empty($ibuPenghasilan)) $student->ibu_penghasilan = $ibuPenghasilan;
+                    if (empty($student->wali_nik) && !empty($waliNik)) $student->wali_nik = $waliNik;
+                    if (empty($student->wali_telepon) && !empty($waliTelepon)) $student->wali_telepon = $waliTelepon;
+                    if (empty($student->wali_hubungan) && !empty($waliHubungan)) $student->wali_hubungan = $waliHubungan;
+                    if (empty($student->wali_pekerjaan) && !empty($waliPekerjaan)) $student->wali_pekerjaan = $waliPekerjaan;
+                    if (empty($student->wali_penghasilan) && !empty($waliPenghasilan)) $student->wali_penghasilan = $waliPenghasilan;
+                    if (empty($student->nomor_kk) && !empty($nomorKk)) $student->nomor_kk = $nomorKk;
+                    if (empty($student->anak_ke) && !empty($anakKe)) $student->anak_ke = (int)$anakKe;
+                    if (empty($student->jumlah_saudara) && !empty($jumlahSaudara)) $student->jumlah_saudara = (int)$jumlahSaudara;
+                    if (empty($student->hobi) && !empty($hobi)) $student->hobi = $hobi;
+                    if (empty($student->riwayat_penyakit) && !empty($riwayatPenyakit)) $student->riwayat_penyakit = $riwayatPenyakit;
                     if (empty($student->alamat_lengkap) && !empty($alamatLengkap)) $student->alamat_lengkap = $alamatLengkap;
                     if (empty($student->alamat) && !empty($alamatLengkap)) $student->alamat = $alamatLengkap;
                     if (empty($student->tempat_lahir) && !empty($tempatLahir)) $student->tempat_lahir = $tempatLahir;
                     if (empty($student->nik) && !empty($nikInput)) $student->nik = $nikInput;
                     if (empty($student->nisn) && !empty($nisnInput)) $student->nisn = $nisnInput;
                     if (empty($student->golongan_darah) && !empty($golDarah)) $student->golongan_darah = $golDarah;
-                    if (empty($student->ayah_pekerjaan) && !empty($pekerjaanWali)) $student->ayah_pekerjaan = $pekerjaanWali;
-                    if (empty($student->ibu_nama) && !empty($namaIbu)) $student->ibu_nama = $namaIbu;
                     if (empty($student->nama_sekolah) && !empty($namaSekolah)) $student->nama_sekolah = $namaSekolah;
+                    if (empty($student->tahun_lulus) && !empty($tahunLulus)) $student->tahun_lulus = $tahunLulus;
+                    if (empty($student->alamat_sekolah) && !empty($alamatSekolah)) $student->alamat_sekolah = $alamatSekolah;
                     if (!empty($dormitoryId) && empty($student->dormitory_id)) {
                         $student->dormitory_id = $dormitoryId;
                         $student->kamar_asrama = $kamarInput;
+                    }
+                    if (!empty($jenjangInput) && (empty($student->jenjang) || $student->jenjang !== $jenjangInput)) {
+                        $student->jenjang = $jenjangInput;
+                    }
+                    if (!empty($kelasInput) && (empty($student->kelas) || $student->kelas !== $kelasInput)) {
+                        $student->kelas = $kelasInput;
+                    }
+                    if (!empty($statusInput) && in_array($statusInput, ['Aktif', 'Alumni', 'Mutasi', 'Cuti'])) {
+                        $student->status = $statusInput;
                     }
                     $student->save();
                 } else {
@@ -1546,7 +1863,12 @@ class StudentController extends Controller
                         'tanggal_lahir' => $tglLahirDb,
                         'tempat_lahir' => $tempatLahir ?: null,
                         'nik' => $nikInput ?: null,
+                        'nomor_kk' => $nomorKk ?: null,
+                        'anak_ke' => !empty($anakKe) ? (int)$anakKe : null,
+                        'jumlah_saudara' => !empty($jumlahSaudara) ? (int)$jumlahSaudara : null,
                         'golongan_darah' => $golDarah ?: null,
+                        'hobi' => $hobi ?: null,
+                        'riwayat_penyakit' => $riwayatPenyakit ?: null,
                         'alamat_lengkap' => $alamatLengkap ?: null,
                         'alamat' => $alamatLengkap ?: null,
                         'jenjang' => $jenjangInput,
@@ -1554,16 +1876,29 @@ class StudentController extends Controller
                         'kamar_asrama' => $kamarInput,
                         'dormitory_id' => $dormitoryId,
                         'tahun_masuk' => $tahunMasuk,
-                        'status' => 'Aktif',
-                        'nama_wali' => $namaWali ?: null,
-                        'ayah_nama' => $namaWali ?: null,
-                        'no_whatsapp' => $noWhatsapp ?: null,
-                        'ayah_telepon' => $noWhatsapp ?: null,
-                        'ayah_pekerjaan' => $pekerjaanWali ?: null,
-                        'ibu_nama' => $namaIbu ?: null,
-                        'ibu_telepon' => $teleponIbu ?: null,
+                        'status' => in_array($statusInput, ['Aktif', 'Alumni', 'Mutasi', 'Cuti']) ? $statusInput : 'Aktif',
                         'nama_sekolah' => $namaSekolah ?: null,
                         'tahun_lulus' => $tahunLulus ?: null,
+                        'alamat_sekolah' => $alamatSekolah ?: null,
+                        'ayah_nama' => $ayahNama ?: ($namaWali ?: null),
+                        'ayah_nik' => $ayahNik ?: null,
+                        'ayah_telepon' => $ayahTelepon ?: ($noWhatsapp ?: null),
+                        'ayah_pekerjaan' => $ayahPekerjaan ?: null,
+                        'ayah_pendidikan' => $ayahPendidikan ?: null,
+                        'ayah_penghasilan' => $ayahPenghasilan ?: null,
+                        'ibu_nama' => $ibuNama ?: null,
+                        'ibu_nik' => $ibuNik ?: null,
+                        'ibu_telepon' => $ibuTelepon ?: null,
+                        'ibu_pekerjaan' => $ibuPekerjaan ?: null,
+                        'ibu_pendidikan' => $ibuPendidikan ?: null,
+                        'ibu_penghasilan' => $ibuPenghasilan ?: null,
+                        'nama_wali' => $namaWali ?: ($ayahNama ?: null),
+                        'wali_nik' => $waliNik ?: null,
+                        'wali_telepon' => $waliTelepon ?: null,
+                        'wali_hubungan' => $waliHubungan ?: null,
+                        'wali_pekerjaan' => $waliPekerjaan ?: null,
+                        'wali_penghasilan' => $waliPenghasilan ?: null,
+                        'no_whatsapp' => $noWhatsapp ?: null,
                         'catatan' => $catatan ?: 'Import Massal Santri & Tunggakan',
                         'password' => Hash::make($defaultPassword),
                     ]);
@@ -1763,28 +2098,65 @@ class StudentController extends Controller
                 // Jika client menambahkan kolom sendiri di Excel (misal: Wisuda, Ziarah, Seragam, Uang Saku, dll),
                 // sistem secara otomatis mendeteksi kolom tersebut, memetakan pos biayanya, dan membuat tagihannya.
                 $knownKeys = [
+                    // Data Pokok & Akademik Santri
                     'nama_lengkap', 'nama', 'nama_santri', 'santri',
                     'nis', 'no_induk', 'nomor_induk',
                     'username', 'user_id',
-                    'nisn', 'no_nisn',
+                    'nisn', 'no_nisn', 'stambuk', 'no_stambuk',
                     'jenis_kelamin', 'jk', 'gender',
                     'tanggal_lahir', 'tgl_lahir', 'tgl_lahir_yyyy_mm_dd', 'birth_date',
-                    'tahun_masuk', 'angkatan',
-                    'kelas', 'rombel',
-                    'jenjang', 'tingkat',
                     'tempat_lahir', 'tmp_lahir', 'kota_lahir',
+                    'tahun_masuk', 'angkatan', 'thn_masuk',
+                    'jenjang', 'tingkat', 'jenjang_pendidikan',
+                    'status_mukim', 'mukim_atau_laju', 'hunian', 'status_hunian', 'tipe_santri', 'mukim_laju', 'status_pondok', 'mukim', 'laju',
+                    'kelas', 'rombel', 'kelas_santri',
+                    'status', 'status_santri', 'status_keaktifan',
+
+                    // Identitas & Fisik Santri
                     'nik', 'no_nik', 'nik_santri',
+                    'nomor_kk', 'no_kk', 'kartu_keluarga', 'kk',
+                    'anak_ke', 'anak_ke_',
+                    'jumlah_saudara', 'jml_saudara', 'saudara',
                     'golongan_darah', 'gol_darah', 'goldar',
-                    'alamat_lengkap', 'alamat', 'domisili', 'alamat_santri',
+                    'hobi', 'minat_bakat', 'minat',
+                    'riwayat_penyakit', 'penyakit', 'alergi',
                     'kamar_asrama', 'kamar', 'asrama',
-                    'nama_wali', 'wali', 'orang_tua', 'nama_ortu', 'ayah_nama',
-                    'no_whatsapp', 'whatsapp', 'no_wa', 'no_hp', 'telepon', 'ayah_telepon',
-                    'pekerjaan_wali', 'ayah_pekerjaan', 'pekerjaan_ayah', 'wali_pekerjaan',
-                    'nama_ibu', 'ibu_nama',
-                    'telepon_ibu', 'ibu_telepon', 'no_hp_ibu',
+                    'alamat_lengkap', 'alamat', 'domisili', 'alamat_santri',
+
+                    // Riwayat Pendidikan Asal
                     'nama_sekolah', 'sekolah_asal', 'asal_sekolah',
                     'tahun_lulus', 'thn_lulus',
-                    'catatan', 'keterangan_santri',
+                    'alamat_sekolah', 'kota_sekolah',
+
+                    // Data Ayah
+                    'ayah_nama', 'nama_ayah',
+                    'ayah_nik', 'nik_ayah', 'no_nik_ayah',
+                    'ayah_telepon', 'no_hp_ayah', 'wa_ayah', 'telepon_ayah',
+                    'ayah_pekerjaan', 'pekerjaan_ayah',
+                    'ayah_pendidikan', 'pendidikan_ayah',
+                    'ayah_penghasilan', 'penghasilan_ayah', 'gaji_ayah',
+
+                    // Data Ibu
+                    'ibu_nama', 'nama_ibu',
+                    'ibu_nik', 'nik_ibu', 'no_nik_ibu',
+                    'ibu_telepon', 'no_hp_ibu', 'wa_ibu', 'telepon_ibu',
+                    'ibu_pekerjaan', 'pekerjaan_ibu',
+                    'ibu_pendidikan', 'pendidikan_ibu',
+                    'ibu_penghasilan', 'penghasilan_ibu', 'gaji_ibu',
+
+                    // Data Wali
+                    'nama_wali', 'wali', 'orang_tua', 'nama_ortu',
+                    'wali_hubungan', 'hubungan_wali', 'hubungan',
+                    'wali_telepon', 'no_hp_wali', 'telepon_wali',
+                    'wali_nik', 'nik_wali', 'no_nik_wali',
+                    'wali_pekerjaan', 'pekerjaan_wali',
+                    'wali_penghasilan', 'penghasilan_wali',
+
+                    // Kontak & Catatan
+                    'no_whatsapp', 'whatsapp', 'no_wa', 'no_hp', 'telepon', 'kontak',
+                    'catatan', 'keterangan_santri', 'catatan_santri',
+
+                    // Keterangan & Jatuh Tempo Tagihan
                     'keterangan_tagihan', 'keterangan_tunggakan', 'catatan_tunggakan', 'rincian_tunggakan', 'keterangan', 'catatan_tagihan',
                     'jatuh_tempo_tunggakan', 'jatuh_tempo', 'tgl_jatuh_tempo', 'due_date',
                     '_raw_headers',
@@ -1819,7 +2191,9 @@ class StudentController extends Controller
                     }
 
                     $customNom = $cleanNominal($cellVal);
-                    if ($customNom > 0) {
+                    // Filter: Hanya nominal tagihan wajar (Rp 1.000 s/d Rp 100.000.000)
+                    // Mencegah nilai biodata angka (misal NIK/KK/No HP) tidak sengaja dianggap sebagai pos tagihan
+                    if ($customNom >= 1000 && $customNom <= 100000000) {
                         $rawHeadersMap = $data['_raw_headers'] ?? [];
                         $rawColName = $rawHeadersMap[$colKey] ?? ucwords(str_replace('_', ' ', $colKey));
 
@@ -2849,7 +3223,7 @@ class StudentController extends Controller
             'nama_asrama' => 'required|string|max:100',
             'kamar' => 'required|string|max:50',
             'gender' => 'required|string|in:Laki-laki,Perempuan',
-            'kapasitas' => 'required|integer|min:1|max:50',
+            'kapasitas' => 'required|integer|min:1|max:1000',
             'musyrif' => 'nullable|string|max:100',
             'lokasi' => 'nullable|string|max:100',
             'keterangan' => 'nullable|string|max:255',
@@ -2877,7 +3251,7 @@ class StudentController extends Controller
             'nama_asrama' => 'required|string|max:100',
             'kamar' => 'required|string|max:50',
             'gender' => 'required|string|in:Laki-laki,Perempuan',
-            'kapasitas' => 'required|integer|min:1|max:50',
+            'kapasitas' => 'required|integer|min:1|max:1000',
             'musyrif' => 'nullable|string|max:100',
             'lokasi' => 'nullable|string|max:100',
             'keterangan' => 'nullable|string|max:255',

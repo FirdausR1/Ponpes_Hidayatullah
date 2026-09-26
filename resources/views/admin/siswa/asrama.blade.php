@@ -296,7 +296,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Kapasitas Maksimal (Ranjang) <span class="text-rose-500">*</span></label>
-                        <input type="number" name="kapasitas" value="8" min="1" max="50" required class="ta-input text-xs">
+                        <input type="number" name="kapasitas" value="8" min="1" max="1000" required class="ta-input text-xs">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Lokasi Lantai / Blok</label>
@@ -355,7 +355,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Kapasitas Maksimal <span class="text-rose-500">*</span></label>
-                        <input type="number" name="kapasitas" x-model="editData.kapasitas" min="1" max="50" required class="ta-input text-xs">
+                        <input type="number" name="kapasitas" x-model="editData.kapasitas" min="1" max="1000" required class="ta-input text-xs">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Lokasi Lantai / Blok</label>

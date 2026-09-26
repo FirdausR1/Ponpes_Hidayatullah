@@ -87,10 +87,16 @@
 
                     <textarea id="content" name="content" rows="16" class="w-full rounded-lg border border-gray-300 bg-white p-4 text-xs sm:text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/10 transition leading-relaxed">{{ old('content', $article->content) }}</textarea>
 
-                    <p class="text-[11px] text-gray-500 mt-2 flex items-center gap-1.5">
-                        <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">i</span>
-                        <span><strong>Tips Paragraf:</strong> Tekan <strong>Enter</strong> untuk membuat paragraf baru <code>&lt;p&gt;</code>, atau <strong>Shift + Enter</strong> untuk ganti baris tanpa jarak <code>&lt;br&gt;</code>.</span>
-                    </p>
+                    <div class="mt-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5 shadow-sm">
+                        <div class="font-bold flex items-center gap-1.5 text-slate-900">
+                            <svg class="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Panduan Penulisan &amp; Format Berita:</span>
+                        </div>
+                        <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                            <li><strong>Cara Buat Kutipan / Quote Narasumber:</strong> Sorot/blok teks perkataan narasumber, lalu klik tombol <strong>Blockquote (ikon tanda petik &ldquo;&rdquo;)</strong> di toolbar editor. Teks otomatis diberi kotak kartu kutipan elegan dengan lambang tanda kutip seperti berita media nasional.</li>
+                            <li><strong>Paragraf Baru:</strong> Tekan <strong>Enter</strong> untuk paragraf baru <code>&lt;p&gt;</code>, atau <strong>Shift + Enter</strong> untuk turun baris rapat <code>&lt;br&gt;</code>.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -193,6 +199,35 @@
 <script>
     // Konfigurasi CKEditor 4 sesuai tampilan screenshot user
     CKEDITOR.config.versionCheck = false;
+    CKEDITOR.config.extraCss = `
+        body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #1e293b; padding: 12px; }
+        blockquote {
+            position: relative;
+            background: #f3f5f8;
+            border: 1px solid #e5e9f0;
+            border-radius: 14px;
+            padding: 20px 22px 20px 64px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #334155;
+            font-size: 14.5px;
+            line-height: 1.75;
+        }
+        blockquote::before {
+            content: "";
+            position: absolute;
+            left: 18px;
+            top: 18px;
+            width: 32px;
+            height: 32px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cbd5e1'%3E%3Cpath d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.95;
+        }
+        blockquote p { margin: 0 0 8px 0; color: inherit; font-style: italic; }
+        blockquote p:last-child { margin-bottom: 0; }
+    `;
     CKEDITOR.replace('content', {
         language: 'id',
         height: 420,
