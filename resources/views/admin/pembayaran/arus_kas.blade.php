@@ -20,6 +20,47 @@
     tabMasuk: 'semua',
     modalTransfer: false,
     modalSaldoAwal: false,
+    modalRekapMasuk: false,
+    rekapForm: {
+        tanggal: '{{ date('Y-m-d') }}',
+        jenjang: 'Semua',
+        keterangan: '',
+        pos: {
+            'Uang Makan': { tunai: '', bank: '' },
+            'Syahriyah': { tunai: '', bank: '' },
+            'SOT': { tunai: '', bank: '' },
+            'Tabungan': { tunai: '', bank: '' },
+            'Kas Umum': { tunai: '', bank: '' },
+            'Uang Gedung': { tunai: '', bank: '' },
+            'Kertas': { tunai: '', bank: '' },
+            'Kesehatan': { tunai: '', bank: '' },
+            'Kegiatan': { tunai: '', bank: '' },
+            'Pengembangan Pondok': { tunai: '', bank: '' },
+            'Lainnya': { tunai: '', bank: '' }
+        }
+    },
+    calcSubtotal(p) {
+        let t = parseFloat(this.rekapForm.pos[p]?.tunai) || 0;
+        let b = parseFloat(this.rekapForm.pos[p]?.bank) || 0;
+        return t + b;
+    },
+    calcTotalTunai() {
+        let total = 0;
+        for (let p in this.rekapForm.pos) {
+            total += parseFloat(this.rekapForm.pos[p]?.tunai) || 0;
+        }
+        return total;
+    },
+    calcTotalBank() {
+        let total = 0;
+        for (let p in this.rekapForm.pos) {
+            total += parseFloat(this.rekapForm.pos[p]?.bank) || 0;
+        }
+        return total;
+    },
+    calcGrandTotal() {
+        return this.calcTotalTunai() + this.calcTotalBank();
+    },
     saldoAwalForm: {
         tanggal: '{{ $saldoAwalTanggal ?: date('Y-m-d') }}',
         tunai: '{{ $saldoAwalTunai > 0 ? (int)$saldoAwalTunai : '' }}',
@@ -42,7 +83,7 @@
             this.transferData.ke_kas = 'Transfer Bank';
         }
     }
-}">
+}" x-init="if (window.location.hash === '#modalRekapMasuk') modalRekapMasuk = true">
 
     <!-- Header Page (TailAdmin Card Style) -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-theme-xs">
@@ -60,6 +101,10 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap items-center gap-2.5 no-print">
+            <button type="button" @click="modalRekapMasuk = true" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-emerald-700 transition cursor-pointer">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span>+ Catat Kas Masuk per Pos</span>
+            </button>
             <button type="button" @click="modalTransfer = true" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-theme-xs hover:bg-indigo-700 transition cursor-pointer">
                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 <span>Pindah Dana Antar Kas</span>
@@ -94,6 +139,10 @@
                 <p class="text-xs text-gray-500 mt-0.5">Saldo riil fisik di brankas bendahara dan rekening bank resmi pondok (akumulasi seluruh transaksi &amp; mutasi kas).</p>
             </div>
             <div class="flex items-center gap-2 no-print flex-wrap">
+                <button type="button" @click="modalRekapMasuk = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition cursor-pointer" title="Input Rekapitulasi Kas Masuk per Pos Biaya">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <span>+ Kas Masuk per Pos</span>
+                </button>
                 <button type="button" @click="modalSaldoAwal = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold shadow-sm transition cursor-pointer" title="Atur Saldo Kas Awal Pesantren (Cut-Off Pembukuan)">
                     <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span>Atur Saldo Awal (Cut-Off)</span>
@@ -880,6 +929,91 @@
     </div>
 
     <!-- ========================================================================= -->
+    <!-- TABEL RIWAYAT REKAP PEMASUKAN KAS PER POS (NON-SANTRI / MANUAL BULAN LALU)-->
+    <!-- ========================================================================= -->
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-theme-xs overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-emerald-50/30">
+            <div>
+                <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <span>Riwayat Rekap Kas Masuk per Pos</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Kolektif / Bulan Lalu</span>
+                </h3>
+                <p class="text-xs text-gray-500 mt-0.5">Catatan kas masuk per pos biaya yang diinput secara kolektif (data lampau, saldo pos, atau non-santri)</p>
+            </div>
+            <div class="flex items-center gap-2 no-print">
+                <button type="button" @click="modalRekapMasuk = true" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-theme-xs transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    <span>+ Catat Kas Masuk per Pos</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+                <thead class="bg-gray-100 text-gray-700 uppercase text-[10px] tracking-wider font-bold border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 w-10 text-center">No</th>
+                        <th class="px-4 py-3">No. Transaksi</th>
+                        <th class="px-4 py-3">Tanggal</th>
+                        <th class="px-4 py-3">Keterangan</th>
+                        <th class="px-4 py-3 text-center">Akun Kas</th>
+                        <th class="px-4 py-3">Rincian Pos Biaya</th>
+                        <th class="px-4 py-3 text-right">Nominal (Rp)</th>
+                        <th class="px-4 py-3 text-center">Petugas</th>
+                        <th class="px-4 py-3 text-center no-print">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($rekapMasukList as $idx => $rm)
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 text-center text-gray-400 font-mono">{{ $idx + 1 }}</td>
+                        <td class="px-4 py-3 font-mono font-bold text-gray-900 whitespace-nowrap">{{ $rm->no_transaksi }}</td>
+                        <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ optional($rm->tanggal_bayar)->format('d/m/Y') }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ $rm->catatan ?: ($rm->jenis_pembayaran ?: 'Rekap Kas Masuk') }}</td>
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold {{ $rm->metode_pembayaran === 'Transfer Bank' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                                {{ $rm->metode_pembayaran }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($rm->items as $item)
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px]">
+                                        <span class="font-semibold">{{ $item->pos_biaya }}:</span>
+                                        <span class="font-mono font-bold">Rp {{ number_format($item->nominal, 0, ',', '.') }}</span>
+                                    </span>
+                                @endforeach
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-right font-mono font-bold text-emerald-700 whitespace-nowrap text-sm">
+                            Rp {{ number_format($rm->nominal, 0, ',', '.') }}
+                        </td>
+                        <td class="px-4 py-3 text-center text-gray-500 whitespace-nowrap">
+                            {{ $rm->penerima_nama ?: 'Bendahara' }}
+                        </td>
+                        <td class="px-4 py-3 text-center no-print whitespace-nowrap">
+                            <form action="{{ route('admin.arusKas.rekapMasukDestroy', $rm->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan/menghapus catatan kas masuk ini? Saldo kas akan berkurang sesuai nominal transaksi.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-rose-600 hover:text-rose-800 p-1 rounded hover:bg-rose-50 transition cursor-pointer" title="Hapus Kas Masuk">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9" class="py-8 text-center text-gray-400 text-xs">
+                            Belum ada riwayat rekap kas masuk kolektif pada rentang tanggal ini. Klik <strong>+ Catat Kas Masuk per Pos</strong> untuk menambahkan.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
     <!-- MODAL PINDAH DANA ANTAR KAS (MUTASI KAS)                                  -->
     <!-- ========================================================================= -->
     <div x-show="modalTransfer" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm no-print" @keydown.escape.window="modalTransfer = false">
@@ -1056,6 +1190,146 @@
                     <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-theme-xs transition cursor-pointer flex items-center gap-1.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         <span>Simpan Saldo Awal</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL REKAP PEMASUKAN KAS PER POS BIAYA (CASH & TRANSFER)                -->
+    <!-- ========================================================================= -->
+    <div x-show="modalRekapMasuk" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm no-print" @keydown.escape.window="modalRekapMasuk = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-100 flex flex-col max-h-[92vh]" @click.outside="modalRekapMasuk = false">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 via-white to-teal-50 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg shrink-0">
+                        📥
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">Catat Rekap Pemasukan Kas per Pos</h3>
+                        <p class="text-xs text-gray-500">Input uang masuk bulanan/saldo per pos (Tunai vs Transfer Bank) tanpa perlu input per santri</p>
+                    </div>
+                </div>
+                <button type="button" @click="modalRekapMasuk = false" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <form action="{{ route('admin.arusKas.rekapMasukStore') }}" method="POST" class="flex flex-col flex-1 overflow-hidden">
+                @csrf
+                <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <!-- Penjelasan Singkat -->
+                    <div class="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-950 flex items-start gap-2.5">
+                        <span class="text-base">💡</span>
+                        <div class="text-[11px] leading-relaxed">
+                            <strong>Mudah &amp; Otomatis:</strong> Masukkan jumlah uang masuk untuk masing-masing pos biaya. Kolom <strong>Tunai</strong> otomatis masuk ke <strong>Kas Tunai (Fisik)</strong>, dan kolom <strong>Transfer</strong> masuk ke <strong>Kas Bank (Rekening)</strong>. Seluruh saldo kas langsung siap digunakan untuk Kas Keluar.
+                        </div>
+                    </div>
+
+                    <!-- Header Form (Tanggal, Jenjang, Keterangan) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Tanggal Pemasukan <span class="text-rose-500">*</span></label>
+                            <input type="date" name="tanggal" x-model="rekapForm.tanggal" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <p class="text-[10px] text-gray-400 mt-1">Bisa pilih tanggal bulan lalu untuk data riwayat.</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Alokasi Jenjang</label>
+                            <select name="jenjang" x-model="rekapForm.jenjang" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="Semua">Semua / Bersama (Gabungan)</option>
+                                <option value="MTs">MTs (Madrasah Tsanawiyah)</option>
+                                <option value="MA">MA (Madrasah Aliyah)</option>
+                            </select>
+                            <p class="text-[10px] text-gray-400 mt-1">Pilih MTs, MA, atau kas gabungan.</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Keterangan / Berita Acara</label>
+                            <input type="text" name="keterangan" x-model="rekapForm.keterangan" placeholder="Contoh: Rekap Masuk Februari 2026" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <p class="text-[10px] text-gray-400 mt-1">Catatan ringkas tujuan pencatatan.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Input per Pos Biaya -->
+                    <div class="border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-[10px] tracking-wider font-bold border-b border-gray-200">
+                                <tr>
+                                    <th class="px-3.5 py-2.5">Pos Sumber Dana</th>
+                                    <th class="px-3.5 py-2.5 w-40 text-center">Masuk Tunai (Rp)</th>
+                                    <th class="px-3.5 py-2.5 w-40 text-center">Masuk Transfer (Rp)</th>
+                                    <th class="px-3.5 py-2.5 w-32 text-right">Subtotal Pos</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                <template x-for="(obj, posKey) in rekapForm.pos" :key="posKey">
+                                    <tr class="hover:bg-gray-50/80 transition">
+                                        <td class="px-3.5 py-2 font-semibold text-gray-800">
+                                            <span x-text="posKey"></span>
+                                        </td>
+                                        <td class="px-3 py-1.5">
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-[10px] font-bold text-gray-400">Rp</span>
+                                                <input type="number" :name="'pos[' + posKey + '][tunai]'" x-model="obj.tunai" min="0" step="1" placeholder="0" class="w-full pl-7 pr-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono font-bold text-emerald-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none text-right">
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-1.5">
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-[10px] font-bold text-gray-400">Rp</span>
+                                                <input type="number" :name="'pos[' + posKey + '][bank]'" x-model="obj.bank" min="0" step="1" placeholder="0" class="w-full pl-7 pr-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono font-bold text-blue-700 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-right">
+                                            </div>
+                                        </td>
+                                        <td class="px-3.5 py-2 text-right font-mono font-bold text-gray-900">
+                                            Rp <span x-text="calcSubtotal(posKey).toLocaleString('id-ID')">0</span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Ringkasan Live Total -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Total Uang Tunai</span>
+                                <span class="text-xs text-emerald-600">Masuk Kas Fisik</span>
+                            </div>
+                            <strong class="font-mono text-sm font-black text-emerald-700">
+                                Rp <span x-text="calcTotalTunai().toLocaleString('id-ID')">0</span>
+                            </strong>
+                        </div>
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">Total Transfer Bank</span>
+                                <span class="text-xs text-blue-600">Masuk Rekening</span>
+                            </div>
+                            <strong class="font-mono text-sm font-black text-blue-700">
+                                Rp <span x-text="calcTotalBank().toLocaleString('id-ID')">0</span>
+                            </strong>
+                        </div>
+                        <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-indigo-800 uppercase tracking-wider block">Grand Total Masuk</span>
+                                <span class="text-xs text-indigo-600">Total Likuiditas</span>
+                            </div>
+                            <strong class="font-mono text-sm font-black text-indigo-900">
+                                Rp <span x-text="calcGrandTotal().toLocaleString('id-ID')">0</span>
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="px-6 py-3.5 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-2.5 shrink-0">
+                    <button type="button" @click="modalRekapMasuk = false" class="px-4 py-2.5 rounded-xl border border-gray-300 text-xs font-medium text-gray-700 hover:bg-white transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-theme-xs transition cursor-pointer flex items-center gap-1.5" :disabled="calcGrandTotal() <= 0" :class="calcGrandTotal() <= 0 ? 'opacity-50 cursor-not-allowed' : ''">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <span>Simpan Kas Masuk (<span x-text="'Rp ' + calcGrandTotal().toLocaleString('id-ID')">Rp 0</span>)</span>
                     </button>
                 </div>
             </form>

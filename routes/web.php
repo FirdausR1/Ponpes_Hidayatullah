@@ -183,6 +183,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::post('/arus-kas/transfer', [ExpenseController::class, 'cashTransferStore'])->name('arusKas.transferStore');
         Route::delete('/arus-kas/transfer/{id}', [ExpenseController::class, 'cashTransferDestroy'])->name('arusKas.transferDestroy');
         Route::post('/arus-kas/saldo-awal', [ExpenseController::class, 'saldoAwalStore'])->name('arusKas.saldoAwalStore');
+        Route::post('/arus-kas/rekap-masuk', [ExpenseController::class, 'rekapKasMasukStore'])->name('arusKas.rekapMasukStore');
+        Route::delete('/arus-kas/rekap-masuk/{id}', [ExpenseController::class, 'rekapKasMasukDestroy'])->name('arusKas.rekapMasukDestroy');
 
         // Laporan Keuangan Bulanan Resmi untuk Ketua Yayasan
         Route::get('/laporan-yayasan', [ExpenseController::class, 'laporanYayasanIndex'])->name('laporanYayasan.index');

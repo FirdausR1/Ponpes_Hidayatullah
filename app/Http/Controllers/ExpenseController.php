@@ -14,6 +14,7 @@ use App\Models\Classroom;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -240,8 +241,10 @@ class ExpenseController extends Controller
                     $pqq->whereNull('status')->orWhere('status', '!=', 'Ditolak');
                 });
                 if ($jenjang && $jenjang !== 'all' && $jenjang !== 'Semua') {
-                    $pq->whereHas('student', function ($sq) use ($jenjang) {
-                        $sq->where('jenjang', 'like', "%{$jenjang}%");
+                    $pq->where(function ($sq) use ($jenjang) {
+                        $sq->whereHas('student', function ($ssq) use ($jenjang) {
+                            $ssq->where('jenjang', 'like', "%{$jenjang}%");
+                        })->orWhere('catatan', 'like', "%{$jenjang}%");
                     });
                 }
             });
@@ -493,11 +496,11 @@ class ExpenseController extends Controller
 
         // Pemasukan Santri MTs vs MA
         $masukSantriMts = (float) $studentPayments->filter(function($p) {
-            return stripos($p->student->jenjang ?? '', 'MTs') !== false;
+            return stripos($p->student->jenjang ?? '', 'MTs') !== false || stripos($p->catatan ?? '', 'MTs') !== false;
         })->sum('nominal');
 
         $masukSantriMa = (float) $studentPayments->filter(function($p) {
-            return stripos($p->student->jenjang ?? '', 'MA') !== false;
+            return stripos($p->student->jenjang ?? '', 'MA') !== false || stripos($p->catatan ?? '', 'MA') !== false;
         })->sum('nominal');
 
         $masukSantriLainnya = $totalMasukSantri - ($masukSantriMts + $masukSantriMa);
@@ -578,9 +581,9 @@ class ExpenseController extends Controller
 
         foreach ($studentPayments as $sp) {
             $j = 'Lainnya';
-            if (stripos($sp->student->jenjang ?? '', 'MTs') !== false) {
+            if (stripos($sp->student->jenjang ?? '', 'MTs') !== false || stripos($sp->catatan ?? '', 'MTs') !== false) {
                 $j = 'MTs';
-            } elseif (stripos($sp->student->jenjang ?? '', 'MA') !== false) {
+            } elseif (stripos($sp->student->jenjang ?? '', 'MA') !== false || stripos($sp->catatan ?? '', 'MA') !== false) {
                 $j = 'MA';
             }
 
@@ -788,6 +791,15 @@ class ExpenseController extends Controller
         $saldoAwalTanggal = $liveCashBalances['saldo_awal_tanggal'] ?: date('Y-m-01');
         $saldoAwalKeterangan = $liveCashBalances['saldo_awal_keterangan'] ?: 'Saldo Awal Cut-Off Pesantren';
 
+        // Rekap Kas Masuk Khusus (Non-Santri / Rekap Kolektif Saldo per Pos)
+        $rekapMasukList = StudentPayment::with('items')
+            ->whereNull('student_id')
+            ->whereNull('psb_registration_id')
+            ->whereBetween('tanggal_bayar', [$startDate, $endDate])
+            ->orderBy('tanggal_bayar', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
         return view('admin.pembayaran.arus_kas', compact(
             'startDate',
             'endDate',
@@ -838,7 +850,8 @@ class ExpenseController extends Controller
             'saldoAwalTunai',
             'saldoAwalBank',
             'saldoAwalTanggal',
-            'saldoAwalKeterangan'
+            'saldoAwalKeterangan',
+            'rekapMasukList'
         ));
     }
 
@@ -930,6 +943,156 @@ class ExpenseController extends Controller
         $fmtBank = 'Rp ' . number_format($cleanBank, 0, ',', '.');
 
         return redirect()->back()->with('success', "Saldo Kas Awal (Cut-Off) berhasil disimpan! Kas Tunai: {$fmtTunai}, Kas Bank: {$fmtBank}. Seluruh saldo live dan buku kas telah disinkronkan.");
+    }
+
+    /**
+     * Simpan Rekap Kas Masuk per Pos Biaya (Tunai & Bank)
+     */
+    public function rekapKasMasukStore(Request $request)
+    {
+        $request->validate([
+            'tanggal' => 'required|date',
+            'keterangan' => 'nullable|string|max:255',
+            'jenjang' => 'nullable|string',
+            'pos' => 'required|array',
+        ]);
+
+        $tanggal = $request->tanggal;
+        $keterangan = $request->keterangan ?: 'Rekap Pemasukan Kas per Pos';
+        $jenjang = $request->jenjang ?: 'Semua';
+        $posData = $request->input('pos', []);
+
+        $totalTunai = 0;
+        $totalBank = 0;
+        $itemsTunai = [];
+        $itemsBank = [];
+
+        foreach ($posData as $posName => $values) {
+            $rawTunai = preg_replace('/[^0-9]/', '', (string)($values['tunai'] ?? 0));
+            $rawBank = preg_replace('/[^0-9]/', '', (string)($values['bank'] ?? 0));
+
+            $valTunai = (float) $rawTunai;
+            $valBank = (float) $rawBank;
+
+            if ($valTunai > 0) {
+                $totalTunai += $valTunai;
+                $itemsTunai[] = [
+                    'pos' => $posName,
+                    'nominal' => $valTunai,
+                ];
+            }
+
+            if ($valBank > 0) {
+                $totalBank += $valBank;
+                $itemsBank[] = [
+                    'pos' => $posName,
+                    'nominal' => $valBank,
+                ];
+            }
+        }
+
+        if ($totalTunai <= 0 && $totalBank <= 0) {
+            return redirect()->back()->with('error', 'Gagal mencatat kas masuk: Harap isi nominal minimal pada satu pos biaya (Tunai atau Transfer).');
+        }
+
+        $dateCarbon = Carbon::parse($tanggal);
+        $bulanStr = $dateCarbon->translatedFormat('F');
+        $tahunStr = $dateCarbon->format('Y');
+        $createdTransactions = [];
+
+        DB::beginTransaction();
+        try {
+            // 1. Simpan Transaksi Kas Masuk Tunai jika ada
+            if ($totalTunai > 0) {
+                $noTrxTunai = 'IN-TUNAI-' . $dateCarbon->format('ymd') . '-' . strtoupper(Str::random(4));
+                $paymentTunai = StudentPayment::create([
+                    'student_id' => null,
+                    'user_id' => auth()->id(),
+                    'no_transaksi' => $noTrxTunai,
+                    'jenis_pembayaran' => 'Rekap Kas Tunai',
+                    'bulan' => $bulanStr,
+                    'tahun' => $tahunStr,
+                    'nominal' => $totalTunai,
+                    'tanggal_bayar' => $tanggal,
+                    'metode_pembayaran' => 'Tunai',
+                    'status' => 'Lunas',
+                    'catatan' => "{$keterangan} [Jenjang: {$jenjang}]",
+                    'penerima_nama' => auth()->user()->name ?? 'Bendahara',
+                ]);
+
+                foreach ($itemsTunai as $item) {
+                    StudentPaymentItem::create([
+                        'payment_id' => $paymentTunai->id,
+                        'student_bill_id' => null,
+                        'pos_biaya' => $item['pos'],
+                        'nominal' => $item['nominal'],
+                        'keterangan' => "Rekap Tunai {$item['pos']}",
+                    ]);
+                }
+                $createdTransactions[] = "Tunai (Rp " . number_format($totalTunai, 0, ',', '.') . ")";
+            }
+
+            // 2. Simpan Transaksi Kas Masuk Transfer Bank jika ada
+            if ($totalBank > 0) {
+                $noTrxBank = 'IN-BANK-' . $dateCarbon->format('ymd') . '-' . strtoupper(Str::random(4));
+                $paymentBank = StudentPayment::create([
+                    'student_id' => null,
+                    'user_id' => auth()->id(),
+                    'no_transaksi' => $noTrxBank,
+                    'jenis_pembayaran' => 'Rekap Kas Bank',
+                    'bulan' => $bulanStr,
+                    'tahun' => $tahunStr,
+                    'nominal' => $totalBank,
+                    'tanggal_bayar' => $tanggal,
+                    'metode_pembayaran' => 'Transfer Bank',
+                    'status' => 'Lunas',
+                    'catatan' => "{$keterangan} [Jenjang: {$jenjang}]",
+                    'penerima_nama' => auth()->user()->name ?? 'Bendahara',
+                ]);
+
+                foreach ($itemsBank as $item) {
+                    StudentPaymentItem::create([
+                        'payment_id' => $paymentBank->id,
+                        'student_bill_id' => null,
+                        'pos_biaya' => $item['pos'],
+                        'nominal' => $item['nominal'],
+                        'keterangan' => "Rekap Transfer Bank {$item['pos']}",
+                    ]);
+                }
+                $createdTransactions[] = "Transfer Bank (Rp " . number_format($totalBank, 0, ',', '.') . ")";
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat menyimpan kas masuk: ' . $e->getMessage());
+        }
+
+        $summaryText = implode(' & ', $createdTransactions);
+        $grandTotal = 'Rp ' . number_format($totalTunai + $totalBank, 0, ',', '.');
+        return redirect()->back()->with('success', "Kas Masuk per Pos berhasil dicatat! {$summaryText} — Total: {$grandTotal}. Saldo kas dan laporan arus kas otomatis bertambah.");
+    }
+
+    /**
+     * Hapus Rekap Kas Masuk
+     */
+    public function rekapKasMasukDestroy($id)
+    {
+        $payment = StudentPayment::whereNull('student_id')->whereNull('psb_registration_id')->findOrFail($id);
+        $noTrx = $payment->no_transaksi;
+        $nom = 'Rp ' . number_format($payment->nominal, 0, ',', '.');
+
+        DB::beginTransaction();
+        try {
+            $payment->items()->delete();
+            $payment->delete();
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menghapus kas masuk: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', "Data kas masuk {$noTrx} sebesar {$nom} berhasil dibatalkan / dihapus dari buku kas.");
     }
 
     /**
@@ -1946,6 +2109,8 @@ class ExpenseController extends Controller
                 $keterangan = 'Sot';
                 if (in_array('INFAQ', $posList) || in_array('WAKAF', $posList)) {
                     $keterangan = 'Infaq';
+                } elseif (stripos($sp->jenis_pembayaran ?? '', 'Rekap') !== false || empty($sp->student_id)) {
+                    $keterangan = $sp->jenis_pembayaran ?: 'Rekap Kas Masuk';
                 }
 
                 $key = "{$rawDate}_{$keterangan}_{$metode}";
@@ -1965,7 +2130,7 @@ class ExpenseController extends Controller
                 $groupedPenerimaan[$key]['jumlah'] += (float) $sp->nominal;
                 $groupedPenerimaan[$key]['count'] += 1;
                 $groupedPenerimaan[$key]['details'][] = [
-                    'nama' => $sp->student->nama_lengkap ?? 'Tanpa Nama',
+                    'nama' => $sp->student->nama_lengkap ?? ($sp->catatan ?: ($sp->jenis_pembayaran ?: 'Kas Masuk Non-Santri')),
                     'nominal' => (float) $sp->nominal,
                 ];
             }
