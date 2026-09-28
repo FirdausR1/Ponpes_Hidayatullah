@@ -8,6 +8,7 @@ use App\Models\PsbRegistration;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Student;
+use App\Models\StudentBill;
 use App\Services\PhotoVerificationService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -307,7 +308,132 @@ class AdminController extends Controller
 
         $registrations = $query->with('student')->paginate(12)->withQueryString();
 
-        return view('admin.psb.index', compact('registrations', 'years', 'gelombangs', 'statusPenempatan'));
+        // Ambil santri MTs aktif (khususnya kelas IX atau MTs) sebagai kandidat PSB Internal MA
+        $mtsCandidates = Student::where('status', 'Aktif')
+            ->where(function($sq) {
+                $sq->where('kelas', 'like', 'IX%')
+                   ->orWhere('kelas', 'like', '9%')
+                   ->orWhere('jenjang', 'like', '%MTs%');
+            })
+            ->orderBy('kelas')
+            ->orderBy('nama_lengkap')
+            ->get(['id', 'nis', 'nisn', 'nik', 'nama_lengkap', 'jenis_kelamin', 'kelas', 'jenjang', 'kamar_asrama', 'psb_registration_id']);
+
+        return view('admin.psb.index', compact('registrations', 'years', 'gelombangs', 'statusPenempatan', 'mtsCandidates'));
+    }
+
+    /**
+     * Daftarkan Santri MTs Kelas 9 ke PSB Internal MA (Paket Biaya Rp 800.000)
+     */
+    public function psbTarikInternal(Request $request)
+    {
+        $request->validate([
+            'student_ids' => 'required|array|min:1',
+            'student_ids.*' => 'exists:students,id',
+        ], [
+            'student_ids.required' => 'Pilih minimal satu santri MTs yang akan didaftarkan ke PSB Internal MA.',
+        ]);
+
+        $studentIds = $request->input('student_ids');
+        $students = Student::whereIn('id', $studentIds)->get();
+        $importedCount = 0;
+        $academicYear = Setting::get('tahun_ajaran', '2026/2027');
+
+        $yearCode = '26';
+        if (preg_match('/20(\d{2})/', $academicYear, $matches)) {
+            $yearCode = $matches[1];
+        }
+
+        foreach ($students as $student) {
+            // Cek apakah sudah pernah didaftarkan ke PSB MA Internal
+            $existingPsb = PsbRegistration::where(function($q) use ($student) {
+                    if (!empty($student->nisn)) {
+                        $q->where('nisn', $student->nisn);
+                    } else {
+                        $q->where('nama_lengkap', $student->nama_lengkap);
+                    }
+                })
+                ->where(function($q) {
+                    $q->where('jenjang', 'like', '%MA%')
+                      ->orWhere('jalur', 'like', '%Internal%');
+                })->first();
+
+            if ($existingPsb) {
+                if (!$student->psb_registration_id) {
+                    $student->update(['psb_registration_id' => $existingPsb->id]);
+                }
+                continue;
+            }
+
+            $isLaju = ($student->kamar_asrama && stripos($student->kamar_asrama, 'laju') !== false) || stripos($student->jenjang ?? '', 'laju') !== false;
+            $jenjangTarget = $isLaju ? 'MA Laju' : 'MA Mukim';
+
+            $prefix = "MA-{$yearCode}-INT-";
+            $count = PsbRegistration::where('no_registrasi', 'like', "{$prefix}%")->count() + 1;
+            $noReg = $prefix . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+            $psb = PsbRegistration::create([
+                'no_registrasi' => $noReg,
+                'jalur' => 'Internal',
+                'gelombang' => 'Internal',
+                'nama_lengkap' => $student->nama_lengkap,
+                'nisn' => $student->nisn,
+                'nik' => $student->nik,
+                'tempat_lahir' => $student->tempat_lahir ?? 'Jember',
+                'tanggal_lahir' => $student->tanggal_lahir,
+                'jenjang' => $jenjangTarget,
+                'jenis_kelamin' => $student->jenis_kelamin ?? 'Laki-laki',
+                'nama_wali' => $student->nama_wali ?? '-',
+                'no_whatsapp' => $student->no_whatsapp ?? '-',
+                'asal_sekolah' => 'MTs Hidayatullah',
+                'alamat_lengkap' => $student->alamat ?? '-',
+                'status' => 'Diterima',
+                'status_pembayaran' => 'Belum Bayar',
+                'nominal_pembayaran' => 200000,
+                'catatan' => "PSB Internal: Lanjutan dari MTs ({$student->kelas}) ke MA. Rincian Paket Rp 800.000: Pendaftaran 200k, Melanjutkan MA 200k, Kertas 200k, Kesehatan Smt 1 100k, Kegiatan Smt 1 100k.",
+            ]);
+
+            $student->update(['psb_registration_id' => $psb->id]);
+
+            // Terbitkan tagihan masuk MA otomatis jika dicentang
+            if ($request->boolean('terbitkan_tagihan_internal', true)) {
+                $paketItems = [
+                    ['pos' => 'PENDAFTARAN', 'judul' => 'Biaya Pendaftaran PSB MA (Internal)', 'nom' => 200000],
+                    ['pos' => 'PANGKAL', 'judul' => 'Biaya Melanjutkan MA', 'nom' => 200000],
+                    ['pos' => 'KERTAS', 'judul' => 'Biaya Kertas / Evaluasi Belajar (Internal)', 'nom' => 200000],
+                    ['pos' => 'KESEHATAN', 'judul' => 'Iuran Kesehatan Santri Smt 1', 'nom' => 100000],
+                    ['pos' => 'KEGIATAN', 'judul' => 'Iuran Kegiatan Santri Smt 1', 'nom' => 100000],
+                ];
+
+                foreach ($paketItems as $pItem) {
+                    $existBill = StudentBill::where('student_id', $student->id)
+                        ->where('pos_biaya', $pItem['pos'])
+                        ->where('judul_tagihan', 'like', '%MA%')
+                        ->first();
+
+                    if (!$existBill) {
+                        StudentBill::create([
+                            'student_id' => $student->id,
+                            'kategori' => 'daftar_ulang',
+                            'pos_biaya' => $pItem['pos'],
+                            'judul_tagihan' => $pItem['judul'],
+                            'nominal' => $pItem['nom'],
+                            'nominal_asli' => $pItem['nom'],
+                            'nominal_tagihan' => $pItem['nom'],
+                            'nominal_potongan' => 0,
+                            'nominal_bayar' => 0,
+                            'sisa_tagihan' => $pItem['nom'],
+                            'status' => 'Belum Bayar',
+                            'tahun' => date('Y'),
+                        ]);
+                    }
+                }
+            }
+
+            $importedCount++;
+        }
+
+        return redirect()->route('admin.psb.index')->with('success', "Alhamdulillah! Sebanyak {$importedCount} santri MTs berhasil didaftarkan ke PSB Internal MA. Rincian paket Rp 800.000 otomatis tercatat dan masuk ke Laporan Harian PSB.");
     }
 
     public function psbUpdateStatus(Request $request, $id)

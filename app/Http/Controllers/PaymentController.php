@@ -457,7 +457,7 @@ class PaymentController extends Controller
     public function getPsbBillsAjax($psbId)
     {
         $psb = PsbRegistration::findOrFail($psbId);
-        $tarif = PsbRegistration::getTarifBreakdown($psb->jenjang);
+        $tarif = PsbRegistration::getTarifBreakdown($psb->jenjang, $psb->jalur ?? $psb->gelombang ?? null);
 
         $biayaPendaftaran = $tarif['biaya_pendaftaran'];
         $pendaftaranLunas = ($psb->status_pembayaran === 'Lunas');
@@ -617,7 +617,7 @@ class PaymentController extends Controller
         // ==========================================
         if ($request->filled('psb_id') || $request->input('payment_type') === 'psb') {
             $reg = PsbRegistration::findOrFail($request->psb_id);
-            $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
+            $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang, $reg->jalur ?? $reg->gelombang ?? null);
             $standardPsb = $tarif['sisa_daftar_ulang'];
 
             // Kumpulkan item-item yang dibayar dari psb_items
@@ -2322,7 +2322,7 @@ class PaymentController extends Controller
     public function kwitansiPsb($id)
     {
         $reg = PsbRegistration::findOrFail($id);
-        $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
+        $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang, $reg->jalur ?? $reg->gelombang ?? null);
 
         $nominalBayar = floatval($reg->nominal_pembayaran ?: 200000);
         $standardNominal = $tarif['total_biaya_masuk'];

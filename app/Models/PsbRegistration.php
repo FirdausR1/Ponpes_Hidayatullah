@@ -275,11 +275,63 @@ class PsbRegistration extends Model
      * Hitung struktur tarif resmi berdasarkan jenjang & hunian (Mukim vs Laju).
      * Dinamis membaca konfigurasi tarif resmi yang diatur Bendahara di Pengaturan Tarif / Web.
      */
-    public static function getTarifBreakdown($jenjang)
+    public static function getTarifBreakdown($jenjang, $jalur = null)
     {
         $jenjangUpper = strtoupper($jenjang ?? '');
         $isMa = str_contains($jenjangUpper, 'MA');
         $isLaju = str_contains($jenjangUpper, 'LAJU');
+
+        $isInternal = false;
+        if (!empty($jalur) && str_contains(strtolower((string)$jalur), 'internal')) {
+            $isInternal = true;
+        } elseif (str_contains(strtolower($jenjangUpper), 'internal')) {
+            $isInternal = true;
+        }
+
+        // Khusus PSB Jalur Internal (Santri MTs Hidayatullah yang melanjutkan ke MA Hidayatullah)
+        if ($isInternal) {
+            $jenjangLabel = 'MA';
+            $hunianLabel = $isLaju ? 'Laju' : 'Mukim';
+            $fullLabel = "MA Internal (Lanjutan MTs) " . ($isLaju ? 'Laju' : 'Mukim');
+            $biayaPendaftaran = 200000;
+
+            // Rincian 5 komponen resmi paket masuk MA Internal (Total Rp 800.000)
+            $itemsDaftarUlang = [
+                ['nama' => 'Biaya Pendaftaran PSB', 'pos_biaya' => 'PENDAFTARAN', 'nominal' => 200000, 'keterangan' => 'Formulir PSB MA'],
+                ['nama' => 'Melanjutkan MA', 'pos_biaya' => 'PANGKAL', 'nominal' => 200000, 'keterangan' => 'Administrasi Masuk MA'],
+                ['nama' => 'Kertas / Evaluasi Belajar', 'pos_biaya' => 'KERTAS', 'nominal' => 200000, 'keterangan' => 'Kertas Ujian & Evaluasi'],
+                ['nama' => 'Kesehatan Smt 1', 'pos_biaya' => 'KESEHATAN', 'nominal' => 100000, 'keterangan' => 'Kesehatan Santri Smt 1'],
+                ['nama' => 'Kegiatan Smt 1', 'pos_biaya' => 'KEGIATAN', 'nominal' => 100000, 'keterangan' => 'Kegiatan Santri Smt 1'],
+            ];
+
+            $totalMasuk = 800000;
+            $sisaDaftarUlang = 600000; // Total 800k dikurangi pendaftaran 200k jika pendaftaran dibayar di muka
+
+            $uangMakan = $isLaju ? 0 : 300000;
+            $syahriahBulanan = $isLaju ? 0 : 30000;
+            $sotBulanan = 75000;
+            $tabunganWajib = 25000;
+            $totalBulanan = $uangMakan + $syahriahBulanan + $sotBulanan + $tabunganWajib;
+
+            $itemsBulanan = [
+                ['nama' => 'Uang Makan 3x Sehari', 'nominal' => $uangMakan],
+                ['nama' => 'Syahriah Pendidikan', 'nominal' => $syahriahBulanan],
+                ['nama' => 'Iuran SOT', 'nominal' => $sotBulanan],
+                ['nama' => 'Tabungan Wajib Santri', 'nominal' => $tabunganWajib],
+            ];
+
+            return [
+                'jenjang_short' => $jenjangLabel,
+                'hunian' => $hunianLabel,
+                'kategori_label' => $fullLabel,
+                'biaya_pendaftaran' => $biayaPendaftaran,
+                'total_biaya_masuk' => $totalMasuk,
+                'sisa_daftar_ulang' => $sisaDaftarUlang,
+                'total_bulanan' => $totalBulanan,
+                'items_daftar_ulang' => $itemsDaftarUlang,
+                'items_bulanan' => $itemsBulanan,
+            ];
+        }
 
         $jenjangLabel = $isMa ? 'MA' : 'MTs';
         $hunianLabel = $isLaju ? 'Laju' : 'Mukim';
@@ -403,7 +455,7 @@ class PsbRegistration extends Model
 
     public function getTarifDetailsAttribute()
     {
-        return static::getTarifBreakdown($this->jenjang);
+        return static::getTarifBreakdown($this->jenjang, $this->jalur ?? $this->gelombang ?? null);
     }
 
     protected static function booted()

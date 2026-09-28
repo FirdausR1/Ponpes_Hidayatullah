@@ -631,7 +631,7 @@ class StudentController extends Controller
      */
     public function syncPsbDaftarUlangBill(Student $student, PsbRegistration $reg): StudentBill
     {
-        $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang);
+        $tarif = PsbRegistration::getTarifBreakdown($reg->jenjang, $reg->jalur ?? $reg->gelombang ?? null);
         $standardDaftarUlang = (float) $tarif['sisa_daftar_ulang'];
 
         // Ambil riwayat pembayaran daftar ulang santri ini

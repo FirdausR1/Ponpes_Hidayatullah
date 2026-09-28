@@ -61,6 +61,12 @@
                 <span>Laporan PSB</span>
             </a>
 
+            <!-- 4. Tombol Tarik Santri Internal (MTs ke MA) -->
+            <button type="button" onclick="document.getElementById('modalTarikInternal').classList.remove('hidden')" class="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2.5 text-xs font-semibold shadow-theme-xs transition cursor-pointer" title="Daftarkan santri MTs kelas 9 yang melanjutkan ke MA Hidayatullah (Jalur Internal)">
+                <svg class="w-4 h-4 fill-none stroke-currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <span>PSB Internal (MTs &rarr; MA)</span>
+            </button>
+
             <!-- 4. TailAdmin Dropdown: Menu Opsi Lainnya -->
             <div class="relative inline-block text-left" x-data="{ open: false }" @click.outside="open = false">
                 <button @click="open = !open" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-3.5 py-2.5 text-xs font-medium shadow-theme-xs transition cursor-pointer">
@@ -1600,6 +1606,193 @@ function clearPsbSelection() {
         </form>
     </div>
 </div>
+
+<!-- MODAL: TARIK SANTRI INTERNAL (MTS KE MA) -->
+<div id="modalTarikInternal" class="ta-modal-backdrop hidden">
+    <div class="ta-modal max-w-3xl">
+        <div class="ta-modal-header">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800">PSB Jalur Internal</span>
+                    <h3 class="font-bold text-gray-800 text-base">Tarik Santri MTs ke PSB Internal MA</h3>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">Daftarkan santri MTs kelas 9 yang fix melanjutkan ke MA Hidayatullah tanpa perlu isi biodata ulang.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('modalTarikInternal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <form action="{{ route('admin.psb.tarikInternal') }}" method="POST">
+            @csrf
+            <div class="ta-modal-body space-y-4 text-xs">
+                <!-- Rincian Paket Biaya Masuk MA Internal (Total Rp 800.000) -->
+                <div class="rounded-xl border border-teal-200 bg-teal-50/70 p-3.5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2.5">
+                        <span class="font-bold text-teal-950 text-xs">Rincian Paket Biaya Masuk MA Internal:</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-700 text-white font-extrabold text-xs shadow-xs">
+                            Total: Rp 800.000
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-[11px]">
+                        <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
+                            <span class="text-gray-500 block text-[10px]">Pendaftaran</span>
+                            <span class="font-bold text-gray-900">Rp 200.000</span>
+                        </div>
+                        <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
+                            <span class="text-gray-500 block text-[10px]">Lanjut MA</span>
+                            <span class="font-bold text-gray-900">Rp 200.000</span>
+                        </div>
+                        <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
+                            <span class="text-gray-500 block text-[10px]">Kertas / Ujian</span>
+                            <span class="font-bold text-gray-900">Rp 200.000</span>
+                        </div>
+                        <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
+                            <span class="text-gray-500 block text-[10px]">Kesehatan Smt 1</span>
+                            <span class="font-bold text-gray-900">Rp 100.000</span>
+                        </div>
+                        <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
+                            <span class="text-gray-500 block text-[10px]">Kegiatan Smt 1</span>
+                            <span class="font-bold text-gray-900">Rp 100.000</span>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-teal-800 mt-2">
+                        * Data santri yang ditarik akan langsung masuk ke statistik <strong>Laporan Harian PSB MA (Kategori Internal)</strong> dan otomatis dibuatkan No. Registrasi PSB Internal.
+                    </p>
+                </div>
+
+                <!-- Kontrol Filter & Pencarian Cepat -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2 flex-1">
+                        <input type="text" id="searchInternalCandidate" onkeyup="filterInternalCandidates()" placeholder="Cari nama atau NIS santri..." class="ta-input w-full py-1.5 px-3 text-xs">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="toggleSelectAllInternal(true)" class="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-[11px] font-semibold text-gray-700 transition">
+                            Pilih Semua
+                        </button>
+                        <button type="button" onclick="toggleSelectAllInternal(false)" class="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-[11px] font-semibold text-gray-700 transition">
+                            Batal Pilih
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daftar Santri Kandidat MTs -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+                    <table class="w-full text-left text-xs" id="tableInternalCandidates">
+                        <thead class="bg-gray-50 sticky top-0 border-b border-gray-200 text-gray-600">
+                            <tr>
+                                <th class="p-2.5 w-10 text-center">
+                                    <input type="checkbox" id="masterCheckboxInternal" onchange="toggleSelectAllInternal(this.checked)" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                </th>
+                                <th class="p-2.5">Nama Santri</th>
+                                <th class="p-2.5 w-24">NIS</th>
+                                <th class="p-2.5 w-20 text-center">L/P</th>
+                                <th class="p-2.5 w-24 text-center">Kelas</th>
+                                <th class="p-2.5 w-32 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse($mtsCandidates ?? [] as $cand)
+                                @php
+                                    $isAlreadyInMa = !empty($cand->psb_registration_id) || stripos($cand->jenjang ?? '', 'MA') !== false;
+                                @endphp
+                                <tr class="cand-row hover:bg-gray-50/80 transition {{ $isAlreadyInMa ? 'bg-gray-50/50 opacity-60' : '' }}" data-name="{{ strtolower($cand->nama_lengkap) }}" data-nis="{{ $cand->nis }}">
+                                    <td class="p-2.5 text-center">
+                                        @if(!$isAlreadyInMa)
+                                            <input type="checkbox" name="student_ids[]" value="{{ $cand->id }}" class="cand-checkbox rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                        @else
+                                            <svg class="w-4 h-4 text-emerald-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        @endif
+                                    </td>
+                                    <td class="p-2.5 font-medium text-gray-900">
+                                        {{ $cand->nama_lengkap }}
+                                        @if(!empty($cand->kamar_asrama))
+                                            <span class="block text-[10px] text-gray-400">{{ $cand->kamar_asrama }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-2.5 font-mono text-gray-600">{{ $cand->nis ?: '-' }}</td>
+                                    <td class="p-2.5 text-center">
+                                        @if(stripos($cand->jenis_kelamin ?? '', 'putri') !== false || stripos($cand->jenis_kelamin ?? '', 'perempuan') !== false)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200">P</span>
+                                        @else
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">L</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-800">
+                                            {{ $cand->kelas ?: 'MTs' }}
+                                        </span>
+                                    </td>
+                                    <td class="p-2.5 text-center">
+                                        @if($isAlreadyInMa)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                                Sudah di MA
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                Siap Lanjut
+                                            </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="p-6 text-center text-gray-400">
+                                        Belum ada data santri aktif di jenjang MTs / Kelas IX.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Opsi Penerbitan Tagihan Otomatis -->
+                <div class="rounded-xl border border-gray-200 bg-gray-50/70 p-3">
+                    <label class="flex items-start gap-2.5 cursor-pointer">
+                        <input type="checkbox" name="terbitkan_tagihan_internal" value="1" checked class="mt-0.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                        <div>
+                            <span class="font-bold text-gray-900 block">Otomatis Terbitkan Tagihan Masuk MA (Rp 800.000) ke Buku Kasir</span>
+                            <span class="text-gray-500 block mt-0.5 text-[11px]">
+                                Sistem akan otomatis mencatat tagihan 5 pos (Pendaftaran, Lanjut MA, Kertas, Kesehatan Smt 1, Kegiatan Smt 1) di kasir keuangan santri.
+                            </span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="ta-modal-footer">
+                <button type="button" onclick="document.getElementById('modalTarikInternal').classList.add('hidden')" class="ta-btn-sm-outline">
+                    Batal
+                </button>
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-theme-xs transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Daftarkan ke PSB Internal MA</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterInternalCandidates() {
+    const query = (document.getElementById('searchInternalCandidate').value || '').toLowerCase();
+    const rows = document.querySelectorAll('#tableInternalCandidates tbody tr.cand-row');
+    rows.forEach(r => {
+        const name = r.getAttribute('data-name') || '';
+        const nis = r.getAttribute('data-nis') || '';
+        if (name.includes(query) || nis.includes(query)) {
+            r.style.display = '';
+        } else {
+            r.style.display = 'none';
+        }
+    });
+}
+
+function toggleSelectAllInternal(checked) {
+    const checkboxes = document.querySelectorAll('#tableInternalCandidates tbody tr.cand-row:not([style*="display: none"]) .cand-checkbox');
+    checkboxes.forEach(cb => cb.checked = checked);
+    const master = document.getElementById('masterCheckboxInternal');
+    if (master) master.checked = checked;
+}
+</script>
 @endsection
 
 @section('scripts')

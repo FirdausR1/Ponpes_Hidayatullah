@@ -199,6 +199,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/psb/laporan', [AdminController::class, 'psbLaporan'])->name('psb.laporan');
         Route::get('/psb/laporan/cetak', [AdminController::class, 'psbLaporanCetak'])->name('psb.laporan.cetak');
         Route::post('/psb/laporan/seed-contoh', [AdminController::class, 'psbSeedContoh'])->name('psb.laporan.seedContoh');
+        Route::post('/psb/tarik-internal', [AdminController::class, 'psbTarikInternal'])->name('psb.tarikInternal');
         Route::get('/psb/export', [AdminController::class, 'psbExport'])->name('psb.export');
         Route::get('/psb/print', [AdminController::class, 'psbPrint'])->name('psb.print');
         Route::patch('/psb/{id}/status', [AdminController::class, 'psbUpdateStatus'])->name('psb.updateStatus');
