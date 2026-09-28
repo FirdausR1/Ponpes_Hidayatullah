@@ -23,6 +23,7 @@ $directoriesToInclude = [
     'database/migrations',
     'database/seeders',
     'database/scripts',
+    'public/images',
     'public/.htaccess',
 ];
 

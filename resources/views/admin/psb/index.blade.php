@@ -55,7 +55,13 @@
                 <span>Cetak Masal CV</span>
             </a>
 
-            <!-- 3. TailAdmin Dropdown: Menu Opsi Lainnya -->
+            <!-- 3. Laporan Harian PSB Lengkap dengan KOP -->
+            <a href="{{ route('admin.psb.laporan') }}" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2.5 text-xs font-semibold shadow-theme-xs transition" title="Buka Rekapitulasi & Laporan Harian PSB Lengkap dengan Kop Surat Resmi">
+                <svg class="w-4 h-4 fill-none stroke-currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/><path d="M5 21h14"/></svg>
+                <span>Laporan PSB</span>
+            </a>
+
+            <!-- 4. TailAdmin Dropdown: Menu Opsi Lainnya -->
             <div class="relative inline-block text-left" x-data="{ open: false }" @click.outside="open = false">
                 <button @click="open = !open" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-3.5 py-2.5 text-xs font-medium shadow-theme-xs transition cursor-pointer">
                     <span>Menu Lainnya</span>
@@ -65,6 +71,12 @@
                 </button>
 
                 <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-2 w-60 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg z-30" style="display: none;">
+                    
+                    <!-- Laporan Harian PSB (Daily Report) -->
+                    <a href="{{ route('admin.psb.laporan') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition mb-1">
+                        <svg class="w-4 h-4 text-indigo-600 fill-none stroke-currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/><path d="M5 21h14"/></svg>
+                        <span>Laporan Harian PSB (Daily)</span>
+                    </a>
                     
                     <!-- Impor Massal yang Diterima ke Siswa Aktif -->
                     <button type="button" onclick="openModalBulkImportPsb()" class="w-full text-left flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition cursor-pointer">
@@ -268,6 +280,7 @@
                     <option value="Menunggu" {{ request('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
                     <option value="Diterima" {{ request('status') == 'Diterima' ? 'selected' : '' }}>Diterima</option>
                     <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
+                    <option value="Mengundurkan Diri" {{ request('status') == 'Mengundurkan Diri' ? 'selected' : '' }}>Mengundurkan Diri</option>
                 </select>
                 <span class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
@@ -546,11 +559,13 @@
                                     @method('PATCH')
                                     <select name="status" onchange="this.form.submit()" class="text-xs font-semibold rounded-lg px-2.5 py-1.5 border transition cursor-pointer outline-none shadow-2xs {{ 
                                         $reg->status == 'Diterima' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 
-                                        ($reg->status == 'Ditolak' ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-amber-50 text-amber-700 border-amber-300') 
+                                        ($reg->status == 'Mengundurkan Diri' ? 'bg-purple-50 text-purple-700 border-purple-300' :
+                                        ($reg->status == 'Ditolak' ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-amber-50 text-amber-700 border-amber-300')) 
                                     }}">
                                         <option value="Menunggu" {{ $reg->status == 'Menunggu' ? 'selected' : '' }}>⏳ Menunggu</option>
                                         <option value="Diterima" {{ $reg->status == 'Diterima' ? 'selected' : '' }}>✓ Diterima</option>
                                         <option value="Ditolak" {{ $reg->status == 'Ditolak' ? 'selected' : '' }}>✕ Ditolak</option>
+                                        <option value="Mengundurkan Diri" {{ $reg->status == 'Mengundurkan Diri' ? 'selected' : '' }}>🚫 Mengundurkan Diri</option>
                                     </select>
                                 </form>
                             </td>

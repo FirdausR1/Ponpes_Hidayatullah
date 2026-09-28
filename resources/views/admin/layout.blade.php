@@ -150,9 +150,13 @@
                             <span class="{{ request()->routeIs('admin.berita.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg></span>
                             Kelola Berita
                         </a></li>
-                        <li><a href="{{ route('admin.psb.index') }}" class="menu-item {{ request()->routeIs('admin.psb.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
-                            <span class="{{ request()->routeIs('admin.psb.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
+                        <li><a href="{{ route('admin.psb.index') }}" class="menu-item {{ request()->routeIs('admin.psb.index') ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ request()->routeIs('admin.psb.index') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
                             Pendaftar PSB
+                        </a></li>
+                        <li><a href="{{ route('admin.psb.laporan') }}" class="menu-item {{ request()->routeIs('admin.psb.laporan*') ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ request()->routeIs('admin.psb.laporan*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/><path d="M5 21h14"/></svg></span>
+                            Laporan PSB
                         </a></li>
                         @if(auth()->user() && auth()->user()->isSuperAdmin())
                         <li><a href="{{ route('admin.users.index') }}" class="menu-item {{ request()->routeIs('admin.users.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
@@ -485,14 +489,17 @@
                             @endforelse
                         </div>
 
-                        <div class="px-4 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                        <div class="px-4 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
                             <a href="{{ route('admin.psb.index') }}" class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition">
-                                Buka Semua Pendaftar PSB &rarr;
+                                Pendaftar PSB &rarr;
+                            </a>
+                            <a href="{{ route('admin.psb.laporan') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                                Rekap Laporan &rarr;
                             </a>
                             <form action="{{ route('admin.psb.autoVerify') }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-[11px] text-emerald-600 hover:text-emerald-800 font-medium cursor-pointer" title="Verifikasi otomatis semua pas foto santri">
-                                    ⚡ Verifikasi Foto Otomatis
+                                    ⚡ Verifikasi Foto
                                 </button>
                             </form>
                         </div>
