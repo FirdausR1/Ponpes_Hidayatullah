@@ -719,38 +719,92 @@
                         </div>
                     </div>
 
-                    <!-- Pilihan Pos Biaya Bulanan yang diterbitkan -->
-                    <div class="space-y-1.5 p-3 rounded-xl border border-gray-200 bg-gray-50/70">
-                        <label class="block font-bold text-gray-800 text-[11px] uppercase tracking-wider mb-2">Pilih Pos Biaya yang Diterbitkan:</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
-                                <input type="checkbox" name="pos_bulanan[]" value="MAKAN" checked class="mt-0.5 text-emerald-600 rounded">
-                                <div class="text-xs">
-                                    <span class="font-semibold text-gray-800">Uang Makan</span>
-                                    <span class="block text-[10px] text-gray-500">Mukim: Rp 300rb</span>
+                    <!-- Pilihan Pos Biaya Bulanan yang diterbitkan & Penyesuaian Nominal Langsung -->
+                    <div class="space-y-2 p-3.5 rounded-xl border border-gray-200 bg-gray-50/70">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                            <label class="block font-bold text-gray-800 text-[11px] uppercase tracking-wider">Pilih Pos &amp; Nominal yang Diterbitkan:</label>
+                            <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                ✎ Nominal dapat diubah langsung di sini
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <!-- Pos 1: Uang Makan -->
+                            <div class="p-2.5 rounded-lg bg-white border border-gray-200 hover:border-emerald-500 transition">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="pos_bulanan[]" value="MAKAN" checked class="text-emerald-600 rounded">
+                                        <span class="font-bold text-xs text-gray-900">Uang Makan</span>
+                                    </label>
+                                    <span class="text-[10px] text-gray-400">Khusus Mukim</span>
                                 </div>
-                            </label>
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
-                                <input type="checkbox" name="pos_bulanan[]" value="TAB" checked class="mt-0.5 text-emerald-600 rounded">
-                                <div class="text-xs">
-                                    <span class="font-semibold text-gray-800">Tabungan Wajib</span>
-                                    <span class="block text-[10px] text-gray-500">Rp 25.000</span>
+                                <div class="mt-2 flex items-center gap-1.5">
+                                    <span class="text-xs text-gray-400 font-medium">Rp</span>
+                                    <input type="number" name="custom_nominal[MAKAN]" value="{{ $tarifDefaults['MAKAN'] ?? 300000 }}" placeholder="300000" class="h-8 w-full rounded-md border border-gray-200 bg-gray-50/50 px-2.5 text-xs font-mono font-bold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none">
                                 </div>
-                            </label>
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-emerald-200 bg-emerald-50/30 cursor-pointer hover:border-emerald-500 transition">
-                                <input type="checkbox" name="pos_bulanan[]" value="SOT" checked class="mt-0.5 text-emerald-600 rounded">
-                                <div class="text-xs">
-                                    <span class="font-bold text-emerald-900">SOT (Iuran SOT)</span>
-                                    <span class="block text-[10px] text-emerald-700 font-semibold">MTs: 55rb | MA: 75rb</span>
+                            </div>
+
+                            <!-- Pos 2: Tabungan Wajib -->
+                            <div class="p-2.5 rounded-lg bg-white border border-gray-200 hover:border-emerald-500 transition">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="pos_bulanan[]" value="TAB" checked class="text-emerald-600 rounded">
+                                        <span class="font-bold text-xs text-gray-900">Tabungan Wajib</span>
+                                    </label>
+                                    <span class="text-[10px] text-gray-400">Semua Santri</span>
                                 </div>
-                            </label>
-                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-emerald-500 transition">
-                                <input type="checkbox" name="pos_bulanan[]" value="SYAHRIYAH" checked class="mt-0.5 text-emerald-600 rounded">
-                                <div class="text-xs">
-                                    <span class="font-semibold text-gray-800">Syahriyah SPP</span>
-                                    <span class="block text-[10px] text-gray-500">Sesuai Jenjang &amp; Asrama</span>
+                                <div class="mt-2 flex items-center gap-1.5">
+                                    <span class="text-xs text-gray-400 font-medium">Rp</span>
+                                    <input type="number" name="custom_nominal[TAB]" value="{{ $tarifDefaults['TAB'] ?? 25000 }}" placeholder="25000" class="h-8 w-full rounded-md border border-gray-200 bg-gray-50/50 px-2.5 text-xs font-mono font-bold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none">
                                 </div>
+                            </div>
+
+                            <!-- Pos 3: Iuran SOT (MTs & MA) -->
+                            <div class="p-2.5 rounded-lg bg-white border border-emerald-200 bg-emerald-50/20 hover:border-emerald-500 transition">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="pos_bulanan[]" value="SOT" checked class="text-emerald-600 rounded">
+                                        <span class="font-bold text-xs text-emerald-950">SOT (Iuran SOT)</span>
+                                    </label>
+                                    <span class="text-[10px] text-emerald-700 font-semibold">MTs &amp; MA</span>
+                                </div>
+                                <div class="mt-2 grid grid-cols-2 gap-2">
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 block mb-0.5">MTs (Rp):</span>
+                                        <input type="number" name="custom_nominal[SOT_MTS]" value="{{ $tarifDefaults['SOT_MTS'] ?? 55000 }}" placeholder="55000" class="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs font-mono font-bold text-gray-800 focus:border-emerald-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 block mb-0.5">MA (Rp):</span>
+                                        <input type="number" name="custom_nominal[SOT_MA]" value="{{ $tarifDefaults['SOT_MA'] ?? 75000 }}" placeholder="75000" class="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs font-mono font-bold text-gray-800 focus:border-emerald-500 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pos 4: Syahriyah SPP -->
+                            <div class="p-2.5 rounded-lg bg-white border border-gray-200 hover:border-emerald-500 transition">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="pos_bulanan[]" value="SYAHRIYAH" checked class="text-emerald-600 rounded">
+                                        <span class="font-bold text-xs text-gray-900">Syahriyah SPP</span>
+                                    </label>
+                                    <span class="text-[10px] text-gray-400">Pendidikan</span>
+                                </div>
+                                <div class="mt-2 flex items-center gap-1.5">
+                                    <span class="text-xs text-gray-400 font-medium">Rp</span>
+                                    <input type="number" name="custom_nominal[SYAHRIYAH]" value="{{ $tarifDefaults['SYAHRIYAH'] ?? 30000 }}" placeholder="30000" class="h-8 w-full rounded-md border border-gray-200 bg-gray-50/50 px-2.5 text-xs font-mono font-bold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Opsi Simpan Sebagai Tarif Standar Baru -->
+                        <div class="pt-2 mt-1 border-t border-gray-200/70 flex items-center justify-between">
+                            <label class="flex items-center gap-2 cursor-pointer text-[11px] text-gray-600">
+                                <input type="checkbox" name="simpan_ke_master_tarif" value="1" checked class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                <span>Simpan juga perubahan nominal ini ke <strong>Master Tarif</strong></span>
                             </label>
+                            <a href="{{ route('admin.pembayaran.tarif.index') }}" target="_blank" class="text-[10px] text-emerald-700 hover:underline">
+                                Master Tarif &rarr;
+                            </a>
                         </div>
                     </div>
 

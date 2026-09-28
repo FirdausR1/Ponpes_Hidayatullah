@@ -1026,6 +1026,30 @@ class PaymentController extends Controller
             }
         }
 
+        // Hitung nilai tarif default saat ini dari Master Tarif
+        $rawBiayaBulanan = Setting::get('biaya_bulanan_json');
+        $biayaBulananList = json_decode($rawBiayaBulanan ?? '[]', true) ?: [];
+        $tarifDefaults = [
+            'MAKAN' => 300000,
+            'SYAHRIYAH' => 30000,
+            'SOT_MTS' => 55000,
+            'SOT_MA' => 75000,
+            'TAB' => 25000,
+        ];
+        foreach ($biayaBulananList as $bRow) {
+            if (!empty($bRow['is_total'])) continue;
+            $komp = strtolower($bRow['komponen'] ?? '');
+            $valMts = (float) preg_replace('/[^0-9]/', '', $bRow['mts_mukim'] ?? '0');
+            $valMa = (float) preg_replace('/[^0-9]/', '', $bRow['ma_mukim'] ?? '0');
+            if (str_contains($komp, 'makan') && $valMts > 0) $tarifDefaults['MAKAN'] = $valMts;
+            if ((str_contains($komp, 'syahriyah') || str_contains($komp, 'spp')) && $valMts > 0) $tarifDefaults['SYAHRIYAH'] = $valMts;
+            if (str_contains($komp, 'tabungan') && $valMts > 0) $tarifDefaults['TAB'] = $valMts;
+            if (str_contains($komp, 'sot')) {
+                if ($valMts > 0) $tarifDefaults['SOT_MTS'] = $valMts;
+                if ($valMa > 0) $tarifDefaults['SOT_MA'] = $valMa;
+            }
+        }
+
         return view('admin.pembayaran.tagihan', compact(
             'bills',
             'statusFilter',
@@ -1041,7 +1065,8 @@ class PaymentController extends Controller
             'totalSantriNunggak',
             'classrooms',
             'activeStudents',
-            'posBiayaList'
+            'posBiayaList',
+            'tarifDefaults'
         ));
     }
 
@@ -1089,10 +1114,48 @@ class PaymentController extends Controller
             return redirect()->back()->with('error', 'Tidak ada data santri yang sesuai dengan sasaran target tersebut.');
         }
 
-        // Ambil tarif bulanan dinamis dari Pengaturan Master Tarif
-        $rawBiayaBulanan = Setting::get('biaya_bulanan_json');
-        $biayaBulananList = json_decode($rawBiayaBulanan ?? '[]', true) ?: [];
-        $createdCount = 0;
+        // Ambil penyesuaian nominal kustom langsung dari modal terbitkan tagihan
+        $customNominal = $request->input('custom_nominal', []);
+        $hasCustomMakan = isset($customNominal['MAKAN']) && is_numeric($customNominal['MAKAN']);
+        $hasCustomTab = isset($customNominal['TAB']) && is_numeric($customNominal['TAB']);
+        $hasCustomSpp = isset($customNominal['SYAHRIYAH']) && is_numeric($customNominal['SYAHRIYAH']);
+        $hasCustomSotMts = isset($customNominal['SOT_MTS']) && is_numeric($customNominal['SOT_MTS']);
+        $hasCustomSotMa = isset($customNominal['SOT_MA']) && is_numeric($customNominal['SOT_MA']);
+
+        // Opsi: Simpan juga ke Master Tarif jika dicentang
+        if ($request->boolean('simpan_ke_master_tarif') && !empty($customNominal)) {
+            $masterList = json_decode($rawBiayaBulanan ?? 'null', true);
+            if (is_array($masterList)) {
+                foreach ($masterList as &$mRow) {
+                    if (!empty($mRow['is_total'])) continue;
+                    $komp = strtolower($mRow['komponen'] ?? '');
+                    if (str_contains($komp, 'makan') && $hasCustomMakan) {
+                        $mRow['mts_mukim'] = 'Rp ' . number_format($customNominal['MAKAN'], 0, ',', '.');
+                        $mRow['ma_mukim'] = 'Rp ' . number_format($customNominal['MAKAN'], 0, ',', '.');
+                    } elseif ((str_contains($komp, 'syahriyah') || str_contains($komp, 'spp')) && $hasCustomSpp) {
+                        $mRow['mts_mukim'] = 'Rp ' . number_format($customNominal['SYAHRIYAH'], 0, ',', '.');
+                        $mRow['ma_mukim'] = 'Rp ' . number_format($customNominal['SYAHRIYAH'], 0, ',', '.');
+                    } elseif (str_contains($komp, 'tabungan') && $hasCustomTab) {
+                        $mRow['mts_mukim'] = 'Rp ' . number_format($customNominal['TAB'], 0, ',', '.');
+                        $mRow['mts_laju'] = 'Rp ' . number_format($customNominal['TAB'], 0, ',', '.');
+                        $mRow['ma_mukim'] = 'Rp ' . number_format($customNominal['TAB'], 0, ',', '.');
+                        $mRow['ma_laju'] = 'Rp ' . number_format($customNominal['TAB'], 0, ',', '.');
+                    } elseif (str_contains($komp, 'sot')) {
+                        if ($hasCustomSotMts) {
+                            $mRow['mts_mukim'] = 'Rp ' . number_format($customNominal['SOT_MTS'], 0, ',', '.');
+                            $mRow['mts_laju'] = 'Rp ' . number_format($customNominal['SOT_MTS'], 0, ',', '.');
+                        }
+                        if ($hasCustomSotMa) {
+                            $mRow['ma_mukim'] = 'Rp ' . number_format($customNominal['SOT_MA'], 0, ',', '.');
+                            $mRow['ma_laju'] = 'Rp ' . number_format($customNominal['SOT_MA'], 0, ',', '.');
+                        }
+                    }
+                }
+                unset($mRow);
+                Setting::set('biaya_bulanan_json', json_encode($masterList, JSON_PRETTY_PRINT), 'biaya');
+                $biayaBulananList = $masterList;
+            }
+        }
 
         foreach ($students as $st) {
             $isMukim = !empty($st->kamar_asrama) && !str_contains(strtolower($st->kamar_asrama), 'laju');
@@ -1132,6 +1195,22 @@ class PaymentController extends Controller
                             $tarifSot = $valNom;
                         }
                     }
+                }
+
+                // Terapkan override dari custom_nominal modal jika diisi oleh bendahara
+                if ($hasCustomMakan && $isMukim) {
+                    $tarifMakan = (float) $customNominal['MAKAN'];
+                }
+                if ($hasCustomTab) {
+                    $tarifTabungan = (float) $customNominal['TAB'];
+                }
+                if ($hasCustomSpp && $isMukim) {
+                    $tarifSyahriyah = (float) $customNominal['SYAHRIYAH'];
+                }
+                if ($isMA && $hasCustomSotMa) {
+                    $tarifSot = (float) $customNominal['SOT_MA'];
+                } elseif (!$isMA && $hasCustomSotMts) {
+                    $tarifSot = (float) $customNominal['SOT_MTS'];
                 }
             }
 
