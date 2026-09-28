@@ -344,6 +344,14 @@ class AdminController extends Controller
             $yearCode = $matches[1];
         }
 
+        // Ambil nominal dinamis dari input modal (bisa berubah sewaktu-waktu)
+        $nomPendaftaran = (float) preg_replace('/[^0-9]/', '', (string)$request->input('biaya_pendaftaran', 200000));
+        $nomLanjut = (float) preg_replace('/[^0-9]/', '', (string)$request->input('biaya_lanjut_ma', 200000));
+        $nomKertas = (float) preg_replace('/[^0-9]/', '', (string)$request->input('biaya_kertas', 200000));
+        $nomKesehatan = (float) preg_replace('/[^0-9]/', '', (string)$request->input('biaya_kesehatan', 100000));
+        $nomKegiatan = (float) preg_replace('/[^0-9]/', '', (string)$request->input('biaya_kegiatan', 100000));
+        $totalPaket = $nomPendaftaran + $nomLanjut + $nomKertas + $nomKesehatan + $nomKegiatan;
+
         foreach ($students as $student) {
             // Cek apakah sudah pernah didaftarkan ke PSB MA Internal
             $existingPsb = PsbRegistration::where(function($q) use ($student) {
@@ -372,6 +380,8 @@ class AdminController extends Controller
             $count = PsbRegistration::where('no_registrasi', 'like', "{$prefix}%")->count() + 1;
             $noReg = $prefix . str_pad($count, 3, '0', STR_PAD_LEFT);
 
+            $catatanText = "PSB Internal: Lanjutan dari MTs ({$student->kelas}) ke MA. Total Paket: Rp " . number_format($totalPaket, 0, ',', '.') . " (Pendaftaran: Rp " . number_format($nomPendaftaran, 0, ',', '.') . ", Melanjutkan MA: Rp " . number_format($nomLanjut, 0, ',', '.') . ", Kertas: Rp " . number_format($nomKertas, 0, ',', '.') . ", Kesehatan: Rp " . number_format($nomKesehatan, 0, ',', '.') . ", Kegiatan: Rp " . number_format($nomKegiatan, 0, ',', '.') . "). Bisa dicicil bertahap di kasir.";
+
             $psb = PsbRegistration::create([
                 'no_registrasi' => $noReg,
                 'jalur' => 'Internal',
@@ -389,23 +399,25 @@ class AdminController extends Controller
                 'alamat_lengkap' => $student->alamat ?? '-',
                 'status' => 'Diterima',
                 'status_pembayaran' => 'Belum Bayar',
-                'nominal_pembayaran' => 200000,
-                'catatan' => "PSB Internal: Lanjutan dari MTs ({$student->kelas}) ke MA. Rincian Paket Rp 800.000: Pendaftaran 200k, Melanjutkan MA 200k, Kertas 200k, Kesehatan Smt 1 100k, Kegiatan Smt 1 100k.",
+                'nominal_pembayaran' => $nomPendaftaran > 0 ? $nomPendaftaran : 200000,
+                'catatan' => $catatanText,
             ]);
 
             $student->update(['psb_registration_id' => $psb->id]);
 
-            // Terbitkan tagihan masuk MA otomatis jika dicentang
+            // Terbitkan tagihan masuk MA otomatis jika dicentang (bisa dicicil di kasir)
             if ($request->boolean('terbitkan_tagihan_internal', true)) {
                 $paketItems = [
-                    ['pos' => 'PENDAFTARAN', 'judul' => 'Biaya Pendaftaran PSB MA (Internal)', 'nom' => 200000],
-                    ['pos' => 'PANGKAL', 'judul' => 'Biaya Melanjutkan MA', 'nom' => 200000],
-                    ['pos' => 'KERTAS', 'judul' => 'Biaya Kertas / Evaluasi Belajar (Internal)', 'nom' => 200000],
-                    ['pos' => 'KESEHATAN', 'judul' => 'Iuran Kesehatan Santri Smt 1', 'nom' => 100000],
-                    ['pos' => 'KEGIATAN', 'judul' => 'Iuran Kegiatan Santri Smt 1', 'nom' => 100000],
+                    ['pos' => 'PENDAFTARAN', 'judul' => 'Biaya Pendaftaran PSB MA (Internal)', 'nom' => $nomPendaftaran],
+                    ['pos' => 'PANGKAL', 'judul' => 'Biaya Melanjutkan MA', 'nom' => $nomLanjut],
+                    ['pos' => 'KERTAS', 'judul' => 'Biaya Kertas / Evaluasi Belajar (Internal)', 'nom' => $nomKertas],
+                    ['pos' => 'KESEHATAN', 'judul' => 'Iuran Kesehatan Santri Smt 1', 'nom' => $nomKesehatan],
+                    ['pos' => 'KEGIATAN', 'judul' => 'Iuran Kegiatan Santri Smt 1', 'nom' => $nomKegiatan],
                 ];
 
                 foreach ($paketItems as $pItem) {
+                    if ($pItem['nom'] <= 0) continue;
+
                     $existBill = StudentBill::where('student_id', $student->id)
                         ->where('pos_biaya', $pItem['pos'])
                         ->where('judul_tagihan', 'like', '%MA%')
@@ -433,7 +445,8 @@ class AdminController extends Controller
             $importedCount++;
         }
 
-        return redirect()->route('admin.psb.index')->with('success', "Alhamdulillah! Sebanyak {$importedCount} santri MTs berhasil didaftarkan ke PSB Internal MA. Rincian paket Rp 800.000 otomatis tercatat dan masuk ke Laporan Harian PSB.");
+        $formattedTotal = number_format($totalPaket, 0, ',', '.');
+        return redirect()->route('admin.psb.index')->with('success', "Alhamdulillah! Sebanyak {$importedCount} santri MTs berhasil didaftarkan ke PSB Internal MA. Rincian paket Rp {$formattedTotal} otomatis tercatat (bisa dicicil) dan masuk ke Laporan Harian PSB.");
     }
 
     public function psbUpdateStatus(Request $request, $id)

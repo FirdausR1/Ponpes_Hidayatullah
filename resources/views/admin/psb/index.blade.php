@@ -1624,39 +1624,72 @@ function clearPsbSelection() {
         <form action="{{ route('admin.psb.tarikInternal') }}" method="POST">
             @csrf
             <div class="ta-modal-body space-y-4 text-xs">
-                <!-- Rincian Paket Biaya Masuk MA Internal (Total Rp 800.000) -->
+                <!-- Rincian Paket Biaya Masuk MA Internal (Dapat Diedit & Mendukung Cicilan) -->
                 <div class="rounded-xl border border-teal-200 bg-teal-50/70 p-3.5">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2.5">
-                        <span class="font-bold text-teal-950 text-xs">Rincian Paket Biaya Masuk MA Internal:</span>
+                        <div>
+                            <span class="font-bold text-teal-950 text-xs block">Rincian Paket Biaya Masuk MA Internal:</span>
+                            <span class="text-[10px] text-teal-700">Nominal tiap komponen dapat diubah sewaktu-waktu &amp; mendukung pembayaran bertahap (cicilan).</span>
+                        </div>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-700 text-white font-extrabold text-xs shadow-xs">
-                            Total: Rp 800.000
+                            Total: <span id="labelTotalInternal">Rp 800.000</span>
                         </span>
                     </div>
+
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-[11px]">
+                        <!-- 1. Pendaftaran -->
                         <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
-                            <span class="text-gray-500 block text-[10px]">Pendaftaran</span>
-                            <span class="font-bold text-gray-900">Rp 200.000</span>
+                            <span class="text-gray-500 block text-[10px] font-medium mb-1">Pendaftaran</span>
+                            <div class="flex items-center">
+                                <span class="text-[10px] text-gray-400 font-semibold mr-1">Rp</span>
+                                <input type="number" name="biaya_pendaftaran" id="inputBiayaPendaftaran" value="200000" oninput="recalcTotalInternal()" class="w-full text-xs font-bold text-gray-900 border border-gray-200 rounded px-1.5 py-1 text-center font-mono focus:border-teal-500 outline-none">
+                            </div>
                         </div>
+
+                        <!-- 2. Lanjut MA -->
                         <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
-                            <span class="text-gray-500 block text-[10px]">Lanjut MA</span>
-                            <span class="font-bold text-gray-900">Rp 200.000</span>
+                            <span class="text-gray-500 block text-[10px] font-medium mb-1">Lanjut MA</span>
+                            <div class="flex items-center">
+                                <span class="text-[10px] text-gray-400 font-semibold mr-1">Rp</span>
+                                <input type="number" name="biaya_lanjut_ma" id="inputBiayaLanjutMa" value="200000" oninput="recalcTotalInternal()" class="w-full text-xs font-bold text-gray-900 border border-gray-200 rounded px-1.5 py-1 text-center font-mono focus:border-teal-500 outline-none">
+                            </div>
                         </div>
+
+                        <!-- 3. Kertas / Ujian -->
                         <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
-                            <span class="text-gray-500 block text-[10px]">Kertas / Ujian</span>
-                            <span class="font-bold text-gray-900">Rp 200.000</span>
+                            <span class="text-gray-500 block text-[10px] font-medium mb-1">Kertas / Ujian</span>
+                            <div class="flex items-center">
+                                <span class="text-[10px] text-gray-400 font-semibold mr-1">Rp</span>
+                                <input type="number" name="biaya_kertas" id="inputBiayaKertas" value="200000" oninput="recalcTotalInternal()" class="w-full text-xs font-bold text-gray-900 border border-gray-200 rounded px-1.5 py-1 text-center font-mono focus:border-teal-500 outline-none">
+                            </div>
                         </div>
+
+                        <!-- 4. Kesehatan Smt 1 -->
                         <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
-                            <span class="text-gray-500 block text-[10px]">Kesehatan Smt 1</span>
-                            <span class="font-bold text-gray-900">Rp 100.000</span>
+                            <span class="text-gray-500 block text-[10px] font-medium mb-1">Kesehatan Smt 1</span>
+                            <div class="flex items-center">
+                                <span class="text-[10px] text-gray-400 font-semibold mr-1">Rp</span>
+                                <input type="number" name="biaya_kesehatan" id="inputBiayaKesehatan" value="100000" oninput="recalcTotalInternal()" class="w-full text-xs font-bold text-gray-900 border border-gray-200 rounded px-1.5 py-1 text-center font-mono focus:border-teal-500 outline-none">
+                            </div>
                         </div>
+
+                        <!-- 5. Kegiatan Smt 1 -->
                         <div class="bg-white p-2 rounded-lg border border-teal-100 shadow-xs">
-                            <span class="text-gray-500 block text-[10px]">Kegiatan Smt 1</span>
-                            <span class="font-bold text-gray-900">Rp 100.000</span>
+                            <span class="text-gray-500 block text-[10px] font-medium mb-1">Kegiatan Smt 1</span>
+                            <div class="flex items-center">
+                                <span class="text-[10px] text-gray-400 font-semibold mr-1">Rp</span>
+                                <input type="number" name="biaya_kegiatan" id="inputBiayaKegiatan" value="100000" oninput="recalcTotalInternal()" class="w-full text-xs font-bold text-gray-900 border border-gray-200 rounded px-1.5 py-1 text-center font-mono focus:border-teal-500 outline-none">
+                            </div>
                         </div>
                     </div>
-                    <p class="text-[10px] text-teal-800 mt-2">
-                        * Data santri yang ditarik akan langsung masuk ke statistik <strong>Laporan Harian PSB MA (Kategori Internal)</strong> dan otomatis dibuatkan No. Registrasi PSB Internal.
-                    </p>
+
+                    <div class="mt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[10px] text-teal-900">
+                        <span>* Data santri yang ditarik otomatis masuk ke statistik <strong>Laporan Harian PSB MA (Kategori Internal)</strong>.</span>
+                        <span class="inline-flex items-center gap-1 font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-teal-200 shadow-xs w-fit">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Mendukung Pembayaran Bertahap / Cicilan
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Kontrol Filter & Pencarian Cepat -->
@@ -1749,9 +1782,9 @@ function clearPsbSelection() {
                     <label class="flex items-start gap-2.5 cursor-pointer">
                         <input type="checkbox" name="terbitkan_tagihan_internal" value="1" checked class="mt-0.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
                         <div>
-                            <span class="font-bold text-gray-900 block">Otomatis Terbitkan Tagihan Masuk MA (Rp 800.000) ke Buku Kasir</span>
+                            <span class="font-bold text-gray-900 block">Otomatis Terbitkan Tagihan Masuk MA ke Buku Kasir (Bisa Dicicil)</span>
                             <span class="text-gray-500 block mt-0.5 text-[11px]">
-                                Sistem akan otomatis mencatat tagihan 5 pos (Pendaftaran, Lanjut MA, Kertas, Kesehatan Smt 1, Kegiatan Smt 1) di kasir keuangan santri.
+                                Sistem akan otomatis mencatat tagihan 5 pos di kasir keuangan santri. <strong>Bisa dibayar lunas sekaligus atau dicicil sebagian</strong> oleh wali santri.
                             </span>
                         </div>
                     </label>
@@ -1772,6 +1805,19 @@ function clearPsbSelection() {
 </div>
 
 <script>
+function recalcTotalInternal() {
+    const pendaftaran = parseFloat(document.getElementById('inputBiayaPendaftaran')?.value) || 0;
+    const lanjut = parseFloat(document.getElementById('inputBiayaLanjutMa')?.value) || 0;
+    const kertas = parseFloat(document.getElementById('inputBiayaKertas')?.value) || 0;
+    const kesehatan = parseFloat(document.getElementById('inputBiayaKesehatan')?.value) || 0;
+    const kegiatan = parseFloat(document.getElementById('inputBiayaKegiatan')?.value) || 0;
+    const total = pendaftaran + lanjut + kertas + kesehatan + kegiatan;
+    const label = document.getElementById('labelTotalInternal');
+    if (label) {
+        label.textContent = 'Rp ' + total.toLocaleString('id-ID');
+    }
+}
+
 function filterInternalCandidates() {
     const query = (document.getElementById('searchInternalCandidate').value || '').toLowerCase();
     const rows = document.querySelectorAll('#tableInternalCandidates tbody tr.cand-row');
