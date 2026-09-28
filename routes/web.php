@@ -170,6 +170,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/pembayaran-rekap-tunggakan', [PaymentController::class, 'rekapTunggakan'])->name('pembayaran.rekapTunggakan');
         Route::get('/pembayaran-rekap-tunggakan/export', [PaymentController::class, 'exportRekapTunggakanExcel'])->name('pembayaran.rekapTunggakan.export');
 
+        // Pencatatan Kas Masuk (Inflow / Rekap Saldo per Pos)
+        Route::get('/kas-masuk', [ExpenseController::class, 'kasMasukIndex'])->name('kasMasuk.index');
+
         // Pencatatan Kas Keluar & Beban Operasional Pesantren
         Route::get('/pengeluaran', [ExpenseController::class, 'index'])->name('pengeluaran.index');
         Route::get('/pengeluaran/export', [ExpenseController::class, 'exportPengeluaranExcel'])->name('pengeluaran.export');

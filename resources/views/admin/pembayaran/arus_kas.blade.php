@@ -83,7 +83,7 @@
             this.transferData.ke_kas = 'Transfer Bank';
         }
     }
-}" x-init="if (window.location.hash === '#modalRekapMasuk') modalRekapMasuk = true">
+}" x-init="if (window.location.hash === '#modalRekapMasuk' || new URLSearchParams(window.location.search).get('open') === 'rekapMasuk') modalRekapMasuk = true">
 
     <!-- Header Page (TailAdmin Card Style) -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-theme-xs">

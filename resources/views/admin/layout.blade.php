@@ -246,6 +246,10 @@
                             <span class="{{ request()->routeIs('admin.pembayaran.rekapTunggakan*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></span>
                             Rekap Tunggakan
                         </a></li>
+                        <li><a href="{{ route('admin.kasMasuk.index') }}" class="menu-item {{ (request()->routeIs('admin.kasMasuk.*') || (request()->routeIs('admin.arusKas.*') && request('open') === 'rekapMasuk')) ? 'menu-item-active' : 'menu-item-inactive' }}">
+                            <span class="{{ (request()->routeIs('admin.kasMasuk.*') || (request()->routeIs('admin.arusKas.*') && request('open') === 'rekapMasuk')) ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+                            Kas Masuk (Inflow)
+                        </a></li>
                         <li><a href="{{ route('admin.pengeluaran.index') }}" class="menu-item {{ request()->routeIs('admin.pengeluaran.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                             <span class="{{ request()->routeIs('admin.pengeluaran.*') ? 'mi-icon-active' : 'mi-icon-inactive' }}"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
                             Kas Keluar (Beban)

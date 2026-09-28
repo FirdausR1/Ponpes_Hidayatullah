@@ -24,6 +24,14 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ExpenseController extends Controller
 {
     /**
+     * Halaman Kas Masuk (Inflow / Rekap Saldo per Pos)
+     */
+    public function kasMasukIndex(Request $request)
+    {
+        return redirect()->route('admin.arusKas.index', array_merge($request->query(), ['open' => 'rekapMasuk']));
+    }
+
+    /**
      * Halaman Buku Kas Keluar (Beban Operasional Pesantren)
      */
     public function index(Request $request)
