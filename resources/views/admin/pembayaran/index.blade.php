@@ -780,64 +780,87 @@
 
                         <!-- State 1B: Orang Sudah Terpilih (Profile Card Mewah) -->
                         <div x-show="selectedPerson" class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <div class="flex items-center justify-between pb-1">
+                                <span class="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                     <span>Pembayar Terpilih</span>
                                 </span>
-                                <button type="button" @click="resetPerson()" class="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                    Ganti Pembayar Lain
+                                <button type="button" @click="resetPerson()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition shadow-2xs group" title="Kembali ke daftar dan pilih santri lain">
+                                    <svg class="w-3.5 h-3.5 text-rose-600 group-hover:-translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                                    <span>&larr; Kembali / Pilih Santri Lain</span>
                                 </button>
                             </div>
 
-                            <div class="p-4 rounded-2xl text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4" :class="paymentType === 'psb' ? 'bg-gradient-to-r from-purple-900 via-indigo-800 to-slate-900' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'bg-gradient-to-r from-amber-900 via-amber-800 to-stone-900' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900' : 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900'))">
-                                <div class="flex items-center gap-3.5">
-                                    <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center text-xl font-bold shrink-0">
+                            <!-- Profile Card Mewah & Responsif (Tidak Bertumpuk) -->
+                            <div class="p-4 sm:p-5 rounded-2xl text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4" :class="paymentType === 'psb' ? 'bg-gradient-to-r from-purple-900 via-indigo-800 to-slate-900' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'bg-gradient-to-r from-amber-900 via-amber-800 to-stone-900' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900' : 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900'))">
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center text-xl font-bold shrink-0 shadow-inner">
                                         <span x-text="selectedPerson ? selectedPerson.nama.charAt(0) : '?'"></span>
                                     </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <h3 class="text-base font-black tracking-tight" x-text="selectedPerson ? selectedPerson.nama : ''"></h3>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase" 
+                                    <div class="min-w-0">
+                                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                            <h3 class="text-base sm:text-lg font-black tracking-tight text-white truncate max-w-[240px] sm:max-w-xs" x-text="selectedPerson ? selectedPerson.nama : ''"></h3>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow-2xs" 
                                                   :class="paymentType === 'psb' ? 'bg-amber-300 text-purple-950' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'bg-amber-300 text-amber-950' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'bg-rose-300 text-rose-950' : 'bg-emerald-300 text-emerald-950'))" 
                                                   x-text="paymentType === 'psb' ? 'Calon Santri PSB' : (selectedPerson && selectedPerson.status === 'Alumni' ? 'Alumni' : (selectedPerson && selectedPerson.status === 'Mutasi' ? 'Santri Mutasi' : 'Santri Aktif'))">
                                             </span>
-                                            <span x-show="paymentType !== 'psb' && selectedPerson && selectedPerson.kategori_label" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow-xs" :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-blue-200 text-blue-950 border border-blue-300'" x-text="selectedPerson ? selectedPerson.kategori_label : ''"></span>
+                                            <span x-show="paymentType !== 'psb' && selectedPerson && selectedPerson.kategori_label" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase shadow-2xs" :class="selectedPerson && selectedPerson.hunian === 'Mukim' ? 'bg-emerald-200 text-emerald-950 border border-emerald-300' : 'bg-blue-200 text-blue-950 border border-blue-300'" x-text="selectedPerson ? selectedPerson.kategori_label : ''"></span>
                                         </div>
-                                        <div class="text-xs text-emerald-200 flex flex-wrap items-center gap-2 mt-0.5">
+                                        <div class="text-xs text-emerald-100 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                                             <span x-text="(paymentType !== 'psb' ? 'NIS: ' : 'No Reg: ') + (selectedPerson ? selectedPerson.nomor : '')" class="font-mono text-white font-bold"></span>
                                             <span>&bull;</span>
-                                            <span class="px-2 py-0.5 rounded-md bg-white/20 text-white font-semibold" x-text="selectedPerson ? selectedPerson.kelas : ''"></span>
-                                            <span x-show="selectedPerson && selectedPerson.angkatan" class="text-white/80 font-mono" x-text="'&bull; Angkatan ' + selectedPerson.angkatan"></span>
-                                            <span x-show="selectedPerson && selectedPerson.asrama" class="text-emerald-100" x-text="'&bull; ' + (selectedPerson ? selectedPerson.asrama : '')"></span>
+                                            <span class="px-2 py-0.5 rounded-md bg-white/20 text-white font-semibold text-[11px]" x-text="selectedPerson ? selectedPerson.kelas : ''"></span>
+                                            <span x-show="selectedPerson && selectedPerson.angkatan" class="text-white/80 font-mono text-[11px]" x-text="'&bull; Angkatan ' + selectedPerson.angkatan"></span>
+                                            <span x-show="selectedPerson && selectedPerson.asrama" class="text-emerald-100 text-[11px]" x-text="'&bull; ' + (selectedPerson ? selectedPerson.asrama : '')"></span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 shrink-0">
-                                    <!-- Box Tabungan Santri (Khusus Santri Aktif/Alumni) -->
-                                    <div x-show="paymentType !== 'psb'" class="text-right bg-emerald-500/25 backdrop-blur-sm px-3.5 py-2.5 rounded-xl border border-emerald-300/40 shadow-xs">
-                                        <span class="text-[10px] uppercase font-bold text-emerald-200 block">Total Saldo Tabungan</span>
-                                        <span class="text-base sm:text-lg font-black font-mono text-emerald-300" x-text="formatRupiah(selectedPerson ? (selectedPerson.saldo_tabungan || saldoTabungan) : 0)"></span>
-                                    </div>
+                                <!-- Tombol Kembali di Pojok Kanan Banner -->
+                                <div class="shrink-0 flex items-center justify-end">
+                                    <button type="button" @click="resetPerson()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-bold border border-white/30 backdrop-blur-md shadow-xs transition flex items-center justify-center gap-2 group" title="Batal pilih & kembali cari santri lain">
+                                        <svg class="w-4 h-4 text-white group-hover:-translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                                        <span>&larr; Kembali / Ganti Santri</span>
+                                    </button>
+                                </div>
+                            </div>
 
-                                    <!-- Box Total Tunggakan Santri / PSB -->
-                                    <div class="text-right bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
-                                        <span class="text-[10px] uppercase font-bold text-emerald-200 block" x-text="paymentType !== 'psb' ? 'Total Tunggakan Santri' : 'Sisa Biaya Masuk PSB'"></span>
-                                        <span class="text-base sm:text-lg font-black font-mono text-amber-300" x-text="formatRupiah(paymentType !== 'psb' ? (studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0)) : psbSisa)"></span>
-
-                                        <!-- Tombol Rincian Tunggakan & Input Keringanan Pimpinan -->
-                                        <div class="mt-2 flex flex-wrap items-center justify-end gap-1.5" x-show="paymentType !== 'psb'">
-                                            <button type="button" @click="showTunggakanModal = true" x-show="tunggakanByMonth.length > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 text-[11px] font-black transition shadow-xs">
-                                                <svg class="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                                <span>Rincian Tunggakan (<span x-text="tunggakanByMonth.length"></span> Periode)</span>
-                                            </button>
-                                            <a :href="'{{ route('admin.pembayaran.potongan.index') }}'" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold transition shadow-xs" title="Kelola Keringanan & Potongan Biaya (SKTM / Kebijakan Pimpinan)">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                <span>⚡ Keringanan Pimpinan</span>
-                                            </a>
+                            <!-- 2-Card Grid Stats (Saldo Tabungan & Total Tunggakan) - Bersih, Proporsional & Responsif -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                <!-- Card 1: Total Saldo Tabungan Santri -->
+                                <div x-show="paymentType !== 'psb'" class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 shadow-2xs flex flex-col justify-between gap-2.5 transition hover:border-emerald-300">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div>
+                                            <span class="text-xs font-bold text-emerald-950 uppercase tracking-wider block">Total Saldo Tabungan</span>
+                                            <span class="text-[11px] text-emerald-700">Tersimpan di Pesantren</span>
                                         </div>
+                                        <span class="text-lg sm:text-xl font-black font-mono text-emerald-700" x-text="formatRupiah(selectedPerson ? (selectedPerson.saldo_tabungan || saldoTabungan) : 0)"></span>
+                                    </div>
+                                    <div class="pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[11px] text-emerald-800">
+                                        <span>Dapat dicairkan via kasir</span>
+                                        <span class="px-2 py-0.5 rounded-md bg-emerald-100 font-bold text-[10px] text-emerald-800 border border-emerald-200">Lihat Step 3 &darr;</span>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Total Tunggakan Santri / PSB -->
+                                <div class="p-4 rounded-2xl border border-rose-200 bg-rose-50/70 shadow-2xs flex flex-col justify-between gap-2.5 transition hover:border-rose-300" :class="paymentType === 'psb' ? 'sm:col-span-2' : ''">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div>
+                                            <span class="text-xs font-bold text-rose-950 uppercase tracking-wider block" x-text="paymentType !== 'psb' ? 'Total Tunggakan Santri' : 'Sisa Biaya Masuk PSB'"></span>
+                                            <span class="text-[11px] text-rose-600 font-medium" x-text="paymentType !== 'psb' ? (totalTunggakanCount + ' tagihan belum lunas') : 'Sisa tagihan daftar ulang'"></span>
+                                        </div>
+                                        <span class="text-lg sm:text-xl font-black font-mono text-rose-700" x-text="formatRupiah(paymentType !== 'psb' ? (studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0)) : psbSisa)"></span>
+                                    </div>
+                                    <!-- Action Buttons Tunggakan -->
+                                    <div class="pt-2 border-t border-rose-200/60 flex flex-wrap items-center gap-2" x-show="paymentType !== 'psb'">
+                                        <button type="button" @click="showTunggakanModal = true" x-show="tunggakanByMonth.length > 0" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 active:scale-95 text-gray-950 text-xs font-black transition shadow-2xs">
+                                            <svg class="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                            <span>Rincian (<span x-text="tunggakanByMonth.length"></span> Periode)</span>
+                                        </button>
+                                        <a :href="'{{ route('admin.pembayaran.potongan.index') }}'" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold transition shadow-2xs" title="Kelola Keringanan & Potongan Biaya (SKTM / Kebijakan Pimpinan)">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span>⚡ Keringanan Pimpinan</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -1050,23 +1073,7 @@
                                 </div>
                             </div>
 
-                            <!-- Card Ringkasan Tunggakan & Saldo Tabungan (Mirip Modal Rincian) -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div class="p-3.5 bg-rose-50/80 border border-rose-200 rounded-xl flex items-center justify-between shadow-2xs">
-                                    <div>
-                                        <span class="text-xs font-bold text-rose-900 block">Total Tunggakan Santri</span>
-                                        <span class="text-[11px] text-rose-600 font-medium" x-text="totalTunggakanCount + ' pos tagihan belum lunas'"></span>
-                                    </div>
-                                    <span class="text-base sm:text-lg font-black font-mono text-rose-700" x-text="formatRupiah(studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0))"></span>
-                                </div>
-                                <div class="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between shadow-2xs">
-                                    <div>
-                                        <span class="text-xs font-bold text-emerald-900 block">Total Saldo Tabungan Santri</span>
-                                        <span class="text-[11px] text-emerald-600 font-medium">Saldo Simpanan Tersimpan</span>
-                                    </div>
-                                    <span class="text-base sm:text-lg font-black font-mono text-emerald-700" x-text="formatRupiah(selectedPerson ? (selectedPerson.saldo_tabungan || saldoTabungan) : 0)"></span>
-                                </div>
-                            </div>
+
 
                             <!-- Header & Quick Action Buttons -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-3">
