@@ -79,27 +79,25 @@ try {
     $convertedTabunganCount = 0;
     $totalNominalConverted = 0;
 
-    foreach ($tabBills as $tabBill) {
-        $student = \App\Models\Student::find($tabBill->student_id);
+    $byStudent = $tabBills->groupBy('student_id');
+
+    foreach ($byStudent as $studentId => $bills) {
+        $student = \App\Models\Student::find($studentId);
         if (!$student) continue;
 
-        // Cek apakah santri ini sudah memiliki pembayaran TAB yang sesuai
-        $existingPayment = \App\Models\StudentPaymentItem::whereHas('payment', function($q) use ($student) {
-            $q->where('student_id', $student->id)->where('status', 'Lunas');
-        })->where('pos_biaya', 'TAB')->where('nominal', $tabBill->nominal_tagihan)->first();
-
-        if (!$existingPayment) {
+        $sumNom = (float) $bills->sum('nominal_tagihan');
+        if ($sumNom > 0) {
             $pPrefix = 'TAB-IMP-' . date('Ymd');
-            $pNo = $pPrefix . '-' . str_pad($tabBill->id, 4, '0', STR_PAD_LEFT);
+            $pNo = $pPrefix . '-' . str_pad($student->id, 4, '0', STR_PAD_LEFT) . '-' . strtoupper(\Illuminate\Support\Str::random(3));
 
             $pay = \App\Models\StudentPayment::create([
                 'student_id' => $student->id,
                 'user_id' => 1,
                 'no_transaksi' => $pNo,
                 'jenis_pembayaran' => 'SETORAN TABUNGAN AWAL',
-                'bulan' => $tabBill->bulan ?: date('F'),
-                'tahun' => $tabBill->tahun ?: date('Y'),
-                'nominal' => $tabBill->nominal_tagihan,
+                'bulan' => date('F'),
+                'tahun' => date('Y'),
+                'nominal' => $sumNom,
                 'tanggal_bayar' => now(),
                 'metode_pembayaran' => 'Tunai',
                 'status' => 'Lunas',
@@ -111,14 +109,17 @@ try {
                 'payment_id' => $pay->id,
                 'student_bill_id' => null,
                 'pos_biaya' => 'TAB',
-                'nominal' => $tabBill->nominal_tagihan,
+                'nominal' => $sumNom,
                 'keterangan' => 'Saldo Awal Tabungan Santri',
             ]);
+
+            $totalNominalConverted += $sumNom;
+            $convertedTabunganCount += count($bills);
         }
 
-        $totalNominalConverted += $tabBill->nominal_tagihan;
-        $tabBill->delete();
-        $convertedTabunganCount++;
+        foreach ($bills as $b) {
+            $b->delete();
+        }
     }
 
     // 4. Bersihkan Cache Laravel
