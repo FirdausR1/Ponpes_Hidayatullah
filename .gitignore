@@ -20,3 +20,5 @@ yarn-error.log
 /scratch/
 *.zip
 *.sql
+*.xlsx
+*.xls

@@ -1361,6 +1361,8 @@ class StudentController extends Controller
         $existingStudents = 0;
         $createdBills = 0;
         $totalNominalBills = 0;
+        $importedTabunganCount = 0;
+        $totalTabunganNominal = 0;
         $skipped = 0;
 
         try {
@@ -1948,29 +1950,153 @@ class StudentController extends Controller
                     $tahunTagihan = (int)$ym[1];
                 }
 
-                // Helper deteksi nama bulan jika bendahara menuliskan nama bulan di keterangan (misal: "Mei-Juni" atau "April")
-                $daftarBulan = [
-                    'Januari' => '/\b(januari|january|jan)\b/i',
-                    'Februari' => '/\b(februari|february|feb)\b/i',
-                    'Maret' => '/\b(maret|march|mar)\b/i',
-                    'April' => '/\b(april|apr)\b/i',
-                    'Mei' => '/\b(mei|may)\b/i',
-                    'Juni' => '/\b(juni|june|jun)\b/i',
-                    'Juli' => '/\b(juli|july|jul)\b/i',
-                    'Agustus' => '/\b(agustus|august|agu|ags)\b/i',
-                    'September' => '/\b(september|sep|sept)\b/i',
-                    'Oktober' => '/\b(oktober|october|okt|oct)\b/i',
-                    'November' => '/\b(november|nov)\b/i',
-                    'Desember' => '/\b(desember|december|des|dec)\b/i',
+                // ============================================================
+                // PEMBAGIAN BULAN & POS TAGIHAN BULANAN SECARA CERDAS & AKURAT
+                // ============================================================
+                // Kamus alias nama bulan dalam format Bahasa Indonesia & Inggris (singkatan & lengkap)
+                $monthMap = [
+                    'januari' => 'Januari', 'january' => 'Januari', 'jan' => 'Januari',
+                    'februari' => 'Februari', 'february' => 'Februari', 'feb' => 'Februari',
+                    'maret' => 'Maret', 'march' => 'Maret', 'mar' => 'Maret',
+                    'april' => 'April', 'apr' => 'April',
+                    'mei' => 'Mei', 'may' => 'Mei',
+                    'juni' => 'Juni', 'june' => 'Juni', 'jun' => 'Juni',
+                    'juli' => 'Juli', 'july' => 'Juli', 'jul' => 'Juli',
+                    'agustus' => 'Agustus', 'august' => 'Agustus', 'agu' => 'Agustus', 'ags' => 'Agustus',
+                    'september' => 'September', 'sep' => 'September', 'sept' => 'September',
+                    'oktober' => 'Oktober', 'october' => 'Oktober', 'okt' => 'Oktober', 'oct' => 'Oktober',
+                    'november' => 'November', 'nov' => 'November',
+                    'desember' => 'Desember', 'december' => 'Desember', 'des' => 'Desember', 'dec' => 'Desember'
                 ];
+
+                // Urutan bulan tahun ajaran pondok pesantren (dimulai Juli s.d. Juni)
+                $academicSequence = [
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'
+                ];
+
                 $detectedMonths = [];
-                if (!empty($ketTunggakan)) {
-                    foreach ($daftarBulan as $bNama => $bPattern) {
-                        if (preg_match($bPattern, $ketTunggakan)) {
-                            $detectedMonths[] = $bNama;
+                $rawKet = strtolower(trim((string)$ketTunggakan));
+
+                if (!empty($rawKet)) {
+                    // 1. Deteksi rentang bulan (misal: "jul - sep", "juli s/d september", "jul-sep")
+                    if (preg_match('/(jan|feb|mar|apr|mei|may|jun|jul|agu|ags|aug|sep|okt|oct|nov|des|dec)[a-z]*\s*(?:-|s\/?d|sampai|to)\s*(jan|feb|mar|apr|mei|may|jun|jul|agu|ags|aug|sep|okt|oct|nov|des|dec)[a-z]*/i', $rawKet, $mRange)) {
+                        $startM = $monthMap[strtolower($mRange[1])] ?? null;
+                        $endM = $monthMap[strtolower($mRange[2])] ?? null;
+                        if ($startM && $endM) {
+                            $idxStart = array_search($startM, $academicSequence);
+                            $idxEnd = array_search($endM, $academicSequence);
+                            if ($idxStart !== false && $idxEnd !== false && $idxStart <= $idxEnd) {
+                                for ($i = $idxStart; $i <= $idxEnd; $i++) {
+                                    $detectedMonths[] = $academicSequence[$i];
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Deteksi kata per kata jika bukan rentang (misal: "JUL,AGS,SEP" atau "agustus, september")
+                    if (empty($detectedMonths)) {
+                        preg_match_all('/\b[a-zA-Z]{3,}\b/', $rawKet, $words);
+                        foreach ($words[0] as $w) {
+                            $wLower = strtolower($w);
+                            if (isset($monthMap[$wLower])) {
+                                $mName = $monthMap[$wLower];
+                                if (!in_array($mName, $detectedMonths)) {
+                                    $detectedMonths[] = $mName;
+                                }
+                            }
                         }
                     }
                 }
+
+                // Standar tarif per bulan untuk santri ini
+                $isMukimBool = ($hunianVal === 'Mukim') || (!empty($student->kamar_asrama) && !str_contains(strtolower($student->kamar_asrama), 'laju'));
+                $isMaBool = ($jenShort === 'MA') || str_contains(strtoupper($student->jenjang ?? ''), 'MA');
+                $stdMakan = $isMukimBool ? 300000 : 0;
+                $stdSyahriyah = $isMukimBool ? 30000 : 0;
+                $stdSot = $isMaBool ? 75000 : 55000;
+                $stdTab = 25000;
+
+                // Helper resolusi bulan & pemecahan nominal agar selalu bulat tanpa ada angka 500 perak
+                $resolvePosMonthlyBills = function($val, $unitTarif) use ($detectedMonths, $academicSequence) {
+                    if ($val <= 0) return [];
+
+                    $count = ($unitTarif > 0 && ($val % $unitTarif === 0 || $val % 10000 === 0))
+                        ? (int) round($val / $unitTarif)
+                        : count($detectedMonths);
+
+                    if ($count <= 0) $count = 1;
+
+                    $posMonths = $detectedMonths;
+
+                    // Jika jumlah bulan terdeteksi kurang dari jumlah bulan riil berdasarkan nominal:
+                    if (count($posMonths) < $count) {
+                        if (empty($posMonths)) {
+                            // Default: gunakan urutan tahun ajaran baru (mulai Juli)
+                            for ($i = 0; $i < $count; $i++) {
+                                if (isset($academicSequence[$i])) {
+                                    $posMonths[] = $academicSequence[$i];
+                                }
+                            }
+                        } else {
+                            // Lengkapi bulan yang terlewat (misal ada Agustus & September tapi butuh 3 bulan -> otomatis lengkapi Juli di depan)
+                            $first = $posMonths[0];
+                            $idxFirst = array_search($first, $academicSequence);
+                            $needed = $count - count($posMonths);
+                            for ($k = 1; $k <= $needed; $k++) {
+                                $prevIdx = $idxFirst - $k;
+                                if ($prevIdx >= 0) {
+                                    $prevMonth = $academicSequence[$prevIdx];
+                                    if (!in_array($prevMonth, $posMonths)) {
+                                        array_unshift($posMonths, $prevMonth);
+                                    }
+                                }
+                            }
+                            while (count($posMonths) < $count) {
+                                $last = end($posMonths);
+                                $idxLast = array_search($last, $academicSequence);
+                                if ($idxLast !== false && isset($academicSequence[$idxLast + 1])) {
+                                    $nextMonth = $academicSequence[$idxLast + 1];
+                                    if (!in_array($nextMonth, $posMonths)) {
+                                        $posMonths[] = $nextMonth;
+                                    } else {
+                                        break;
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    } elseif (count($posMonths) > $count) {
+                        $posMonths = array_slice($posMonths, -$count);
+                    }
+
+                    $bills = [];
+                    $mCount = count($posMonths);
+
+                    if ($unitTarif > 0 && $val % $unitTarif === 0 && $mCount === (int)($val / $unitTarif)) {
+                        foreach ($posMonths as $b) {
+                            $bills[] = ['bulan' => $b, 'nominal' => $unitTarif];
+                        }
+                    } else {
+                        // Distribusi nominal secara bulat kelipatan seribu (mencegah pecahan ganjil 500 perak)
+                        $base = floor(($val / $mCount) / 1000) * 1000;
+                        $rem = $val - ($base * $mCount);
+                        foreach ($posMonths as $idx => $b) {
+                            $curNom = $base;
+                            if ($rem >= 1000) {
+                                $curNom += 1000;
+                                $rem -= 1000;
+                            }
+                            $bills[] = ['bulan' => $b, 'nominal' => $curNom];
+                        }
+                        if ($rem > 0 && count($bills) > 0) {
+                            $bills[count($bills) - 1]['nominal'] += $rem;
+                        }
+                    }
+
+                    return $bills;
+                };
 
                 // Helper instan buat StudentBill jika belum ada duplikat persis
                 $createBillIfNotExists = function($kat, $pos, $judul, $bln, $thn, $nom) use ($student, $jatuhTempo, $creatorName, &$createdBills, &$totalNominalBills) {
@@ -2009,120 +2135,173 @@ class StudentController extends Controller
 
                 // 1. Tunggakan Uang Makan (Rp 300.000/bln)
                 if ($makanVal > 0) {
-                    if (count($detectedMonths) > 0) {
-                        $nomPerBulan = round($makanVal / count($detectedMonths));
-                        foreach ($detectedMonths as $bName) {
-                            $createBillIfNotExists('bulanan', 'MAKAN', "Tunggakan Uang Makan Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                    $makanBills = $resolvePosMonthlyBills($makanVal, $stdMakan);
+                    if (!empty($makanBills)) {
+                        foreach ($makanBills as $itemB) {
+                            $createBillIfNotExists('bulanan', 'MAKAN', "Tunggakan Uang Makan Bulan {$itemB['bulan']}", $itemB['bulan'], $tahunTagihan, $itemB['nominal']);
                         }
                     } else {
-                        $createBillIfNotExists('bulanan', 'MAKAN', 'Tunggakan Uang Makan 3x Sehari' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $makanVal);
+                        $createBillIfNotExists('bulanan', 'MAKAN', 'Tunggakan Uang Makan 3x Sehari', 'Lalu', $tahunTagihan, $makanVal);
                     }
                 }
 
                 // 2. Tunggakan Syahriyah Pendidikan (Rp 30.000/bln)
                 if ($syahriyahVal > 0) {
-                    if (count($detectedMonths) > 0) {
-                        $nomPerBulan = round($syahriyahVal / count($detectedMonths));
-                        foreach ($detectedMonths as $bName) {
-                            $createBillIfNotExists('bulanan', 'SYAHRIYAH', "Tunggakan Syahriyah Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                    $syahBills = $resolvePosMonthlyBills($syahriyahVal, $stdSyahriyah);
+                    if (!empty($syahBills)) {
+                        foreach ($syahBills as $itemB) {
+                            $createBillIfNotExists('bulanan', 'SYAHRIYAH', "Tunggakan Syahriyah Bulan {$itemB['bulan']}", $itemB['bulan'], $tahunTagihan, $itemB['nominal']);
                         }
                     } else {
-                        $createBillIfNotExists('bulanan', 'SYAHRIYAH', 'Tunggakan Syahriyah Pendidikan' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $syahriyahVal);
+                        $createBillIfNotExists('bulanan', 'SYAHRIYAH', 'Tunggakan Syahriyah Pendidikan', 'Lalu', $tahunTagihan, $syahriyahVal);
                     }
                 }
 
                 // 3. Tunggakan Iuran SOT (MTs Rp 55.000 / MA Rp 75.000 per bulan)
                 if ($sotVal > 0) {
-                    if (count($detectedMonths) > 0) {
-                        $nomPerBulan = round($sotVal / count($detectedMonths));
-                        foreach ($detectedMonths as $bName) {
-                            $createBillIfNotExists('bulanan', 'SOT', "Tunggakan Iuran SOT Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                    $sotBills = $resolvePosMonthlyBills($sotVal, $stdSot);
+                    if (!empty($sotBills)) {
+                        foreach ($sotBills as $itemB) {
+                            $createBillIfNotExists('bulanan', 'SOT', "Tunggakan Iuran SOT Bulan {$itemB['bulan']}", $itemB['bulan'], $tahunTagihan, $itemB['nominal']);
                         }
                     } else {
-                        $createBillIfNotExists('bulanan', 'SOT', 'Tunggakan Iuran SOT' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $sotVal);
+                        $createBillIfNotExists('bulanan', 'SOT', 'Tunggakan Iuran SOT', 'Lalu', $tahunTagihan, $sotVal);
                     }
                 }
 
-                // 4. Tunggakan Tabungan Wajib Santri (Rp 25.000/bln)
+                // 4. Saldo Tabungan Awal Santri (Langsung Masuk ke Saldo Tabungan Santri & Berstatus LUNAS)
                 if ($tabunganVal > 0) {
-                    $createBillIfNotExists('bulanan', 'TAB', 'Tunggakan Tabungan Santri' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $tabunganVal);
+                    // Hapus tagihan tunggakan TAB berstatus 'Belum Bayar' jika ada dari import sebelumnya agar tidak dobel/rancu
+                    StudentBill::where('student_id', $student->id)
+                        ->where('pos_biaya', 'TAB')
+                        ->where('status', 'Belum Bayar')
+                        ->where('created_by', 'like', '%Import%')
+                        ->delete();
+
+                    // Cek apakah santri sudah memiliki setoran awal tabungan dari import
+                    $existingTabunganDeposit = StudentPayment::where('student_id', $student->id)
+                        ->where('jenis_pembayaran', 'SETORAN TABUNGAN AWAL')
+                        ->first();
+
+                    if ($existingTabunganDeposit) {
+                        // Perbarui nominal saldo awal jika ada perubahan di file Excel
+                        $existingTabunganDeposit->update([
+                            'nominal' => $tabunganVal,
+                            'catatan' => 'Saldo Tabungan Awal Santri (Diperbarui dari Import Excel)',
+                        ]);
+                        StudentPaymentItem::where('payment_id', $existingTabunganDeposit->id)
+                            ->where('pos_biaya', 'TAB')
+                            ->update([
+                                'nominal' => $tabunganVal,
+                            ]);
+                    } else {
+                        $todayPrefix = 'BYR-' . date('Ymd');
+                        $randCode = strtoupper(Str::random(4));
+                        $noTransaksi = "{$todayPrefix}-TAB-{$student->id}-{$randCode}";
+
+                        $tabPayment = StudentPayment::create([
+                            'student_id' => $student->id,
+                            'user_id' => auth()->id() ?? 1,
+                            'no_transaksi' => $noTransaksi,
+                            'jenis_pembayaran' => 'SETORAN TABUNGAN AWAL',
+                            'bulan' => $detectedMonths[0] ?? date('F'),
+                            'tahun' => $tahunTagihan,
+                            'nominal' => $tabunganVal,
+                            'tanggal_bayar' => Carbon::now()->toDateString(),
+                            'metode_pembayaran' => 'Tunai',
+                            'status' => 'Lunas',
+                            'catatan' => 'Saldo Tabungan Awal Santri (Import Massal Excel)',
+                            'penerima_nama' => $creatorName,
+                        ]);
+
+                        StudentPaymentItem::create([
+                            'payment_id' => $tabPayment->id,
+                            'student_bill_id' => null,
+                            'pos_biaya' => 'TAB',
+                            'nominal' => $tabunganVal,
+                            'keterangan' => 'Saldo Tabungan Awal Santri',
+                        ]);
+                    }
+
+                    $importedTabunganCount++;
+                    $totalTabunganNominal += $tabunganVal;
                 }
 
                 // 5. Tunggakan Uang Pangkal Masuk
                 if ($pangkalVal > 0) {
-                    $createBillIfNotExists('daftar_ulang', 'PANGKAL', 'Sisa Tunggakan Uang Pangkal Masuk' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Juli', $tahunMasukSantri, $pangkalVal);
+                    $createBillIfNotExists('daftar_ulang', 'PANGKAL', 'Sisa Tunggakan Uang Pangkal Masuk', 'Juli', $tahunMasukSantri, $pangkalVal);
                 }
 
                 // 6. Tunggakan Uang Gedung & Sarpras
                 if ($gedungVal > 0) {
-                    $createBillIfNotExists('daftar_ulang', 'GEDUNG', 'Tunggakan Uang Gedung & Sarpras' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $gedungVal);
+                    $createBillIfNotExists('daftar_ulang', 'GEDUNG', 'Tunggakan Uang Gedung & Sarpras', null, $tahunMasukSantri, $gedungVal);
                 }
 
                 // 7. Tunggakan Kertas / Evaluasi Belajar
                 if ($kertasVal > 0) {
-                    $createBillIfNotExists('tahunan', 'KERTAS', 'Tunggakan Kertas / Evaluasi Belajar' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunTagihan, $kertasVal);
+                    $createBillIfNotExists('tahunan', 'KERTAS', 'Tunggakan Kertas / Evaluasi Belajar', null, $tahunTagihan, $kertasVal);
                 }
 
                 // 8. Tunggakan Iuran Kesehatan Santri (1 Thn)
                 if ($kesehatanVal > 0) {
-                    $createBillIfNotExists('tahunan', 'KESEHATAN', 'Tunggakan Iuran Kesehatan Santri' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunTagihan, $kesehatanVal);
+                    $createBillIfNotExists('tahunan', 'KESEHATAN', 'Tunggakan Iuran Kesehatan Santri', null, $tahunTagihan, $kesehatanVal);
                 }
 
                 // 9. Tunggakan Iuran Kegiatan Santri (1 Thn)
                 if ($kegiatanVal > 0) {
-                    $createBillIfNotExists('tahunan', 'KEGIATAN', 'Tunggakan Iuran Kegiatan Santri' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunTagihan, $kegiatanVal);
+                    $createBillIfNotExists('tahunan', 'KEGIATAN', 'Tunggakan Iuran Kegiatan Santri', null, $tahunTagihan, $kegiatanVal);
                 }
 
                 // 10. Tunggakan Biaya PG
                 if ($pgVal > 0) {
-                    $createBillIfNotExists('tambahan', 'PG', 'Tunggakan Biaya PG' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunTagihan, $pgVal);
+                    $createBillIfNotExists('tambahan', 'PG', 'Tunggakan Biaya PG', null, $tahunTagihan, $pgVal);
                 }
 
                 // 11. Pembelian Almari & Fasilitas Asrama
                 if ($almariVal > 0) {
-                    $createBillIfNotExists('daftar_ulang', 'ALMARI', 'Tunggakan Pembelian Almari & Fasilitas Asrama' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $almariVal);
+                    $createBillIfNotExists('daftar_ulang', 'ALMARI', 'Tunggakan Pembelian Almari & Fasilitas Asrama', null, $tahunMasukSantri, $almariVal);
                 }
 
                 // 12. Biaya Pendaftaran Santri Baru (PSB)
                 if ($pendaftaranVal > 0) {
-                    $createBillIfNotExists('daftar_ulang', 'PENDAFTARAN', 'Biaya Pendaftaran Santri Baru' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $pendaftaranVal);
+                    $createBillIfNotExists('daftar_ulang', 'PENDAFTARAN', 'Biaya Pendaftaran Santri Baru', null, $tahunMasukSantri, $pendaftaranVal);
                 }
 
                 // 13. Tunggakan Biaya Kenaikan Kelas
                 if ($kenaikanVal > 0) {
-                    $createBillIfNotExists('tahunan', 'KENAIKAN', 'Tunggakan Biaya Kenaikan Kelas' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunTagihan, $kenaikanVal);
+                    $createBillIfNotExists('tahunan', 'KENAIKAN', 'Tunggakan Biaya Kenaikan Kelas', null, $tahunTagihan, $kenaikanVal);
                 }
 
                 // 14. Infaq Pengembangan Pondok
                 if ($pengembanganVal > 0) {
-                    $createBillIfNotExists('tambahan', 'PENGEMBANGAN PONDOK', 'Infaq Pengembangan Pondok Pesantren' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $pengembanganVal);
+                    $createBillIfNotExists('tambahan', 'PENGEMBANGAN PONDOK', 'Infaq Pengembangan Pondok Pesantren', null, $tahunMasukSantri, $pengembanganVal);
                 }
 
                 // --- POS LEGACY / TAMBAHAN PREVIOUS ---
                 if ($wisudaVal > 0) {
-                    $createBillIfNotExists('tambahan', 'WISUDA', 'Tanggungan Biaya Wisuda / Akhirusanah' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $wisudaVal);
+                    $createBillIfNotExists('tambahan', 'WISUDA', 'Tanggungan Biaya Wisuda / Akhirusanah', null, $tahunMasukSantri, $wisudaVal);
                 }
                 if ($ziarahVal > 0) {
-                    $createBillIfNotExists('tambahan', 'ZIARAH', 'Tanggungan Ziarah Religi / Study Tour' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $ziarahVal);
+                    $createBillIfNotExists('tambahan', 'ZIARAH', 'Tanggungan Ziarah Religi / Study Tour', null, $tahunMasukSantri, $ziarahVal);
                 }
                 if ($kitabVal > 0) {
-                    $createBillIfNotExists('tambahan', 'KITAB', 'Tunggakan Kitab Turats & Buku Pelajaran' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), null, $tahunMasukSantri, $kitabVal);
+                    $createBillIfNotExists('tambahan', 'KITAB', 'Tunggakan Kitab Turats & Buku Pelajaran', null, $tahunMasukSantri, $kitabVal);
                 }
                 if ($lainVal > 0) {
-                    $createBillIfNotExists('tambahan', 'TAMBAHAN', !empty($ketTunggakan) ? "Tagihan Tambahan: {$ketTunggakan}" : 'Tagihan Biaya Tambahan / Insidental', null, $tahunMasukSantri, $lainVal);
+                    $createBillIfNotExists('tambahan', 'TAMBAHAN', 'Tagihan Biaya Tambahan / Insidental', null, $tahunMasukSantri, $lainVal);
                 }
                 if ($legacySpp > 0 && $syahriyahVal == 0 && $sotVal == 0) {
                     if (count($detectedMonths) > 0) {
                         $nomPerBulan = round($legacySpp / count($detectedMonths));
                         foreach ($detectedMonths as $bName) {
-                            $createBillIfNotExists('bulanan', 'SYAHRIYAH', "Tunggakan SPP Bulan {$bName}" . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), $bName, $tahunTagihan, $nomPerBulan);
+                            $createBillIfNotExists('bulanan', 'SYAHRIYAH', "Tunggakan SPP Bulan {$bName}", $bName, $tahunTagihan, $nomPerBulan);
                         }
                     } else {
-                        $createBillIfNotExists('bulanan', 'SYAHRIYAH', 'Tunggakan SPP / Syahriyah Masa Lalu' . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : ""), 'Lalu', $tahunTagihan, $legacySpp);
+                        $createBillIfNotExists('bulanan', 'SYAHRIYAH', 'Tunggakan SPP / Syahriyah Masa Lalu', 'Lalu', $tahunTagihan, $legacySpp);
                     }
                 }
                 if ($totalLalu > 0 && $syahriyahVal == 0 && $sotVal == 0 && $makanVal == 0 && $tabunganVal == 0 && $pangkalVal == 0 && $gedungVal == 0 && $pengembanganVal == 0 && $wisudaVal == 0 && $ziarahVal == 0 && $kitabVal == 0 && $kegiatanVal == 0 && $lainVal == 0 && $legacySpp == 0) {
-                    $createBillIfNotExists('lainnya', 'TUNGGAKAN LALU', !empty($ketTunggakan) ? "Tunggakan Masa Lalu: {$ketTunggakan}" : 'Tunggakan Biaya Pendidikan Masa Lalu', null, $tahunMasukSantri - 1, $totalLalu);
+                    $createBillIfNotExists('lainnya', 'TUNGGAKAN LALU', 'Tunggakan Biaya Pendidikan Masa Lalu', null, $tahunMasukSantri - 1, $totalLalu);
                 }
 
                 // ============================================================
@@ -2269,7 +2448,7 @@ class StudentController extends Controller
                             $kategori = 'tahunan';
                         }
 
-                        $judulTagihan = "Tagihan " . ucwords(strtolower($cleanColName)) . (!empty($ketTunggakan) ? " ({$ketTunggakan})" : "");
+                        $judulTagihan = "Tagihan " . ucwords(strtolower(str_replace('_', ' ', $cleanColName)));
 
                         $createBillIfNotExists($kategori, $finalPos, $judulTagihan, null, $tahunTagihan, $customNom);
                     }
@@ -2289,6 +2468,10 @@ class StudentController extends Controller
         if ($createdBills > 0) {
             $formattedRp = 'Rp ' . number_format($totalNominalBills, 0, ',', '.');
             $summaryParts[] = "{$createdBills} tagihan tunggakan masa lalu berhasil dicatat (Total: {$formattedRp})";
+        }
+        if ($importedTabunganCount > 0) {
+            $formattedTabRp = 'Rp ' . number_format($totalTabunganNominal, 0, ',', '.');
+            $summaryParts[] = "{$importedTabunganCount} santri dicatat saldo awal tabungan (Total: {$formattedTabRp})";
         }
 
         $summaryText = !empty($summaryParts) ? implode(', ', $summaryParts) : "Data berhasil diproses (tidak ada penambahan data baru)";

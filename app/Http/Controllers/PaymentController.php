@@ -383,10 +383,12 @@ class PaymentController extends Controller
                 }
             }
 
+            $cleanJudul = trim(preg_replace('/\s*\((?:daftar ulang[,\s]*|agustus|september|juli|oktober|november|desember|januari|februari|maret|april|mei|juni|[,\s\-\/])+\)/i', '', $b->judul_tagihan));
+
             return [
                 'id' => $b->id,
                 'pos_biaya' => $b->pos_biaya,
-                'judul_tagihan' => $b->judul_tagihan,
+                'judul_tagihan' => $cleanJudul ?: $b->judul_tagihan,
                 'kategori' => $b->kategori,
                 'bulan' => $b->bulan,
                 'tahun' => $b->tahun,
@@ -407,11 +409,37 @@ class PaymentController extends Controller
         // Kelompokkan tunggakan per periode/bulan secara detail
         $tunggakanList = $categorizedBills->filter(fn($b) => $b['sisa_tagihan'] > 0);
         $tunggakanByMonth = [];
+        $academicMonthOrder = [
+            'juli' => 1, 'july' => 1,
+            'agustus' => 2, 'august' => 2,
+            'september' => 3,
+            'oktober' => 4, 'october' => 4,
+            'november' => 5,
+            'desember' => 6, 'december' => 6,
+            'januari' => 7, 'january' => 7,
+            'februari' => 8, 'february' => 8,
+            'maret' => 9, 'march' => 9,
+            'april' => 10,
+            'mei' => 11, 'may' => 11,
+            'juni' => 12, 'june' => 12,
+        ];
+
         foreach ($tunggakanList as $tb) {
             $key = $tb['bulan'] ? ($tb['bulan'] . ' ' . ($tb['tahun'] ?: $curYear)) : ($tb['tahun'] ? 'Tahun ' . $tb['tahun'] : 'Biaya Tambahan / Insidental');
             if (!isset($tunggakanByMonth[$key])) {
+                $sortKey = 999999;
+                if ($tb['bulan']) {
+                    $mLower = strtolower(trim($tb['bulan']));
+                    $mNum = $academicMonthOrder[$mLower] ?? 99;
+                    $yr = intval($tb['tahun'] ?: $curYear);
+                    $sortKey = ($yr * 100) + $mNum;
+                } elseif ($tb['tahun']) {
+                    $sortKey = intval($tb['tahun']) * 100;
+                }
+
                 $tunggakanByMonth[$key] = [
                     'periode' => $key,
+                    'sort_key' => $sortKey,
                     'is_past' => $tb['is_past'],
                     'is_current' => $tb['is_current'],
                     'total_sisa' => 0,
@@ -430,6 +458,9 @@ class PaymentController extends Controller
                 'is_past' => $tb['is_past'],
             ];
         }
+
+        // Urutkan periode secara kronologis (Tahun dulu, lalu Juli, Agustus, September, dst.)
+        uasort($tunggakanByMonth, fn($a, $b) => $a['sort_key'] <=> $b['sort_key']);
 
         return response()->json([
             'student' => $student,

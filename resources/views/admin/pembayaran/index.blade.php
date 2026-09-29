@@ -25,6 +25,7 @@
     tunggakanByMonth: [],
     totalTunggakanCount: 0,
     showTunggakanModal: false,
+    saldoTabungan: 0,
     standardTariffs: { MAKAN: 300000, SYAHRIYAH: 30000, SOT: 55000, TAB: 25000 },
     currentMonthName: 'September',
     currentYear: '{{ date('Y') }}',
@@ -92,6 +93,7 @@
         if (this.selectedStudentId) {
             let st = this.allStudents.find(s => s.id == this.selectedStudentId);
             if (st) {
+                this.saldoTabungan = st.saldo_tabungan || 0;
                 this.selectPerson({
                     type: st.status === 'Alumni' ? 'alumni' : (st.status === 'Mutasi' ? 'mutasi' : 'santri'),
                     id: st.id,
@@ -180,7 +182,8 @@
 
     selectPerson(person) {
         this.selectedPerson = person;
-        if (person.type === 'santri') {
+        this.saldoTabungan = person.saldo_tabungan || 0;
+        if (person.type !== 'psb') {
             this.paymentType = 'santri';
             this.selectedStudentId = person.id;
             this.selectedPsbId = '';
@@ -197,6 +200,7 @@
         this.selectedPerson = null;
         this.selectedStudentId = '';
         this.selectedPsbId = '';
+        this.saldoTabungan = 0;
         this.studentBills = [];
         this.studentDiscounts = [];
         this.tunggakanByMonth = [];
@@ -219,8 +223,10 @@
         fetch('{{ url('/admin/pembayaran/ajax-tagihan') }}/' + studentId)
             .then(res => res.json())
             .then(data => {
-                if (this.selectedPerson && data.saldo_tabungan !== undefined) {
-                    this.selectedPerson.saldo_tabungan = data.saldo_tabungan;
+                let sTab = data.saldo_tabungan !== undefined ? data.saldo_tabungan : (this.selectedPerson ? this.selectedPerson.saldo_tabungan : 0);
+                this.saldoTabungan = sTab;
+                if (this.selectedPerson) {
+                    this.selectedPerson.saldo_tabungan = sTab;
                 }
                 // Santri Bills: Tagihan bulan ini otomatis dicentang, tunggakan lama dibiarkan uncheck (0)
                 this.studentBills = (data.bills || []).map(b => {
@@ -311,10 +317,98 @@
         return tot;
     },
 
+    cleanBillTitle(title) {
+        if (!title) return '';
+        return title.replace(/\s*\((?:daftar ulang[,\s]*|agustus|september|juli|oktober|november|desember|januari|februari|maret|april|mei|juni|[,\s\-\/])+\)/gi, '').trim();
+    },
+
+    getBadgeClass(pos) {
+        pos = (pos || '').toUpperCase();
+        if (pos.includes('MAKAN')) return 'bg-orange-50 text-orange-700 border-orange-200';
+        if (pos.includes('SYAHRIYAH') || pos.includes('SPP')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (pos.includes('SOT')) return 'bg-blue-50 text-blue-700 border-blue-200';
+        if (pos.includes('TAB')) return 'bg-teal-50 text-teal-700 border-teal-200';
+        if (pos.includes('GEDUNG') || pos.includes('SARPRAS')) return 'bg-purple-50 text-purple-700 border-purple-200';
+        if (pos.includes('PANGKAL')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+        if (pos.includes('KESEHATAN')) return 'bg-rose-50 text-rose-700 border-rose-200';
+        if (pos.includes('KEGIATAN')) return 'bg-amber-50 text-amber-700 border-amber-200';
+        if (pos.includes('KERTAS')) return 'bg-sky-50 text-sky-700 border-sky-200';
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    },
+
+    get groupedBills() {
+        let groups = {};
+        let monthWeight = {
+            'juli': 1, 'july': 1,
+            'agustus': 2, 'august': 2,
+            'september': 3,
+            'oktober': 4, 'october': 4,
+            'november': 5,
+            'desember': 6, 'december': 6,
+            'januari': 7, 'january': 7,
+            'februari': 8, 'february': 8,
+            'maret': 9, 'march': 9,
+            'april': 10,
+            'mei': 11, 'may': 11,
+            'juni': 12, 'june': 12
+        };
+
+        (this.studentBills || []).forEach(b => {
+            let key = '';
+            let sortKey = 0;
+            let yr = parseInt(b.tahun) || parseInt(this.currentYear) || 2026;
+
+            if (b.bulan) {
+                key = b.bulan + ' ' + (b.tahun || this.currentYear);
+                let bLower = (b.bulan || '').toLowerCase().trim();
+                let mNum = monthWeight[bLower] || 99;
+                sortKey = (yr * 100) + mNum;
+            } else if (b.tahun) {
+                key = 'Tahun ' + b.tahun;
+                sortKey = (yr * 100);
+            } else {
+                key = 'Biaya Tambahan / Insidental';
+                sortKey = 999999;
+            }
+
+            if (!groups[key]) {
+                groups[key] = {
+                    periode: key,
+                    sortKey: sortKey,
+                    is_past: b.is_past,
+                    is_current: b.is_current,
+                    items: []
+                };
+            }
+            groups[key].items.push(b);
+        });
+
+        return Object.values(groups).sort((a, b) => a.sortKey - b.sortKey);
+    },
+
+    toggleGroupBills(grp) {
+        let allSelected = grp.items.every(b => b.nominal_input > 0);
+        grp.items.forEach(b => {
+            if (allSelected) {
+                b.checked = false;
+                b.nominal_input = 0;
+            } else {
+                b.checked = true;
+                b.nominal_input = b.sisa_tagihan;
+            }
+        });
+        this.uangDiterima = this.calculateTotal();
+    },
+
     // Quick Action Toggles
     toggleBill(b) {
-        b.checked = !b.checked;
-        b.nominal_input = b.checked ? b.sisa_tagihan : 0;
+        if (b.nominal_input > 0) {
+            b.nominal_input = 0;
+            b.checked = false;
+        } else {
+            b.nominal_input = b.sisa_tagihan;
+            b.checked = true;
+        }
         this.uangDiterima = this.calculateTotal();
     },
 
@@ -721,20 +815,29 @@
                                     </div>
                                 </div>
 
-                                <div class="text-right shrink-0 bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
-                                    <span class="text-[10px] uppercase font-bold text-emerald-200 block" x-text="paymentType !== 'psb' ? 'Total Tunggakan Santri' : 'Sisa Biaya Masuk PSB'"></span>
-                                    <span class="text-base sm:text-lg font-black font-mono text-amber-300" x-text="formatRupiah(paymentType !== 'psb' ? (studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0)) : psbSisa)"></span>
+                                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 shrink-0">
+                                    <!-- Box Tabungan Santri (Khusus Santri Aktif/Alumni) -->
+                                    <div x-show="paymentType !== 'psb'" class="text-right bg-emerald-500/25 backdrop-blur-sm px-3.5 py-2.5 rounded-xl border border-emerald-300/40 shadow-xs">
+                                        <span class="text-[10px] uppercase font-bold text-emerald-200 block">Total Saldo Tabungan</span>
+                                        <span class="text-base sm:text-lg font-black font-mono text-emerald-300" x-text="formatRupiah(selectedPerson ? (selectedPerson.saldo_tabungan || saldoTabungan) : 0)"></span>
+                                    </div>
 
-                                    <!-- Tombol Rincian Tunggakan & Input Keringanan Pimpinan -->
-                                    <div class="mt-2 flex flex-wrap items-center justify-end gap-1.5" x-show="paymentType !== 'psb'">
-                                        <button type="button" @click="showTunggakanModal = true" x-show="tunggakanByMonth.length > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 text-[11px] font-black transition shadow-xs">
-                                            <svg class="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                            <span>Rincian Tunggakan (<span x-text="tunggakanByMonth.length"></span> Periode)</span>
-                                        </button>
-                                        <a :href="'{{ route('admin.pembayaran.potongan.index') }}'" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold transition shadow-xs" title="Kelola Keringanan & Potongan Biaya (SKTM / Kebijakan Pimpinan)">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                            <span>⚡ Keringanan Pimpinan</span>
-                                        </a>
+                                    <!-- Box Total Tunggakan Santri / PSB -->
+                                    <div class="text-right bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
+                                        <span class="text-[10px] uppercase font-bold text-emerald-200 block" x-text="paymentType !== 'psb' ? 'Total Tunggakan Santri' : 'Sisa Biaya Masuk PSB'"></span>
+                                        <span class="text-base sm:text-lg font-black font-mono text-amber-300" x-text="formatRupiah(paymentType !== 'psb' ? (studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0)) : psbSisa)"></span>
+
+                                        <!-- Tombol Rincian Tunggakan & Input Keringanan Pimpinan -->
+                                        <div class="mt-2 flex flex-wrap items-center justify-end gap-1.5" x-show="paymentType !== 'psb'">
+                                            <button type="button" @click="showTunggakanModal = true" x-show="tunggakanByMonth.length > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-gray-950 text-[11px] font-black transition shadow-xs">
+                                                <svg class="w-3.5 h-3.5 text-gray-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                                <span>Rincian Tunggakan (<span x-text="tunggakanByMonth.length"></span> Periode)</span>
+                                            </button>
+                                            <a :href="'{{ route('admin.pembayaran.potongan.index') }}'" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold transition shadow-xs" title="Kelola Keringanan & Potongan Biaya (SKTM / Kebijakan Pimpinan)">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <span>⚡ Keringanan Pimpinan</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -947,6 +1050,24 @@
                                 </div>
                             </div>
 
+                            <!-- Card Ringkasan Tunggakan & Saldo Tabungan (Mirip Modal Rincian) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="p-3.5 bg-rose-50/80 border border-rose-200 rounded-xl flex items-center justify-between shadow-2xs">
+                                    <div>
+                                        <span class="text-xs font-bold text-rose-900 block">Total Tunggakan Santri</span>
+                                        <span class="text-[11px] text-rose-600 font-medium" x-text="totalTunggakanCount + ' pos tagihan belum lunas'"></span>
+                                    </div>
+                                    <span class="text-base sm:text-lg font-black font-mono text-rose-700" x-text="formatRupiah(studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0))"></span>
+                                </div>
+                                <div class="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between shadow-2xs">
+                                    <div>
+                                        <span class="text-xs font-bold text-emerald-900 block">Total Saldo Tabungan Santri</span>
+                                        <span class="text-[11px] text-emerald-600 font-medium">Saldo Simpanan Tersimpan</span>
+                                    </div>
+                                    <span class="text-base sm:text-lg font-black font-mono text-emerald-700" x-text="formatRupiah(selectedPerson ? (selectedPerson.saldo_tabungan || saldoTabungan) : 0)"></span>
+                                </div>
+                            </div>
+
                             <!-- Header & Quick Action Buttons -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-3">
                                 <div>
@@ -981,149 +1102,104 @@
                                 Memuat rincian tagihan...
                             </div>
 
-                            <!-- SECTION 1: TUNGGAKAN BULAN SEBELUMNYA -->
-                            <div x-show="!loadingBills && studentBills.some(b => b.is_past)" class="space-y-2">
-                                <div class="flex items-center justify-between pb-1.5 border-b border-gray-200 text-xs">
-                                    <span class="font-bold text-gray-800">Tunggakan Periode Sebelumnya</span>
-                                    <span class="text-[11px] text-gray-500">Pilih pos yang ingin dibayar / dicicil</span>
-                                </div>
-
-                                <template x-for="b in studentBills.filter(x => x.is_past)" :key="'past_' + b.id">
-                                    <div class="p-3 rounded-xl border transition" :class="b.nominal_input > 0 ? 'bg-rose-50/20 border-rose-300' : 'bg-white border-gray-200'">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                            <div class="flex items-start gap-3">
-                                                <input type="checkbox" :checked="b.nominal_input > 0" @change="toggleBill(b)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-gray-300 mt-0.5 cursor-pointer">
-                                                <div>
-                                                    <div class="flex items-center gap-2 flex-wrap">
-                                                        <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-rose-50 text-rose-700 border border-rose-200" x-text="b.pos_biaya"></span>
-                                                        <span class="font-bold text-xs text-gray-900" x-text="b.judul_tagihan"></span>
-                                                        <span class="text-[11px] text-gray-500 font-medium" x-text="b.bulan ? (b.bulan + ' ' + b.tahun) : (b.tahun ? b.tahun : '')"></span>
-                                                    </div>
-                                                    <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
-                                                        <span>Tagihan: <span class="font-medium text-gray-700" x-text="formatRupiah(b.nominal_tagihan)"></span></span>
-                                                        <span>&bull;</span>
-                                                        <span>Sisa: <span class="text-rose-600 font-mono font-bold" x-text="formatRupiah(b.sisa_tagihan)"></span></span>
-                                                        <span x-show="b.nominal_potongan > 0" class="text-purple-700 font-semibold" x-text="'(Keringanan: -' + formatRupiah(b.nominal_potongan) + ')'"></span>
-                                                        <span x-show="b.nominal_bayar > 0" class="text-gray-500" x-text="'(Dicicil: ' + formatRupiah(b.nominal_bayar) + ')'"></span>
-                                                    </div>
-                                                </div>
+                            <!-- DAFTAR TAGIHAN DIKELOMPOKKAN PER PERIODE (PERSIS TAMPILAN DETAIL RINCIAN) -->
+                            <div x-show="!loadingBills && groupedBills.length > 0" class="space-y-4">
+                                <template x-for="(grp, gIdx) in groupedBills" :key="'grp_' + gIdx">
+                                    <div class="rounded-xl border border-gray-200 overflow-hidden shadow-2xs transition hover:border-gray-300">
+                                        <!-- Header Periode -->
+                                        <div class="px-4 py-2.5 bg-gray-50/90 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    <span>Periode:</span>
+                                                    <strong class="text-gray-900" x-text="grp.periode"></strong>
+                                                </span>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" 
+                                                      :class="grp.is_current ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : (grp.is_past ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200')" 
+                                                      x-text="grp.is_current ? 'Bulan Ini' : (grp.is_past ? 'Tunggakan' : 'Tahunan / Tambahan')">
+                                                </span>
+                                                <span class="text-[11px] text-gray-500 font-mono" x-text="'(' + grp.items.length + ' tagihan)'"></span>
                                             </div>
 
-                                            <div class="flex items-center gap-1.5 shrink-0">
-                                                <input type="hidden" :name="'items[' + b.id + '][pos_biaya]'" :value="b.pos_biaya">
-                                                <input type="hidden" :name="'items[' + b.id + '][bill_id]'" :value="b.id">
-                                                <input type="hidden" :name="'items[' + b.id + '][keterangan]'" :value="b.judul_tagihan">
-
-                                                <div class="relative">
-                                                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 text-xs font-bold pointer-events-none">Rp</span>
-                                                    <input type="number" :name="'items[' + b.id + '][nominal]'" x-model="b.nominal_input" min="0" :max="b.sisa_tagihan" placeholder="0" class="w-28 pl-8 pr-2 py-1.5 rounded-lg border border-gray-300 text-xs font-bold text-gray-900 text-right focus:border-brand-500 outline-none">
-                                                </div>
-                                                <button type="button" @click="b.nominal_input = b.sisa_tagihan; b.checked = true" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" title="Bayar Lunas">
-                                                    Pas
-                                                </button>
-                                                <button type="button" @click="b.nominal_input = Math.round(b.sisa_tagihan / 2); b.checked = true" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" title="Cicil Setengah">
-                                                    ½
-                                                </button>
-                                                <button type="button" @click="b.nominal_input = 0; b.checked = false" class="px-2 py-1.5 rounded-lg text-gray-400 hover:text-gray-600 text-xs font-medium transition">
-                                                    0
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-xs font-bold font-mono text-rose-600" 
+                                                      x-text="'Sisa: ' + formatRupiah(grp.items.reduce((sum, it) => sum + (parseFloat(it.sisa_tagihan) || 0), 0))">
+                                                </span>
+                                                <button type="button" 
+                                                        @click="toggleGroupBills(grp)" 
+                                                        class="px-2.5 py-1 rounded-md text-[11px] font-semibold border transition shadow-2xs"
+                                                        :class="grp.items.every(it => it.nominal_input > 0) ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'">
+                                                    <span x-text="grp.items.every(it => it.nominal_input > 0) ? 'Batal Pilih' : 'Pilih Periode Ini'"></span>
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                            </div>
 
-                            <!-- SECTION 2: TAGIHAN RUTIN BULAN INI -->
-                            <div x-show="!loadingBills && studentBills.some(b => b.is_current)" class="space-y-2">
-                                <div class="flex items-center justify-between pb-1.5 border-b border-gray-200 text-xs">
-                                    <span class="font-bold text-gray-800">Tagihan Rutin Bulan Ini (<span x-text="currentMonthName + ' ' + currentYear"></span>)</span>
-                                    <span class="text-[11px] text-gray-500">Dapat dibayar langsung</span>
-                                </div>
+                                        <!-- List Item Tagihan dalam Periode -->
+                                        <div class="p-3 bg-white divide-y divide-gray-100 space-y-2">
+                                            <template x-for="b in grp.items" :key="'bill_' + b.id">
+                                                <div class="pt-2 first:pt-0 p-2.5 rounded-xl border transition" 
+                                                     :class="b.nominal_input > 0 ? (b.is_current ? 'bg-emerald-50/20 border-emerald-300' : 'bg-rose-50/20 border-rose-300') : 'bg-white border-transparent hover:border-gray-200'">
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                        <div class="flex items-start gap-3">
+                                                            <input type="checkbox" 
+                                                                   :checked="b.nominal_input > 0" 
+                                                                   @change="toggleBill(b)" 
+                                                                   class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-gray-300 mt-1 cursor-pointer">
+                                                            <div>
+                                                                <div class="flex items-center gap-2 flex-wrap">
+                                                                    <span class="px-2 py-0.5 rounded font-mono font-bold text-[10px] border" 
+                                                                          :class="getBadgeClass(b.pos_biaya)" 
+                                                                          x-text="b.pos_biaya"></span>
+                                                                    <span class="font-bold text-xs text-gray-900" x-text="cleanBillTitle(b.judul_tagihan)"></span>
+                                                                </div>
+                                                                <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-1">
+                                                                    <span>Tagihan Asli: <span class="font-medium text-gray-700" x-text="formatRupiah(b.nominal_tagihan)"></span></span>
+                                                                    <span>&bull;</span>
+                                                                    <span>Sisa: <strong class="text-rose-600 font-mono font-bold" x-text="formatRupiah(b.sisa_tagihan)"></strong></span>
+                                                                    <span x-show="b.nominal_potongan > 0" class="text-purple-700 font-semibold" x-text="'&bull; Keringanan: -' + formatRupiah(b.nominal_potongan)"></span>
+                                                                    <span x-show="b.nominal_bayar > 0" class="text-emerald-700 font-semibold" x-text="'&bull; Dicicil: ' + formatRupiah(b.nominal_bayar)"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
 
-                                <template x-for="b in studentBills.filter(x => x.is_current)" :key="'cur_' + b.id">
-                                    <div class="p-3 rounded-xl border transition" :class="b.nominal_input > 0 ? 'bg-emerald-50/20 border-emerald-300' : 'bg-white border-gray-200'">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                            <div class="flex items-start gap-3">
-                                                <input type="checkbox" :checked="b.nominal_input > 0" @change="toggleBill(b)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-gray-300 mt-0.5 cursor-pointer">
-                                                <div>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200" x-text="b.pos_biaya"></span>
-                                                        <span class="font-bold text-xs text-gray-900" x-text="b.judul_tagihan"></span>
-                                                    </div>
-                                                    <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
-                                                        <span>Tagihan: <span class="font-medium text-gray-700" x-text="formatRupiah(b.nominal_tagihan)"></span></span>
-                                                        <span>&bull;</span>
-                                                        <span>Sisa: <span class="text-emerald-700 font-mono font-bold" x-text="formatRupiah(b.sisa_tagihan)"></span></span>
-                                                        <span x-show="b.nominal_potongan > 0" class="text-purple-700 font-semibold" x-text="'(Keringanan: -' + formatRupiah(b.nominal_potongan) + ')'"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                        <div class="flex items-center gap-1.5 shrink-0">
+                                                            <input type="hidden" :name="'items[' + b.id + '][pos_biaya]'" :value="b.pos_biaya">
+                                                            <input type="hidden" :name="'items[' + b.id + '][bill_id]'" :value="b.id">
+                                                            <input type="hidden" :name="'items[' + b.id + '][keterangan]'" :value="cleanBillTitle(b.judul_tagihan)">
 
-                                            <div class="flex items-center gap-1.5 shrink-0">
-                                                <input type="hidden" :name="'items[' + b.id + '][pos_biaya]'" :value="b.pos_biaya">
-                                                <input type="hidden" :name="'items[' + b.id + '][bill_id]'" :value="b.id">
-                                                <input type="hidden" :name="'items[' + b.id + '][keterangan]'" :value="b.judul_tagihan">
-
-                                                <div class="relative">
-                                                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 text-xs font-bold pointer-events-none">Rp</span>
-                                                    <input type="number" :name="'items[' + b.id + '][nominal]'" x-model="b.nominal_input" min="0" :max="b.sisa_tagihan" placeholder="0" class="w-28 pl-8 pr-2 py-1.5 rounded-lg border border-gray-300 text-xs font-bold text-gray-900 text-right focus:border-brand-500 outline-none">
-                                                </div>
-                                                <button type="button" @click="b.nominal_input = b.sisa_tagihan; b.checked = true" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" title="Bayar Lunas">
-                                                    Pas
-                                                </button>
-                                                <button type="button" @click="b.nominal_input = Math.round(b.sisa_tagihan / 2); b.checked = true" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" title="Bayar Setengah">
-                                                    ½
-                                                </button>
-                                                <button type="button" @click="b.nominal_input = 0; b.checked = false" class="px-2 py-1.5 rounded-lg text-gray-400 hover:text-gray-600 text-xs font-medium transition">
-                                                    0
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-
-                            <!-- SECTION 3: TAGIHAN TAMBAHAN / INSIDENTAL -->
-                            <div x-show="!loadingBills && studentBills.some(b => b.is_incidental)" class="space-y-2">
-                                <div class="flex items-center justify-between pb-1.5 border-b border-gray-200 text-xs">
-                                    <span class="font-bold text-gray-800">Tagihan Tambahan / Insidental (Ziarah, Wisuda, dsb.)</span>
-                                </div>
-
-                                <template x-for="b in studentBills.filter(x => x.is_incidental)" :key="'inc_' + b.id">
-                                    <div class="p-3 rounded-xl border transition" :class="b.nominal_input > 0 ? 'bg-blue-50/20 border-blue-300' : 'bg-white border-gray-200'">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                            <div class="flex items-start gap-3">
-                                                <input type="checkbox" :checked="b.nominal_input > 0" @change="toggleBill(b)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-gray-300 mt-0.5 cursor-pointer">
-                                                <div>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-blue-50 text-blue-700 border border-blue-200" x-text="b.pos_biaya"></span>
-                                                        <span class="font-bold text-xs text-gray-900" x-text="b.judul_tagihan"></span>
-                                                    </div>
-                                                    <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-2 mt-0.5">
-                                                        <span>Tagihan: <span class="font-medium text-gray-700" x-text="formatRupiah(b.nominal_tagihan)"></span></span>
-                                                        <span>&bull;</span>
-                                                        <span>Sisa: <span class="text-blue-700 font-mono font-bold" x-text="formatRupiah(b.sisa_tagihan)"></span></span>
-                                                        <span x-show="b.nominal_potongan > 0" class="text-purple-700 font-semibold" x-text="'(Keringanan: -' + formatRupiah(b.nominal_potongan) + ')'"></span>
+                                                            <div class="relative">
+                                                                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 text-xs font-bold pointer-events-none">Rp</span>
+                                                                <input type="number" 
+                                                                       :name="'items[' + b.id + '][nominal]'" 
+                                                                       x-model="b.nominal_input" 
+                                                                       @input="b.checked = (parseFloat(b.nominal_input) > 0); uangDiterima = calculateTotal()" 
+                                                                       min="0" 
+                                                                       :max="b.sisa_tagihan" 
+                                                                       placeholder="0" 
+                                                                       class="w-28 pl-8 pr-2 py-1.5 rounded-lg border border-gray-300 text-xs font-bold text-gray-900 text-right focus:border-brand-500 outline-none">
+                                                            </div>
+                                                            <button type="button" 
+                                                                    @click="b.nominal_input = b.sisa_tagihan; b.checked = true; uangDiterima = calculateTotal()" 
+                                                                    class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" 
+                                                                    title="Bayar Lunas Pos Ini">
+                                                                Pas
+                                                            </button>
+                                                            <button type="button" 
+                                                                    @click="b.nominal_input = Math.round(b.sisa_tagihan / 2); b.checked = true; uangDiterima = calculateTotal()" 
+                                                                    class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" 
+                                                                    title="Cicil Setengah Pos Ini">
+                                                                ½
+                                                            </button>
+                                                            <button type="button" 
+                                                                    @click="b.nominal_input = 0; b.checked = false; uangDiterima = calculateTotal()" 
+                                                                    class="px-2 py-1.5 rounded-lg text-gray-400 hover:text-gray-600 text-xs font-medium transition" 
+                                                                    title="Kosongkan Pos Ini">
+                                                                0
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <div class="flex items-center gap-1.5 shrink-0">
-                                                <input type="hidden" :name="'items[' + b.id + '][pos_biaya]'" :value="b.pos_biaya">
-                                                <input type="hidden" :name="'items[' + b.id + '][bill_id]'" :value="b.id">
-                                                <input type="hidden" :name="'items[' + b.id + '][keterangan]'" :value="b.judul_tagihan">
-
-                                                <div class="relative">
-                                                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-gray-400 text-xs font-bold pointer-events-none">Rp</span>
-                                                    <input type="number" :name="'items[' + b.id + '][nominal]'" x-model="b.nominal_input" min="0" :max="b.sisa_tagihan" placeholder="0" class="w-28 pl-8 pr-2 py-1.5 rounded-lg border border-gray-300 text-xs font-bold text-gray-900 text-right focus:border-brand-500 outline-none">
-                                                </div>
-                                                <button type="button" @click="b.nominal_input = b.sisa_tagihan; b.checked = true" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition" title="Bayar Lunas">
-                                                    Pas
-                                                </button>
-                                                <button type="button" @click="b.nominal_input = 0; b.checked = false" class="px-2 py-1.5 rounded-lg text-gray-400 hover:text-gray-600 text-xs font-medium transition">
-                                                    0
-                                                </button>
-                                            </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </template>
@@ -2227,13 +2303,22 @@
                 <button type="button" @click="showTunggakanModal = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
             </div>
 
-            <!-- Total Banner -->
-            <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
-                <div>
-                    <span class="text-xs font-semibold text-gray-700 block">Total Tunggakan</span>
-                    <span class="text-[11px] text-gray-500" x-text="totalTunggakanCount + ' tagihan belum lunas'"></span>
+            <!-- Total Banner Tunggakan & Tabungan -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-rose-900 block">Total Tunggakan</span>
+                        <span class="text-[11px] text-rose-600 font-medium" x-text="totalTunggakanCount + ' tagihan belum lunas'"></span>
+                    </div>
+                    <span class="text-base font-bold font-mono text-rose-700" x-text="formatRupiah(studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0))"></span>
                 </div>
-                <span class="text-base font-bold font-mono text-rose-600" x-text="formatRupiah(studentBills.reduce((acc, b) => acc + (b.sisa_tagihan || 0), 0))"></span>
+                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-emerald-900 block">Saldo Tabungan Santri</span>
+                        <span class="text-[11px] text-emerald-600 font-medium">Tersimpan di Pesantren</span>
+                    </div>
+                    <span class="text-base font-bold font-mono text-emerald-700" x-text="formatRupiah(selectedPerson ? (selectedPerson.saldo_tabungan || saldoTabungan) : 0)"></span>
+                </div>
             </div>
 
             <!-- Daftar Tunggakan Per Periode -->
@@ -2251,8 +2336,8 @@
                                 <div class="py-2 flex items-center justify-between text-xs">
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <span class="px-1.5 py-0.5 rounded font-mono font-medium text-[10px] bg-gray-100 text-gray-700" x-text="it.pos_biaya"></span>
-                                            <span class="font-medium text-gray-900" x-text="it.judul_tagihan"></span>
+                                            <span class="px-2 py-0.5 rounded font-mono font-bold text-[10px] border" :class="getBadgeClass(it.pos_biaya)" x-text="it.pos_biaya"></span>
+                                            <span class="font-medium text-gray-900" x-text="cleanBillTitle(it.judul_tagihan)"></span>
                                         </div>
                                         <div class="text-[11px] text-gray-500 mt-0.5">
                                             Tagihan Asli: <span x-text="formatRupiah(it.nominal_tagihan)"></span>
