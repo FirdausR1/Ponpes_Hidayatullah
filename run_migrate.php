@@ -67,13 +67,70 @@ try {
     ];
     Setting::set('biaya_bulanan_json', json_encode($biayaBulananData, JSON_PRETTY_PRINT), 'biaya');
 
-    // 3. Bersihkan Cache Laravel
+    // 3. Konversi Tagihan Tabungan Santri hasil import lama (status Belum Bayar) menjadi Saldo Tabungan Riil
+    $tabBills = \App\Models\StudentBill::where('pos_biaya', 'TAB')
+        ->where('status', 'Belum Bayar')
+        ->where(function($q) {
+            $q->where('created_by', 'like', '%Import%')
+              ->orWhere('judul_tagihan', 'like', '%Tabungan%');
+        })
+        ->get();
+
+    $convertedTabunganCount = 0;
+    $totalNominalConverted = 0;
+
+    foreach ($tabBills as $tabBill) {
+        $student = \App\Models\Student::find($tabBill->student_id);
+        if (!$student) continue;
+
+        // Cek apakah santri ini sudah memiliki pembayaran TAB yang sesuai
+        $existingPayment = \App\Models\StudentPaymentItem::whereHas('payment', function($q) use ($student) {
+            $q->where('student_id', $student->id)->where('status', 'Lunas');
+        })->where('pos_biaya', 'TAB')->where('nominal', $tabBill->nominal_tagihan)->first();
+
+        if (!$existingPayment) {
+            $pPrefix = 'TAB-IMP-' . date('Ymd');
+            $pNo = $pPrefix . '-' . str_pad($tabBill->id, 4, '0', STR_PAD_LEFT);
+
+            $pay = \App\Models\StudentPayment::create([
+                'student_id' => $student->id,
+                'user_id' => 1,
+                'no_transaksi' => $pNo,
+                'jenis_pembayaran' => 'SETORAN TABUNGAN AWAL',
+                'bulan' => $tabBill->bulan ?: date('F'),
+                'tahun' => $tabBill->tahun ?: date('Y'),
+                'nominal' => $tabBill->nominal_tagihan,
+                'tanggal_bayar' => now(),
+                'metode_pembayaran' => 'Tunai',
+                'status' => 'Lunas',
+                'catatan' => 'Saldo Tabungan Awal Santri (Konversi Otomatis Import)',
+                'penerima_nama' => 'Sistem Import Bendahara',
+            ]);
+
+            \App\Models\StudentPaymentItem::create([
+                'payment_id' => $pay->id,
+                'student_bill_id' => null,
+                'pos_biaya' => 'TAB',
+                'nominal' => $tabBill->nominal_tagihan,
+                'keterangan' => 'Saldo Awal Tabungan Santri',
+            ]);
+        }
+
+        $totalNominalConverted += $tabBill->nominal_tagihan;
+        $tabBill->delete();
+        $convertedTabunganCount++;
+    }
+
+    // 4. Bersihkan Cache Laravel
     Artisan::call('view:clear');
     Artisan::call('config:clear');
     Artisan::call('route:clear');
 
     echo '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 14px; border-radius: 8px; margin-bottom: 16px;">';
-    echo '<strong>Alhamdulillah, Berhasil!</strong> Migrasi database dan sinkronisasi tarif RAB keuangan (Pemisahan SOT & Syahriyah) sukses diterapkan.';
+    echo '<strong>Alhamdulillah, Berhasil!</strong> Migrasi database dan sinkronisasi sistem sukses diterapkan.<br>';
+    if ($convertedTabunganCount > 0) {
+        echo '<div style="margin-top:6px; font-size:13px; color:#14532d;">&bull; Berhasil mengonversi <strong>' . $convertedTabunganCount . ' data tabungan</strong> (Rp ' . number_format($totalNominalConverted, 0, ',', '.') . ') menjadi <strong>Saldo Tabungan Aktif</strong> santri (tidak lagi menjadi tunggakan).</div>';
+    }
     echo '</div>';
     echo '<div style="font-size:13px; font-weight:600; margin-bottom:6px; color:#334155;">Log Migrasi:</div>';
     echo '<pre style="background: #f8fafc; padding: 12px; border-radius: 6px; font-size: 13px; border: 1px solid #cbd5e1; white-space:pre-wrap;">' . htmlspecialchars($migrateOutput) . '</pre>';

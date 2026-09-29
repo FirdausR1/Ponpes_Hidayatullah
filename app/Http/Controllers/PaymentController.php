@@ -384,6 +384,9 @@ class PaymentController extends Controller
             }
 
             $cleanJudul = trim(preg_replace('/\s*\((?:daftar ulang[,\s]*|agustus|september|juli|oktober|november|desember|januari|februari|maret|april|mei|juni|[,\s\-\/])+\)/i', '', $b->judul_tagihan));
+            if ($b->pos_biaya === 'TAB' || stripos($cleanJudul, 'Tabungan') !== false) {
+                $cleanJudul = preg_replace('/Tunggakan\s+Tabungan(\s+Santri)?/i', 'Iuran Tabungan Santri', $cleanJudul);
+            }
 
             return [
                 'id' => $b->id,

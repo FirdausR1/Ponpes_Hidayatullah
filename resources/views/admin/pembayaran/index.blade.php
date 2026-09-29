@@ -39,6 +39,8 @@
     customItems: [{ pos_biaya: '', nominal: '', custom_name: '' }],
     availablePos: {{ json_encode(array_keys($posBiayaList)) }},
     tabunganWithdrawal: '',
+    tabunganDeposit: '',
+    expandedPeriods: {},
 
     // Calon PSB Specific State
     psbData: null,
@@ -209,6 +211,8 @@
         this.advanceItems = [];
         this.customItems = [{ pos_biaya: '', nominal: '', custom_name: '' }];
         this.tabunganWithdrawal = '';
+        this.tabunganDeposit = '';
+        this.expandedPeriods = {};
         this.uangDiterima = '';
         this.psbItems = [];
         this.psbData = null;
@@ -220,6 +224,9 @@
     loadStudentData(studentId) {
         if (!studentId) return;
         this.loadingBills = true;
+        this.expandedPeriods = {};
+        this.tabunganDeposit = '';
+        this.tabunganWithdrawal = '';
         fetch('{{ url('/admin/pembayaran/ajax-tagihan') }}/' + studentId)
             .then(res => res.json())
             .then(data => {
@@ -244,6 +251,7 @@
                 this.currentMonthName = data.current_month || 'September';
                 this.currentYear = data.current_year || '{{ date('Y') }}';
                 this.advanceMonth = this.getNextMonthName(this.currentMonthName);
+                this.expandedPeriods = {};
                 this.loadingBills = false;
                 this.uangDiterima = this.calculateTotal();
             })
@@ -319,7 +327,31 @@
 
     cleanBillTitle(title) {
         if (!title) return '';
-        return title.replace(/\s*\((?:daftar ulang[,\s]*|agustus|september|juli|oktober|november|desember|januari|februari|maret|april|mei|juni|[,\s\-\/])+\)/gi, '').trim();
+        let t = title.replace(/\s*\((?:daftar ulang[,\s]*|agustus|september|juli|oktober|november|desember|januari|februari|maret|april|mei|juni|[,\s\-\/])+\)/gi, '').trim();
+        return t.replace(/Tunggakan\s+Tabungan(\s+Santri)?/gi, 'Iuran Tabungan Santri')
+                .replace(/Tunggakan\s+Tabungan/gi, 'Iuran Tabungan');
+    },
+
+    // Accordion State Helpers
+    isPeriodOpen(periode) {
+        if (this.expandedPeriods[periode] === undefined) {
+            let grp = (this.groupedBills || []).find(g => g.periode === periode);
+            return grp ? Boolean(grp.is_current) : false;
+        }
+        return Boolean(this.expandedPeriods[periode]);
+    },
+    togglePeriod(periode) {
+        this.expandedPeriods[periode] = !this.isPeriodOpen(periode);
+    },
+    expandAllPeriods() {
+        (this.groupedBills || []).forEach(g => {
+            this.expandedPeriods[g.periode] = true;
+        });
+    },
+    collapseAllPeriods() {
+        (this.groupedBills || []).forEach(g => {
+            this.expandedPeriods[g.periode] = false;
+        });
     },
 
     getBadgeClass(pos) {
@@ -468,6 +500,8 @@
         });
         this.advanceItems = [];
         this.customItems = [{ pos_biaya: '', nominal: '', custom_name: '' }];
+        this.tabunganDeposit = '';
+        this.tabunganWithdrawal = '';
         this.psbChecked = false;
         this.psbNominalInput = 0;
         this.uangDiterima = 0;
@@ -543,6 +577,7 @@
                     total += nom;
                 }
             });
+            total += parseFloat(this.tabunganDeposit) || 0;
             total += parseFloat(this.tabunganWithdrawal) || 0;
         }
         return total;
@@ -1101,6 +1136,13 @@
                                     <button type="button" @click="kosongkanSemua()" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-gray-500 text-xs font-medium border border-gray-200 transition">
                                         Kosongkan
                                     </button>
+                                    <div class="h-4 w-px bg-gray-300 mx-0.5 hidden sm:block"></div>
+                                    <button type="button" @click="expandAllPeriods()" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold border border-emerald-200 transition inline-flex items-center gap-1" title="Buka seluruh rincian bulan">
+                                        <span>▾ Buka Semua</span>
+                                    </button>
+                                    <button type="button" @click="collapseAllPeriods()" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-gray-600 text-xs font-medium border border-gray-300 transition inline-flex items-center gap-1" title="Tutup seluruh rincian bulan">
+                                        <span>▴ Tutup Semua</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -1109,15 +1151,20 @@
                                 Memuat rincian tagihan...
                             </div>
 
-                            <!-- DAFTAR TAGIHAN DIKELOMPOKKAN PER PERIODE (PERSIS TAMPILAN DETAIL RINCIAN) -->
-                            <div x-show="!loadingBills && groupedBills.length > 0" class="space-y-4">
+                            <!-- DAFTAR TAGIHAN DIKELOMPOKKAN PER PERIODE (ACCORDION & SCROLL TERKONTROL) -->
+                            <div x-show="!loadingBills && groupedBills.length > 0" class="space-y-3 max-h-[540px] overflow-y-auto pr-1">
                                 <template x-for="(grp, gIdx) in groupedBills" :key="'grp_' + gIdx">
                                     <div class="rounded-xl border border-gray-200 overflow-hidden shadow-2xs transition hover:border-gray-300">
-                                        <!-- Header Periode -->
-                                        <div class="px-4 py-2.5 bg-gray-50/90 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                                        <!-- Header Periode (Bisa Diklik / Accordion) -->
+                                        <div @click="togglePeriod(grp.periode)" 
+                                             class="px-4 py-2.5 bg-gray-50/95 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 cursor-pointer select-none hover:bg-gray-100/80 transition">
                                             <div class="flex items-center gap-2 flex-wrap">
+                                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" 
+                                                     :class="isPeriodOpen(grp.periode) ? 'rotate-180 text-brand-600' : ''" 
+                                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                </svg>
                                                 <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                                     <span>Periode:</span>
                                                     <strong class="text-gray-900" x-text="grp.periode"></strong>
                                                 </span>
@@ -1126,14 +1173,20 @@
                                                       x-text="grp.is_current ? 'Bulan Ini' : (grp.is_past ? 'Tunggakan' : 'Tahunan / Tambahan')">
                                                 </span>
                                                 <span class="text-[11px] text-gray-500 font-mono" x-text="'(' + grp.items.length + ' tagihan)'"></span>
+                                                <!-- Indikator jika ada item periode ini yang dipilih -->
+                                                <template x-if="grp.items.some(it => it.nominal_input > 0)">
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-2xs">
+                                                        Dipilih: <span x-text="formatRupiah(grp.items.reduce((sum, it) => sum + (parseFloat(it.nominal_input) || 0), 0))"></span>
+                                                    </span>
+                                                </template>
                                             </div>
 
-                                            <div class="flex items-center gap-3">
+                                            <div class="flex items-center gap-2.5">
                                                 <span class="text-xs font-bold font-mono text-rose-600" 
                                                       x-text="'Sisa: ' + formatRupiah(grp.items.reduce((sum, it) => sum + (parseFloat(it.sisa_tagihan) || 0), 0))">
                                                 </span>
                                                 <button type="button" 
-                                                        @click="toggleGroupBills(grp)" 
+                                                        @click.stop="toggleGroupBills(grp)" 
                                                         class="px-2.5 py-1 rounded-md text-[11px] font-semibold border transition shadow-2xs"
                                                         :class="grp.items.every(it => it.nominal_input > 0) ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'">
                                                     <span x-text="grp.items.every(it => it.nominal_input > 0) ? 'Batal Pilih' : 'Pilih Periode Ini'"></span>
@@ -1141,8 +1194,8 @@
                                             </div>
                                         </div>
 
-                                        <!-- List Item Tagihan dalam Periode -->
-                                        <div class="p-3 bg-white divide-y divide-gray-100 space-y-2">
+                                        <!-- List Item Tagihan dalam Periode (Bisa Buka-Tutup) -->
+                                        <div x-show="isPeriodOpen(grp.periode)" x-transition class="p-3 bg-white divide-y divide-gray-100 space-y-2">
                                             <template x-for="b in grp.items" :key="'bill_' + b.id">
                                                 <div class="pt-2 first:pt-0 p-2.5 rounded-xl border transition" 
                                                      :class="b.nominal_input > 0 ? (b.is_current ? 'bg-emerald-50/20 border-emerald-300' : 'bg-rose-50/20 border-rose-300') : 'bg-white border-transparent hover:border-gray-200'">
@@ -1352,48 +1405,123 @@
 
                         </div>
 
-                    </div>
-
-                    <!-- STEP 3: PENARIKAN TABUNGAN SANTRI (SESUAI TEMPLATE TAILADMIN) -->
+                             <!-- STEP 3: KELOLA TABUNGAN SANTRI (SETOR & TARIK) -->
                     <div x-show="selectedPerson && paymentType === 'santri'" class="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-theme-xs space-y-4">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3.5">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                <div class="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center font-bold text-xs shrink-0">
                                     3
                                 </div>
                                 <div>
                                     <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                        Penarikan Tabungan Santri
-                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">AMBIL TABUNGAN</span>
+                                        Kelola Tabungan Santri
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">SETOR (TAB)</span>
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">TARIK TABUNGAN</span>
                                     </h3>
-                                    <p class="text-xs text-gray-500">Fitur penarikan / pencairan saldo simpanan tabungan santri melalui kasir</p>
+                                    <p class="text-xs text-gray-500">Setor simpanan sukarela santri atau lakukan penarikan/pencairan saldo tabungan melalui kasir</p>
                                 </div>
                             </div>
-                            <div class="sm:text-right bg-gray-50 sm:bg-transparent p-2.5 sm:p-0 rounded-xl border sm:border-0 border-gray-200 flex sm:block items-center justify-between">
-                                <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider block">Saldo Tabungan</span>
+                            <div class="sm:text-right bg-emerald-50 sm:bg-emerald-50/60 px-3.5 py-2 rounded-xl border border-emerald-200 flex sm:block items-center justify-between">
+                                <span class="text-[10px] text-emerald-800 uppercase font-bold tracking-wider block">Saldo Tabungan Tersimpan</span>
                                 <div class="text-base font-mono font-bold text-emerald-700" x-text="formatRupiah(selectedPerson ? selectedPerson.saldo_tabungan : 0)"></div>
                             </div>
                         </div>
 
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
-                            <div class="text-xs text-gray-600 leading-relaxed max-w-md">
-                                Masukkan nominal saldo tabungan yang ditarik. Transaksi ini akan otomatis memotong saldo tabungan santri secara realtime setelah disimpan dan dicatat dalam kwitansi kasir.
-                            </div>
-                            <div class="flex items-center gap-2 shrink-0">
-                                <span class="text-xs font-bold text-gray-500">Rp</span>
-                                <input type="hidden" name="items[withdraw_tabungan][pos_biaya]" value="AMBIL TABUNGAN">
-                                <div class="relative">
-                                    <input type="number" name="items[withdraw_tabungan][nominal]" x-model="tabunganWithdrawal" placeholder="0" min="0" :max="selectedPerson ? selectedPerson.saldo_tabungan : 0" @input="uangDiterima = calculateTotal()" class="h-10 w-36 sm:w-40 rounded-lg border border-gray-300 px-3 text-sm font-bold font-mono text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 outline-none text-right transition">
+                        <!-- Grid 2 Kolom: Setor & Tarik -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <!-- KARTU 1: SETOR TABUNGAN (SIMPANAN SUKARELA) -->
+                            <div class="p-4 rounded-xl border border-teal-200 bg-teal-50/40 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+                                            &darr;
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-teal-950">Setor Tabungan Sukarela</h4>
+                                            <p class="text-[11px] text-teal-700">Menambah saldo simpanan tabungan santri</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 font-mono">POS TAB</span>
                                 </div>
-                                <button type="button" @click="tabunganWithdrawal = (selectedPerson ? selectedPerson.saldo_tabungan : 0); uangDiterima = calculateTotal();" class="h-10 px-3.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition shrink-0 active:scale-95" title="Tarik seluruh sisa saldo">
-                                    Tarik Semua
-                                </button>
-                                <button type="button" @click="tabunganWithdrawal = ''; uangDiterima = calculateTotal();" class="h-10 w-10 rounded-lg bg-white hover:bg-gray-50 text-gray-400 hover:text-rose-600 border border-gray-300 text-base font-bold transition flex items-center justify-center shrink-0" title="Batal / Kosongkan">
-                                    &times;
-                                </button>
+
+                                <div class="space-y-2">
+                                    <input type="hidden" name="items[deposit_tabungan][pos_biaya]" value="TAB">
+                                    <input type="hidden" name="items[deposit_tabungan][keterangan]" value="Setoran Tabungan Santri">
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 font-bold text-xs pointer-events-none">Rp</span>
+                                        <input type="number" 
+                                               name="items[deposit_tabungan][nominal]" 
+                                               x-model="tabunganDeposit" 
+                                               placeholder="0" 
+                                               min="0" 
+                                               @input="uangDiterima = calculateTotal()" 
+                                               class="h-10 w-full pl-9 pr-3 rounded-lg border border-teal-300 font-mono text-sm font-bold text-gray-900 bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none text-right transition">
+                                    </div>
+
+                                    <!-- Quick chips deposit -->
+                                    <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                        <button type="button" @click="tabunganDeposit = 25000; uangDiterima = calculateTotal()" class="px-2.5 py-1 rounded-lg bg-white hover:bg-teal-100 text-teal-800 border border-teal-300 text-[11px] font-semibold transition shadow-2xs">
+                                            +25rb
+                                        </button>
+                                        <button type="button" @click="tabunganDeposit = 50000; uangDiterima = calculateTotal()" class="px-2.5 py-1 rounded-lg bg-white hover:bg-teal-100 text-teal-800 border border-teal-300 text-[11px] font-semibold transition shadow-2xs">
+                                            +50rb
+                                        </button>
+                                        <button type="button" @click="tabunganDeposit = 100000; uangDiterima = calculateTotal()" class="px-2.5 py-1 rounded-lg bg-white hover:bg-teal-100 text-teal-800 border border-teal-300 text-[11px] font-semibold transition shadow-2xs">
+                                            +100rb
+                                        </button>
+                                        <button type="button" @click="tabunganDeposit = ''; uangDiterima = calculateTotal()" class="px-2 py-1 rounded-lg bg-white hover:bg-gray-100 text-gray-400 hover:text-rose-600 border border-gray-300 text-[11px] font-bold transition" title="Kosongkan">
+                                            &times;
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KARTU 2: TARIK TABUNGAN (PENCAIRAN SIMPANAN) -->
+                            <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-md bg-amber-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+                                            &uarr;
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-amber-950">Tarik Tabungan Santri</h4>
+                                            <p class="text-[11px] text-amber-700">Pencairan / penarikan saldo simpanan santri</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 font-mono">AMBIL TABUNGAN</span>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <input type="hidden" name="items[withdraw_tabungan][pos_biaya]" value="AMBIL TABUNGAN">
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 font-bold text-xs pointer-events-none">Rp</span>
+                                        <input type="number" 
+                                               name="items[withdraw_tabungan][nominal]" 
+                                               x-model="tabunganWithdrawal" 
+                                               placeholder="0" 
+                                               min="0" 
+                                               :max="selectedPerson ? selectedPerson.saldo_tabungan : 0" 
+                                               @input="uangDiterima = calculateTotal()" 
+                                               class="h-10 w-full pl-9 pr-3 rounded-lg border border-amber-300 font-mono text-sm font-bold text-gray-900 bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none text-right transition">
+                                    </div>
+
+                                    <!-- Quick chips withdrawal -->
+                                    <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                        <button type="button" 
+                                                @click="tabunganWithdrawal = (selectedPerson ? selectedPerson.saldo_tabungan : 0); uangDiterima = calculateTotal();" 
+                                                class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold transition shadow-2xs" 
+                                                :disabled="!selectedPerson || !selectedPerson.saldo_tabungan || selectedPerson.saldo_tabungan <= 0"
+                                                title="Tarik seluruh sisa saldo tabungan">
+                                            Tarik Semua Saldo
+                                        </button>
+                                        <button type="button" @click="tabunganWithdrawal = ''; uangDiterima = calculateTotal()" class="px-2 py-1 rounded-lg bg-white hover:bg-gray-100 text-gray-400 hover:text-rose-600 border border-gray-300 text-[11px] font-bold transition" title="Batal / Kosongkan">
+                                            &times;
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </div>             </div>
 
                 </div>
 
@@ -1472,6 +1600,15 @@
                                     <span class="font-mono font-bold text-gray-900" x-text="formatRupiah(c.nominal)"></span>
                                 </div>
                             </template>
+
+                            <!-- Setoran Tabungan Sukarela (Jika ada) -->
+                            <div x-show="tabunganDeposit > 0" class="flex items-center justify-between text-teal-800 py-1 mt-1 border-t border-dashed border-teal-200">
+                                <div>
+                                    <strong class="font-mono text-teal-800">TABUNGAN (SETOR)</strong>
+                                    <span class="text-[11px] text-teal-600 block">Setoran Simpanan Sukarela</span>
+                                </div>
+                                <span class="font-mono font-bold text-teal-900" x-text="formatRupiah(tabunganDeposit)"></span>
+                            </div>
 
                             <!-- Penarikan Tabungan (Jika ada) -->
                             <div x-show="tabunganWithdrawal > 0" class="flex items-center justify-between text-amber-800 py-1 mt-1 border-t border-dashed border-amber-200">
